@@ -104,6 +104,7 @@ void checkTimeout() {
       sortTasksByDueDate(tasks);
 #endif
       u8g2.clearBuffer();
+      OLED().oledWord(" ");
       OLED().setPowerSave(true);
       disableTimeout = true;
       newState = true;
