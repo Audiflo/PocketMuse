@@ -306,6 +306,7 @@ String textPrompt(String promptText, String prefix) {
     #if !OTA_APP 
       if (!noTimeout)  checkTimeout();
       if (DEBUG_VERBOSE) printDebug();
+      if (CurrentHOMEState == NOWLATER) return "_RETURN_";
     #endif
     
     updateBattState();
