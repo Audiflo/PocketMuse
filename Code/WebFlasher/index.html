@@ -1,6 +1,5 @@
 <!doctype html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -481,6 +480,15 @@
                         <div id="latest-version-text" class="latest-version-text"></div>
                     </div>
                     <div class="form-group">
+                        <label for="hardware-select">Select your PocketMage hardware version</label>
+                        <div class="select-wrapper">
+                            <select id="hardware-select" aria-label="Hardware Version">
+                                <option value="Beta V3.2">Beta V3.2</option>
+                                <option value="Production V3.3">Production V3.3</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <div class="checkbox-group">
                             <div class="checkbox-option">
                                 <input type="checkbox" id="preserve-data" name="preserve-data" checked />
@@ -541,7 +549,7 @@
             },
             write(data) {
                 console.log(data);
-            },
+            }
         };
 
         function uint8ToBinaryString(u8) {
@@ -860,5 +868,4 @@
         });
     </script>
 </body>
-
 </html>
