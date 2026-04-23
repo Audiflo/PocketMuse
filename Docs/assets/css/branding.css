@@ -38,7 +38,7 @@
   --accent: #453f87;
   --accent-strong: #2d2960;
 
-  /* Buttons: flat, shaded, square */
+  /* Buttons */
   --button-bg: #fefef3;
   --button-text: #453f87;
   --button-border: #453f87;
@@ -53,7 +53,83 @@
   --font-mono: 'Courier Prime', Menlo, Monaco, monospace;
 }
 
-/* Page background: plain warm off-white, no radial gradients */
+/* Dark mode */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #0f0d1a;
+    --surface: #191626;
+    --surface-soft: #1e1a2e;
+
+    --text-color: #e8e5d5;
+    --text-heading: #c8c3f5;
+
+    --link-color: #c8c3f5;
+    --link-hover: #ddd9ff;
+
+    --border: #3a3060;
+
+    --sidebar-bg: #0f0d1a;
+    --sidebar-text: #c0bce0;
+    --sidebar-border: #2e2850;
+    --sidebar-active-bg: #1e1a10;
+    --sidebar-active-color: #c8c3f5;
+
+    --card-bg: #191626;
+
+    --code-bg: #1a1508;
+
+    --callout-bg: #16131f;
+    --callout-border: #3a3060;
+
+    --accent: #a89ee8;
+    --accent-strong: #c8c3f5;
+
+    --button-bg: #191626;
+    --button-text: #c8c3f5;
+    --button-border: #c8c3f5;
+
+    --shadow: 4px 4px 0 #a89ee8;
+    --shadow-soft: 4px 4px 0 rgba(168, 158, 232, 0.25);
+  }
+}
+
+[data-theme="dark"] {
+  --bg-color: #0f0d1a;
+  --surface: #191626;
+  --surface-soft: #1e1a2e;
+
+  --text-color: #e8e5d5;
+  --text-heading: #c8c3f5;
+
+  --link-color: #c8c3f5;
+  --link-hover: #ddd9ff;
+
+  --border: #3a3060;
+
+  --sidebar-bg: #0f0d1a;
+  --sidebar-text: #c0bce0;
+  --sidebar-border: #2e2850;
+  --sidebar-active-bg: #1e1a10;
+  --sidebar-active-color: #c8c3f5;
+
+  --card-bg: #191626;
+
+  --code-bg: #1a1508;
+
+  --callout-bg: #16131f;
+  --callout-border: #3a3060;
+
+  --accent: #a89ee8;
+  --accent-strong: #c8c3f5;
+
+  --button-bg: #191626;
+  --button-text: #c8c3f5;
+  --button-border: #c8c3f5;
+
+  --shadow: 4px 4px 0 #a89ee8;
+  --shadow-soft: 4px 4px 0 rgba(168, 158, 232, 0.25);
+}
+
 html {
   background: var(--bg-color);
 }
@@ -107,7 +183,6 @@ a:focus {
   background: var(--sidebar-active-bg);
 }
 
-/* Active item: left border accent */
 .sidebar .sidebar-nav a.active {
   box-shadow: inset 4px 0 0 var(--accent);
 }
@@ -119,7 +194,6 @@ a:focus {
 
 .main-content {
   background: var(--surface);
-  /* Hard-edged border + offset shadow */
   border: 2px solid var(--text-heading);
   box-shadow: var(--shadow);
   border-radius: 0;
@@ -152,8 +226,7 @@ p, ol, ul, blockquote, dt, dd {
 .callout {
   border-left: 4px solid var(--callout-border);
   background: var(--callout-bg);
-  /* Soft offset shadow instead of blur */
-  box-shadow: 3px 3px 0 rgba(69, 63, 135, 0.15);
+  box-shadow: 3px 3px 0 var(--shadow-soft);
   padding: 1.25rem 1.5rem;
 }
 
@@ -191,12 +264,11 @@ input[type="submit"]:hover,
 .docmd-pagination a:hover,
 .docmd-pagination button:hover {
   background: var(--accent);
-  color: #ffffff;
+  color: var(--bg-color);
   border-color: var(--accent-strong);
   box-shadow: 4px 4px 0 var(--accent-strong);
 }
 
-/* Active "press" feel */
 button:active,
 .button:active {
   transform: translate(2px, 2px);
@@ -216,7 +288,7 @@ code,
 
 pre {
   padding: 1.25rem !important;
-  box-shadow: 4px 4px 0 rgba(69, 63, 135, 0.12);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Tables */
@@ -229,14 +301,14 @@ td {
 .table-wrapper {
   background: var(--surface);
   border: 2px solid var(--border);
-  box-shadow: 4px 4px 0 rgba(69, 63, 135, 0.1);
+  box-shadow: var(--shadow-soft);
 }
 
 /* Search modal */
 .docmd-search-modal {
   background: var(--surface);
   border: 2px solid var(--accent);
-  box-shadow: 6px 6px 0 rgba(69, 63, 135, 0.2);
+  box-shadow: var(--shadow);
   border-radius: 0;
 }
 
@@ -245,6 +317,8 @@ td {
   border: 2px solid var(--border);
   border-radius: 0;
   font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--text-color);
 }
 
 /* Tabs */
