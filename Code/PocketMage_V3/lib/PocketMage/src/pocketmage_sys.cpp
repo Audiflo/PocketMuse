@@ -171,6 +171,11 @@ void deepSleep(bool alternateScreenSaver) {
   prefs.putBool("Seamless_Reboot", false);
   prefs.end();
   
+  // Power down peripherals
+  #if POCKETMAGE_HW_VERSION == 2
+    setLoadSwitch(false);
+  #endif
+
   // Sleep the ESP32
   esp_deep_sleep_start();
 }
@@ -260,6 +265,12 @@ void hardReset(void* parameter) {
 }
 
 void PocketMage_INIT() {
+  // Enable peripherals (prod only)
+  #if POCKETMAGE_HW_VERSION == 2
+    pinMode(LOAD_SWITCH, OUTPUT);
+    setLoadSwitch(true);
+  #endif
+
   // Check if in OTA app
   pocketmage::checkRebootOTA();
 
@@ -356,6 +367,10 @@ void PocketMage_INIT() {
 
   // Clear any excess keystrokes
   keypad.flush();
+}
+
+void setLoadSwitch(bool state) {
+  digitalWrite(LOAD_SWITCH, state);
 }
 
 // ===================== GLOBAL TEXT HELPERS =====================
