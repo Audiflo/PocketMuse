@@ -355,19 +355,20 @@ void funcSelect(String command) {
   // Help
   else if (command == "help") {
     terminalOutputs.push_back("Available commands:");
-    terminalOutputs.push_back("ls                 List dir");
-    terminalOutputs.push_back("cd <dir>         Change dir");
-    terminalOutputs.push_back("rm <file>       Remove file");
-    terminalOutputs.push_back("rm -r <dir>      Remove dir");
-    terminalOutputs.push_back("cp <src> <dest>   Copy file");
-    terminalOutputs.push_back("mv <src> <dest>   Mv/rename");
-    terminalOutputs.push_back("touch <file>    Create file");
-    terminalOutputs.push_back("clear        Clear terminal");
-    terminalOutputs.push_back("txt <file>      Open in TXT");
-    terminalOutputs.push_back("potion/pot <file> Edit prgm");
-    terminalOutputs.push_back("brew <file>        Run prgm");
-    terminalOutputs.push_back("pot link <file> <alias>");
-    terminalOutputs.push_back("pot unlink <alias>");
+    terminalOutputs.push_back("ls                  List dir");
+    terminalOutputs.push_back("cd <dir>          Change dir");
+    terminalOutputs.push_back("rm <file>        Remove file");
+    terminalOutputs.push_back("rm -r <dir>       Remove dir");
+    terminalOutputs.push_back("cp <src> <dest>    Copy file");
+    terminalOutputs.push_back("mv <src> <dest>    Mv/rename");
+    terminalOutputs.push_back("touch <file>     Create file");
+    terminalOutputs.push_back("mkdir <name>   Create folder");
+    terminalOutputs.push_back("clear         Clear terminal");
+    terminalOutputs.push_back("txt <file>       Open in TXT");
+    terminalOutputs.push_back("potion/pot <file>  Edit prgm");
+    terminalOutputs.push_back("brew <file>         Run prgm");
+    terminalOutputs.push_back("pot link <file> <alias> link");
+    terminalOutputs.push_back("pot unlink <alias>    unlink");
 
     termScrollIndex = terminalOutputs.size() > 14 ? terminalOutputs.size() - 14 : 0;
     newState = true;
