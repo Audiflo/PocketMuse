@@ -1,4 +1,4 @@
-# PocketMage Wrench API Reference
+# PocketMage Scripting Reference
 
 This document details the Wrench script bindings available in the PocketMage OS. Functions are grouped by their operational category.
 
