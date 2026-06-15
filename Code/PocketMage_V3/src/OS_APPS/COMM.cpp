@@ -63,8 +63,6 @@ static String displayName(const char* mac) {
 static void logToSD(const ChatMsg* m) {
   if (PM_SDAUTO().getNoSD() || !global_fs) return;
   SDActive = true;
-  pocketmage::setCpuSpeed(240);
-  delay(30);
   global_fs->mkdir("/chat");
   char path[64];
   if (chatMode == LOCAL_CHAT) {
@@ -80,7 +78,6 @@ static void logToSD(const ChatMsg* m) {
     f.printf("%u|%s|%s\n", m->timestamp, m->sender, m->content);
     f.close();
   }
-  if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
   SDActive = false;
 }
 
@@ -149,7 +146,11 @@ void COMM_INIT() {
   newState = true;
 
   comm_first_draw = true;
-  if (meshReady) return;
+  if (meshReady) {
+    message_t discard{};
+    while (message_queue_receive(&discard, 0) == ESP_OK) {}
+    return;
+  }
 
   WiFi.mode(WIFI_AP_STA);
   esp_wifi_set_ps(WIFI_PS_NONE);
@@ -165,6 +166,7 @@ void COMM_INIT() {
 
   mesh_now_set_receive_callback(meshRecvCb);
 
+  mesh_now_deinit();
   esp_err_t err = mesh_now_init();
   if (err == ESP_OK) {
     meshReady = true;
@@ -200,106 +202,101 @@ static void drainQueue() {
 // KEYBOARD / LOOP
 void processKB_COMM() {
   int nowMs = millis();
-  if (nowMs - KBBounceMillis < KB_COOLDOWN) {
-    drainQueue();
-    nowMs = millis();
-    goto oled_update;
-  }
 
-  // Let the keyboard manage FN/SHIFT naturally — no forced mode
-  {
+  if (nowMs - KBBounceMillis >= KB_COOLDOWN) {
     char ch = KB().updateKeypress();
-    if (ch == 0) { drainQueue(); nowMs = millis(); goto oled_update; }
-    KBBounceMillis = nowMs;
+    if (ch != 0) {
+      KBBounceMillis = nowMs;
 
-    switch (currentState) {
-      case PEER_LIST: {
-        int totalRooms = 1 + mesh_now_get_peer_count();
-        if (ch == 7 || ch == 29) {
-          if (selPeer > 0) { selPeer--; newState = true; }
-        } else if (ch == 6 || ch == 25 || ch == 30) {
-          if (selPeer < totalRooms - 1) { selPeer++; newState = true; }
-        } else if (ch == 13 || ch == ' ' || ch == 20) {
-          if (selPeer == 0) {
-            chatMode = LOCAL_CHAT;
-            currentState = CHAT_VIEW;
-            OLED().oledWord("Local Chat");
-          } else {
-            mesh_peer_t* peers = mesh_now_get_peers();
-            int pc = mesh_now_get_peer_count();
-            int peerIdx = selPeer - 1;
-            if (pc > 0 && peerIdx < pc) {
-              chatMode = DIRECT_CHAT;
-              memcpy(peerMAC, peers[peerIdx].peer_addr, 6);
-              macToStr(peerMAC, peerMacStr);
+      switch (currentState) {
+        case PEER_LIST: {
+          int totalRooms = 1 + mesh_now_get_peer_count();
+          if (ch == 7 || ch == 29) {
+            if (selPeer > 0) { selPeer--; newState = true; }
+          } else if (ch == 6 || ch == 25 || ch == 30) {
+            if (selPeer < totalRooms - 1) { selPeer++; newState = true; }
+          } else if (ch == 13 || ch == ' ' || ch == 20) {
+            if (selPeer == 0) {
+              chatMode = LOCAL_CHAT;
               currentState = CHAT_VIEW;
-              OLED().oledWord(displayName(peerMacStr).c_str());
+              OLED().oledWord("Local Chat");
+            } else {
+              mesh_peer_t* peers = mesh_now_get_peers();
+              int pc = mesh_now_get_peer_count();
+              int peerIdx = selPeer - 1;
+              if (pc > 0 && peerIdx < pc) {
+                chatMode = DIRECT_CHAT;
+                memcpy(peerMAC, peers[peerIdx].peer_addr, 6);
+                macToStr(peerMAC, peerMacStr);
+                currentState = CHAT_VIEW;
+                OLED().oledWord(displayName(peerMacStr).c_str());
+              }
             }
+            newState = true;
+          } else if (ch == 12 || ch == 8 || ch == 127) {
+            HOME_INIT();
           }
-          newState = true;
-        } else if (ch == 12 || ch == 8 || ch == 127) {
-          HOME_INIT();
+          break;
         }
-        break;
-      }
 
-      case CHAT_VIEW: {
-        if (ch == 13 || ch == ' ' || ch == 20) {
-          currentState = CHAT_COMPOSE;
-          inputLen = 0;
-          inputBuf[0] = '\0';
-          newState = true;
-          OLED().oledWord("Type...");
-        } else if (ch == 8 || ch == 127 || ch == 19) {
-          currentState = PEER_LIST;
-          newState = true;
-          OLED().oledWord("Chat");
-        } else if (ch == 12) {
-          HOME_INIT();
-        } else if (ch == 7 || ch == 29) {
-          if (scrollOff > 0) { scrollOff--; autoScroll = false; newState = true; }
-        } else if (ch == 6 || ch == 25 || ch == 30) {
-          int maxOff = msgCount - MAX_VISIBLE_LINES;
-          if (maxOff < 0) maxOff = 0;
-          if (scrollOff < maxOff) { scrollOff++; newState = true; }
-          autoScroll = (scrollOff >= maxOff);
+        case CHAT_VIEW: {
+          if (ch == 13 || ch == ' ' || ch == 20) {
+            currentState = CHAT_COMPOSE;
+            inputLen = 0;
+            inputBuf[0] = '\0';
+            newState = true;
+            OLED().oledWord("Type...");
+          } else if (ch == 8 || ch == 127 || ch == 19) {
+            currentState = PEER_LIST;
+            newState = true;
+            OLED().oledWord("Chat");
+          } else if (ch == 12) {
+            HOME_INIT();
+          } else if (ch == 7 || ch == 29) {
+            if (scrollOff > 0) { scrollOff--; autoScroll = false; newState = true; }
+          } else if (ch == 6 || ch == 25 || ch == 30) {
+            int maxOff = msgCount - MAX_VISIBLE_LINES;
+            if (maxOff < 0) maxOff = 0;
+            if (scrollOff < maxOff) { scrollOff++; newState = true; }
+            autoScroll = (scrollOff >= maxOff);
+          }
+          break;
         }
-        break;
-      }
 
-      case CHAT_COMPOSE: {
-        ESP_LOGD(TAG, "COMPOSE: ch=%d inputLen=%d", ch, inputLen);
-        if (ch == 13) {
-          if (inputLen > 0) {
+        case CHAT_COMPOSE: {
+          ESP_LOGD(TAG, "COMPOSE: ch=%d inputLen=%d", ch, inputLen);
+          if (ch == 13) {
+            if (inputLen > 0) {
+              inputBuf[inputLen] = '\0';
+              ESP_LOGI(TAG, "SENDING: '%s'", inputBuf);
+              esp_err_t sendRet;
+              if (chatMode == LOCAL_CHAT) sendRet = mesh_now_send_broadcast(inputBuf);
+              else sendRet = mesh_now_send_direct(peerMAC, inputBuf);
+              if (sendRet != ESP_OK) {
+                ESP_LOGE(TAG, "Send failed: %s", esp_err_to_name(sendRet));
+              }
+              addMsg(myMacStr, inputBuf, true);
+              ESP_LOGI(TAG, "addMsg done, msgCount=%d", msgCount);
+            }
+            inputLen = 0;
+            inputBuf[0] = '\0';
+            currentState = CHAT_VIEW;
+            newState = true;
+            OLED().oledWord("Chat");
+          } else if (ch == 8 || ch == 127) {
+            if (inputLen > 0) { inputLen--; inputBuf[inputLen] = '\0'; }
+          } else if (ch == 12 || ch == 19) {
+            inputLen = 0;
+            inputBuf[0] = '\0';
+            currentState = CHAT_VIEW;
+            newState = true;
+            OLED().oledWord("Chat");
+          } else if (ch >= 32 && ch <= 126 && inputLen < MAX_INPUT_LEN) {
+            inputBuf[inputLen++] = ch;
             inputBuf[inputLen] = '\0';
-            ESP_LOGI(TAG, "SENDING: '%s'", inputBuf);
-            esp_err_t sendRet;
-            if (chatMode == LOCAL_CHAT) sendRet = mesh_now_send_broadcast(inputBuf);
-            else sendRet = mesh_now_send_direct(peerMAC, inputBuf);
-            if (sendRet != ESP_OK) {
-              ESP_LOGE(TAG, "Send failed: %s", esp_err_to_name(sendRet));
-            }
-            addMsg(myMacStr, inputBuf, true);
-            ESP_LOGI(TAG, "addMsg done, msgCount=%d", msgCount);
           }
-          inputLen = 0;
-          inputBuf[0] = '\0';
-          currentState = CHAT_VIEW;
-          newState = true;
-          OLED().oledWord("Chat");
-        } else if (ch == 8 || ch == 127) {
-          if (inputLen > 0) { inputLen--; inputBuf[inputLen] = '\0'; }
-        } else if (ch == 12 || ch == 19) {
-          inputLen = 0;
-          inputBuf[0] = '\0';
-          currentState = CHAT_VIEW;
-          newState = true;
-          OLED().oledWord("Chat");
-        } else if (ch >= 32 && ch <= 126 && inputLen < MAX_INPUT_LEN) {
-          inputBuf[inputLen++] = ch;
-          inputBuf[inputLen] = '\0';
+          break;
         }
-        break;
       }
     }
   }
@@ -307,7 +304,6 @@ void processKB_COMM() {
   drainQueue();
   nowMs = millis();
 
-oled_update:
   if (nowMs - OLEDFPSMillis >= (1000 / OLED_MAX_FPS)) {
     OLEDFPSMillis = nowMs;
     if (currentState == CHAT_COMPOSE) {
