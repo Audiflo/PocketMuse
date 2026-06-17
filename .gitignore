@@ -2,3 +2,5 @@ site/
 node_modules/
 dist/
 .DS_Store
+.pio/
+.vscode/
