@@ -54,7 +54,7 @@ private:
 
     Decoder&    dec_;
     RingBuffer& rb_;
-    PlayerState state_;
+    volatile PlayerState state_;
     File        file_;
     uint8_t     read_buf_[kReadBufSize];
     char        current_path_[256];

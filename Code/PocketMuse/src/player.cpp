@@ -136,7 +136,7 @@ void Player::tick() {
     if (duration_sec_ == 0 && dec_.sampleRate() > 0) {
         int bps = dec_.bitrate();
         if (bps > 0 && file_size_ > 0) {
-            duration_sec_ = (file_size_ * 8) / (bps * 1000);
+            duration_sec_ = (file_size_ * 8) / bps;
         }
     }
 }

@@ -50,6 +50,7 @@ void browser_render();
 void nowplaying_init();
 void nowplaying_process_key(char ch);
 void nowplaying_render();
+void nowplaying_cache_art(const char* path);
 
 void playlist_process_key(char ch);
 void playlist_render();

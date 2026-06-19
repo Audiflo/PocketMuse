@@ -96,6 +96,24 @@ static uint8_t  s_artCache[(kArtSize * kArtSize) / 8];
 static char     s_artCachePath[256] = {};
 static int      s_cachedW = 0, s_cachedH = 0;
 
+void nowplaying_cache_art(const char* path) {
+    s_cachedW = 0;
+    s_cachedH = 0;
+    s_artCachePath[0] = '\0';
+
+    if (!path || !path[0]) return;
+
+    AlbumArt art;
+    if (!art.load(path)) return;
+
+    if (art.render1Bit(s_artCache, kArtSize, kArtSize, 0, 0, kArtSize)) {
+        s_cachedW = art.width();
+        s_cachedH = art.height();
+        strncpy(s_artCachePath, path, sizeof(s_artCachePath) - 1);
+        s_artCachePath[sizeof(s_artCachePath) - 1] = '\0';
+    }
+}
+
 void nowplaying_render() {
     display.fillScreen(GxEPD_WHITE);
 
@@ -125,30 +143,11 @@ void nowplaying_render() {
     }
     draw_header(hdr);
 
-    // Album art cache the decoded 1bpp bitmap so we don't JPEG-decode
-    // on every redraw (saves stack *and* CPU).
     bool artDrawn = false;
-    bool needDecode = (strcmp(g_nowPath, s_artCachePath) != 0);
-    if (!needDecode && s_cachedW > 0 && s_cachedH > 0) {
-        // Cache hit — draw without AlbumArt/JPEGDEC
+    if (s_cachedW > 0 && s_cachedH > 0) {
         display.drawBitmap(kArtX, kArtY, s_artCache,
                            s_cachedW, s_cachedH, GxEPD_BLACK);
         artDrawn = true;
-    } else if (g_nowPath[0]) {
-        // Cache miss, decode and cache
-        AlbumArt art;
-        if (art.load(g_nowPath)) {
-            if (art.render1Bit(s_artCache, kArtSize, kArtSize, 0, 0, kArtSize)) {
-                display.drawBitmap(kArtX, kArtY, s_artCache,
-                    art.width(), art.height(), GxEPD_BLACK);
-                artDrawn = true;
-                s_cachedW = art.width();
-                s_cachedH = art.height();
-                strncpy(s_artCachePath, g_nowPath, sizeof(s_artCachePath) - 1);
-                s_artCachePath[sizeof(s_artCachePath) - 1] = '\0';
-            }
-        }
-        art.clear();
     }
 
     // If no art, draw a placeholder frame

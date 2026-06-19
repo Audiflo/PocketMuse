@@ -204,11 +204,11 @@ static int artDrawCb(JPEGDRAW* pDraw) {
             // Write to E-Ink 1bpp buffer (also MSB first)
             int idx = einkY * dstRowBytes + (einkX >> 3);
             if (idx < ctx->bufH * dstRowBytes) {
-                if (bit) {
-                    ctx->einkBuf[idx] |= (1 << (7 - (einkX & 7)));
-                } else {
-                    ctx->einkBuf[idx] &= ~(1 << (7 - (einkX & 7)));
-                }
+            if (!bit) {
+                ctx->einkBuf[idx] |= (1 << (7 - (einkX & 7)));
+            } else {
+                ctx->einkBuf[idx] &= ~(1 << (7 - (einkX & 7)));
+            }
             }
         }
     }
@@ -259,11 +259,12 @@ bool AlbumArt::render1Bit(uint8_t* einkBuf, int bufW, int bufH,
     // Decode at full resolution into strips of ~128 pixels wide
     int stripMCUs = 128 / mcuCX;
     if (stripMCUs < 1) stripMCUs = 1;
-    int stripW = stripMCUs * mcuCX; // pixel width of each strip
 
-    // Dither buffer holds grayscale input for one strip row of MCUs
-    // Grayscale: stripW * mcuCY bytes; after dithering it becomes packed 1bpp
-    int ditherSize = stripW * mcuCY;
+    // ONE_BIT_DITHERED mode overrides iMaxMCUs to the full image MCU width
+    // so the dither buffer must hold the grayscale
+    // output for the entire image row, not just the strip.
+    int ditherW = ((imgW + mcuCX - 1) / mcuCX) * mcuCX;
+    int ditherSize = ditherW * mcuCY;
     uint8_t* ditherBuf = new (std::nothrow) uint8_t[ditherSize];
     if (!ditherBuf) {
         jpeg.close(); file.close();

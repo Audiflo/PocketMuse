@@ -1,6 +1,7 @@
 #include <globals.h>
 #include "muse.h"
 #include "metadata.h"
+#include "albumart.h"
 #include <cstring>
 
 const char* get_track_path(int index) {
@@ -62,6 +63,7 @@ void player_play_index(int index) {
     g_playState = PlayerState::Playing;
     g_loopMode = player.loopMode();
     g_shuffleEnabled = player.isShuffle();
+    nowplaying_cache_art(path);
     g_needsRedraw = true;
     g_appMode = MODE_NOWPLAYING;
 }
