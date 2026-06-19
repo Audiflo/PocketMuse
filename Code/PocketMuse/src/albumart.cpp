@@ -143,7 +143,7 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
 }
 
 bool AlbumArt::load(const char* mp3Path) {
-    clear();
+    if (has_art_) clear();
     if (!ensureMuseDir_()) return false;
     return extractAPIC_(mp3Path);
 }
