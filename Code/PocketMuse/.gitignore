@@ -7,3 +7,4 @@
 sdkconfig
 sdkconfig.old
 .DS_Store
+compile_commands.json

@@ -4,3 +4,6 @@
 [submodule "Code/PocketMage_V3/lib/third_party/Mesh-NOW"]
 	path = Code/PocketMage_V3/lib/third_party/Mesh-NOW
 	url = https://github.com/NellowTCS/Mesh-NOW.git
+[submodule "Code/PocketMuse/lib/third_party/libhelix-mp3"]
+	path = Code/PocketMuse/lib/third_party/libhelix-mp3
+	url = https://github.com/NellowTCS/libhelix-mp3.git
