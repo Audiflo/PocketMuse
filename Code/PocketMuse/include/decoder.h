@@ -19,7 +19,7 @@ public:
 
 private:
     static constexpr size_t kInputBufSize  = 8192;
-    static constexpr size_t kOutputSamples = 1152;
+    static constexpr size_t kOutputSamples = 2304;
 
     void compact_();
 

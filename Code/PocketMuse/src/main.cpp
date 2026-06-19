@@ -127,7 +127,7 @@ void einkHandler(void* parameter) {
 
 void setup() {
     PocketMage_INIT();
-    s_pwm.begin();
+    player.setOutput(&s_pwm);
     xTaskCreatePinnedToCore(appTask, "appTask", 32768, NULL, 2, NULL, 1);
     xTaskCreatePinnedToCore(audioTask, "audioTask", 16384, NULL, 5, NULL, 0);
     APP_INIT();

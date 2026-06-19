@@ -8,7 +8,7 @@ public:
     USBStreamOutput(RingBuffer& rb, int muxPin);
     ~USBStreamOutput();
 
-    bool begin() override;
+    bool begin(int sampleRate = 44100) override;
     bool stop() override;
     bool isRunning() const override;
 

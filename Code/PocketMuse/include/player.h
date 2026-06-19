@@ -5,6 +5,7 @@
 
 class Decoder;
 class RingBuffer;
+class AudioOutput;
 
 enum class PlayerState : uint8_t {
     Stopped,
@@ -21,6 +22,8 @@ enum class LoopMode : uint8_t {
 class Player {
 public:
     Player(Decoder& dec, RingBuffer& rb);
+
+    void setOutput(AudioOutput* output) { output_ = output; }
 
     void play(const char* path);
     void pause();
@@ -54,6 +57,7 @@ private:
 
     Decoder&    dec_;
     RingBuffer& rb_;
+    AudioOutput* output_ = nullptr;
     volatile PlayerState state_;
     File        file_;
     uint8_t     read_buf_[kReadBufSize];

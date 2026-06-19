@@ -16,7 +16,7 @@ USBStreamOutput::~USBStreamOutput() {
     stop();
 }
 
-bool USBStreamOutput::begin() {
+bool USBStreamOutput::begin(int sampleRate) {
     if (running_) return true;
     running_ = true;
 

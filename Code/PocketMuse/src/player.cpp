@@ -1,6 +1,7 @@
 #include "player.h"
 #include "decoder.h"
 #include "ringbuf.h"
+#include "output.h"
 #include <cstring>
 #include <cstdlib>
 #include <globals.h>
@@ -119,6 +120,7 @@ void Player::pause() {
     if (state_ == PlayerState::Playing) {
         state_ = PlayerState::Paused;
         paused_ = true;
+        if (output_) output_->pause();
     }
 }
 
@@ -126,6 +128,7 @@ void Player::resume() {
     if (state_ == PlayerState::Paused) {
         state_ = PlayerState::Playing;
         paused_ = false;
+        if (output_) output_->resume();
     }
 }
 
@@ -133,6 +136,7 @@ void Player::stop() {
     closeFile_();
     dec_.reset();
     rb_.reset();
+    if (output_) output_->stop();
     seek_pending_ = false;
     state_ = PlayerState::Stopped;
 }
@@ -189,6 +193,11 @@ void Player::tick() {
     do {
         ret = dec_.process();
     } while (ret > 0);
+
+    // Auto-start output at correct sample rate after first decode
+    if (output_ && !output_->isRunning() && dec_.sampleRate() > 0) {
+        output_->begin(dec_.sampleRate());
+    }
 
     // Update duration estimate after first decode
     if (duration_sec_ == 0 && dec_.sampleRate() > 0) {

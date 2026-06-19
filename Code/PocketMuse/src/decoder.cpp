@@ -3,6 +3,7 @@
 #include <mp3dec.h>
 #include <cstring>
 #include <algorithm>
+#include <Arduino.h>
 
 Decoder::Decoder(RingBuffer& rb)
     : rb_(rb)
@@ -14,6 +15,7 @@ Decoder::Decoder(RingBuffer& rb)
     , bitrate_(0)
 {
     dec_ = MP3InitDecoder();
+    Serial.printf("[decoder] init: %s\n", dec_ ? "OK" : "FAILED (out of memory?)");
 }
 
 Decoder::~Decoder() {
@@ -21,7 +23,10 @@ Decoder::~Decoder() {
 }
 
 void Decoder::compact_() {
-    if (input_pos_ > 0 && input_pos_ < input_len_) {
+    if (input_pos_ >= input_len_) {
+        input_len_ = 0;
+        input_pos_ = 0;
+    } else if (input_pos_ > 0) {
         size_t rem = input_len_ - input_pos_;
         memmove(input_buf_, input_buf_ + input_pos_, rem);
         input_len_ = rem;
@@ -43,24 +48,25 @@ size_t Decoder::input(const uint8_t* data, size_t len) {
 int Decoder::process() {
     if (!dec_) return -1;
 
-    // Need at least a sync word (2 bytes) to attempt decode
     size_t avail = input_len_ - input_pos_;
-    if (avail < 2) return 0;
+    if (avail < 2) {
+        Serial.printf("[dec] underflow: no data (len=%u pos=%u)\n", input_len_, input_pos_);
+        return 0;
+    }
 
-    // Find next sync word
     int off = MP3FindSyncWord(input_buf_ + input_pos_, avail);
     if (off < 0) {
+        Serial.printf("[dec] no sync word in %u bytes (pos=%u len=%u)\n",
+            avail, input_pos_, input_len_);
         input_pos_ = input_len_;
         return 0;
     }
     input_pos_ += off;
 
-    // Decode one frame
     const unsigned char* inp  = input_buf_ + input_pos_;
     size_t               left = input_len_ - input_pos_;
-    int outSamps = kOutputSamples;
 
-    int ret = MP3Decode(dec_, &inp, &left, output_buf_, kOutputSamples / 2);
+    int ret = MP3Decode(dec_, &inp, &left, output_buf_, 0);
 
     // Advance past whatever helix consumed
     input_pos_ = (const uint8_t*)inp - input_buf_;
@@ -82,11 +88,13 @@ int Decoder::process() {
     // Update stream info
     MP3FrameInfo info;
     MP3GetLastFrameInfo(dec_, &info);
+    Serial.printf("[dec] sr=%d ch=%d samps=%d\n", info.samprate, info.nChans, info.outputSamps);
     sample_rate_    = info.samprate;
     num_channels_   = info.nChans;
     bitrate_        = info.bitrate;
 
-    int total = ret * num_channels_;
+    int total = info.outputSamps;
+    if (total > kOutputSamples) total = kOutputSamples;
     size_t written = 0;
     for (int i = 0; i < total; i++) {
         if (rb_.write(output_buf_[i])) {
