@@ -45,10 +45,49 @@ static void appTask(void*) {
 static void audioTask(void*) {
     vTaskDelay(pdMS_TO_TICKS(100));
 
+    // Small batch buffer for draining s_ringbuf -> s_pwm. Batching avoids
+    // paying pwm_audio_write()'s per-call overhead (volume math +
+    // semaphore wait) once per single sample.
+    static constexpr size_t kBatchSamples = 256;
+    int16_t batch[kBatchSamples];
+
+    uint8_t lastVolume = 255; // sentinel outside g_volume's range, forces initial sync
+
     for (;;) {
+        // Decode more of the current file into s_ringbuf if there's room.
         if (s_ringbuf.freeSpace() > 2048) {
             player.tick();
         }
+
+        // Push g_volume changes (UI-driven, see nowplaying_process_key)
+        // through to the actual PWM output. Cheap to check every loop;
+        // only calls into pwm_audio when it actually changed.
+        uint8_t vol = g_volume;
+        if (vol != lastVolume) {
+            // g_volume is 0..255 (UI range); pwm_audio wants -16..16.
+            int8_t pwmVol = (int8_t)((int)vol * 32 / 255) - 16;
+            s_pwm.setVolume(pwmVol);
+            lastVolume = vol;
+        }
+
+        // Drain decoded samples out of the shared ring buffer and feed
+        // them to the active AudioOutput.
+        size_t count = 0;
+        while (count < kBatchSamples) {
+            int16_t sample;
+            if (!s_ringbuf.read(sample)) break;
+            batch[count++] = sample;
+        }
+
+        if (count > 0) {
+            size_t written = 0;
+            while (written < count) {
+                size_t n = s_pwm.write(batch + written, count - written);
+                if (n == 0) break; // output buffer full; drop rest of batch rather than spin
+                written += n;
+            }
+        }
+
         vTaskDelay(pdMS_TO_TICKS(1));
     }
 }
@@ -128,6 +167,7 @@ void einkHandler(void* parameter) {
 void setup() {
     PocketMage_INIT();
     player.setOutput(&s_pwm);
+    s_pwm.begin(44100);
     xTaskCreatePinnedToCore(appTask, "appTask", 32768, NULL, 2, NULL, 1);
     xTaskCreatePinnedToCore(audioTask, "audioTask", 16384, NULL, 5, NULL, 0);
     APP_INIT();

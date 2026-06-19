@@ -17,7 +17,8 @@ bool RingBuffer::read(int16_t& sample) {
     if (head_ == tail_) {
         return false;
     }
-    sample = (int16_t)((int32_t)buf_[tail_] * g_volume / 255);
+    
+    sample = buf_[tail_];
     tail_ = (tail_ + 1) & kMask;
     return true;
 }

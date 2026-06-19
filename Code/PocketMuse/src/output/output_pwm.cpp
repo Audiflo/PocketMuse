@@ -1,24 +1,14 @@
 #include "output_pwm.h"
-#include <driver/timer.h>
-#include <soc/ledc_struct.h>
-
-static RingBuffer* g_rb = nullptr;
-
-static bool IRAM_ATTR pwm_timer_cb(void* arg) {
-    int16_t sample;
-    if (g_rb && g_rb->read(sample)) {
-        uint32_t duty = (uint32_t)(sample + 32768) >> 8;
-        LEDC.channel_group[0].channel[PWMAudioOutput::kLEDCChannel].duty.duty = duty << 4;
-        LEDC.channel_group[0].channel[PWMAudioOutput::kLEDCChannel].conf0.low_speed_update = 1;
-    }
-    return false;
-}
 
 PWMAudioOutput::PWMAudioOutput(RingBuffer& rb, int pin)
-    : rb_(rb), pin_(pin), running_(false), sample_rate_(44100) {}
+    : rb_(rb), pin_(pin), running_(false), initialized_(false), sample_rate_(44100) {}
 
 PWMAudioOutput::~PWMAudioOutput() {
     stop();
+    if (initialized_) {
+        pwm_audio_deinit();
+        initialized_ = false;
+    }
 }
 
 bool PWMAudioOutput::begin(int sampleRate) {
@@ -26,43 +16,32 @@ bool PWMAudioOutput::begin(int sampleRate) {
 
     sample_rate_ = (sampleRate > 0) ? sampleRate : 44100;
 
-    ledc_timer_config_t ledc_timer = {
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .duty_resolution = kResolution,
-        .timer_num = kLEDCTimer,
-        .freq_hz = kCarrierFreq,
-        .clk_cfg = LEDC_AUTO_CLK,
-    };
-    if (ledc_timer_config(&ledc_timer) != ESP_OK) {
+    if (!initialized_) {
+        pwm_audio_config_t pac = {};
+        pac.tg_num             = TIMER_GROUP_0;
+        pac.timer_num          = TIMER_0;
+        pac.gpio_num_left      = pin_;
+        pac.gpio_num_right     = -1;          // mono: buzzer is a single pin
+        pac.ledc_channel_left  = LEDC_CHANNEL_0;
+        pac.ledc_channel_right = LEDC_CHANNEL_1; // unused (gpio_num_right == -1)
+        pac.ledc_timer_sel     = LEDC_TIMER_0;
+        pac.duty_resolution    = kResolution;
+        pac.ringbuf_len        = kRingBufLen;
+
+        if (pwm_audio_init(&pac) != ESP_OK) {
+            return false;
+        }
+        initialized_ = true;
+    }
+
+    // 16-bit signed PCM, mono, at the requested sample rate.
+    if (pwm_audio_set_param(sample_rate_, (ledc_timer_bit_t)16, 1) != ESP_OK) {
         return false;
     }
 
-    ledc_channel_config_t ledc_channel = {
-        .gpio_num = pin_,
-        .speed_mode = LEDC_LOW_SPEED_MODE,
-        .channel = kLEDCChannel,
-        .timer_sel = kLEDCTimer,
-        .duty = 0,
-    };
-    if (ledc_channel_config(&ledc_channel) != ESP_OK) {
+    if (pwm_audio_start() != ESP_OK) {
         return false;
     }
-
-    g_rb = &rb_;
-
-    timer_config_t timer_cfg = {
-        .alarm_en = TIMER_ALARM_EN,
-        .counter_en = TIMER_PAUSE,
-        .intr_type = TIMER_INTR_LEVEL,
-        .counter_dir = TIMER_COUNT_UP,
-        .auto_reload = TIMER_AUTORELOAD_EN,
-        .divider = 2,
-    };
-    timer_init(TIMER_GROUP_0, TIMER_0, &timer_cfg);
-    timer_set_alarm_value(TIMER_GROUP_0, TIMER_0, 40000000 / sample_rate_);
-    timer_enable_intr(TIMER_GROUP_0, TIMER_0);
-    timer_isr_callback_add(TIMER_GROUP_0, TIMER_0, pwm_timer_cb, NULL, 0);
-    timer_start(TIMER_GROUP_0, TIMER_0);
 
     running_ = true;
     return true;
@@ -70,11 +49,10 @@ bool PWMAudioOutput::begin(int sampleRate) {
 
 bool PWMAudioOutput::stop() {
     if (!running_) return false;
-    timer_pause(TIMER_GROUP_0, TIMER_0);
-    timer_disable_intr(TIMER_GROUP_0, TIMER_0);
-    timer_isr_callback_remove(TIMER_GROUP_0, TIMER_0);
-    ledc_stop(LEDC_LOW_SPEED_MODE, kLEDCChannel, 0);
-    g_rb = nullptr;
+    // pwm_audio_stop() pauses the timer/ISR and flushes its internal ring
+    // buffer, but deliberately leaves the PWM signal itself on the pin
+    // (reduces switching noise vs. a hard stop)
+    pwm_audio_stop();
     running_ = false;
     return true;
 }
@@ -85,29 +63,38 @@ bool PWMAudioOutput::isRunning() const {
 
 void PWMAudioOutput::pause() {
     if (!running_) return;
-    ledc_set_duty(LEDC_LOW_SPEED_MODE, kLEDCChannel, 0);
-    ledc_update_duty(LEDC_LOW_SPEED_MODE, kLEDCChannel);
-    timer_pause(TIMER_GROUP_0, TIMER_0);
+    pwm_audio_stop();
 }
 
 void PWMAudioOutput::resume() {
-    if (!running_) return;
-    timer_set_counter_value(TIMER_GROUP_0, TIMER_0, 0);
-    timer_start(TIMER_GROUP_0, TIMER_0);
+    if (!initialized_) return;
+    pwm_audio_start();
+    running_ = true;
+}
+
+void PWMAudioOutput::setVolume(int8_t volume) {
+    if (!initialized_) return;
+    pwm_audio_set_volume(volume);
 }
 
 size_t PWMAudioOutput::write(const int16_t* data, size_t samples) {
-    size_t written = 0;
-    for (size_t i = 0; i < samples; i++) {
-        if (rb_.write(data[i])) {
-            written++;
-        } else {
-            break;
-        }
-    }
-    return written;
+    if (!running_) return 0;
+
+    size_t bytesWritten = 0;
+    pwm_audio_write((uint8_t*)data, samples * sizeof(int16_t), &bytesWritten,
+                     pdMS_TO_TICKS(20));
+
+    // pwm_audio_write reports bytes written, not samples; truncated/partial
+    // writes are always sample-aligned (2 bytes) per its internal masking,
+    // so this division is exact.
+    return bytesWritten / sizeof(int16_t);
 }
 
 size_t PWMAudioOutput::availableForWrite() const {
-    return rb_.freeSpace();
+    // pwm_audio doesn't expose free-space directly; rb_ is no longer the
+    // actual audio path, so just report a generous constant. Callers in
+    // this codebase (Player::tick) only use this as a rough "is there
+    // room" check before calling write(), and pwm_audio_write() itself
+    // blocks/truncates safely if its internal buffer is full.
+    return kRingBufLen;
 }

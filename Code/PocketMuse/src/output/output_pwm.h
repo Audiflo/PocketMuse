@@ -1,14 +1,15 @@
 #pragma once
 #include "output.h"
 #include "ringbuf.h"
-#include <driver/ledc.h>
+#include "pwm_audio.h"
 
+// Thin AudioOutput adapter around Espressif's pwm_audio component (components/pwm_audio)
 class PWMAudioOutput : public AudioOutput {
 public:
-    static constexpr ledc_timer_t kLEDCTimer = LEDC_TIMER_0;
-    static constexpr ledc_channel_t kLEDCChannel = LEDC_CHANNEL_0;
-    static constexpr int kCarrierFreq = 250000;
+    // 8-bit duty resolution at 44.1kHz works well with pwm_audio's
+    // built-in timer-group ISR
     static constexpr ledc_timer_bit_t kResolution = LEDC_TIMER_8_BIT;
+    static constexpr size_t kRingBufLen = 1024 * 8;
 
     PWMAudioOutput(RingBuffer& rb, int pin);
     ~PWMAudioOutput();
@@ -24,9 +25,14 @@ public:
 
     int sampleRate() const { return sample_rate_; }
 
+    // Volume in pwm_audio's native range: -16 (mute) .. 0 (unity) .. 16 (2x).
+    // Call after begin().
+    void setVolume(int8_t volume);
+
 private:
-    RingBuffer& rb_;
+    RingBuffer& rb_;   // unused for audio data now; kept for interface compat
     int pin_;
     bool running_;
+    bool initialized_;
     int sample_rate_;
 };
