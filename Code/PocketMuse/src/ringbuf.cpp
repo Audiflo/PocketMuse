@@ -1,5 +1,5 @@
 #include "ringbuf.h"
-#include <esp_attr.h>
+#include "muse.h"
 
 RingBuffer::RingBuffer() : head_(0), tail_(0) {}
 
@@ -17,7 +17,7 @@ bool RingBuffer::read(int16_t& sample) {
     if (head_ == tail_) {
         return false;
     }
-    sample = buf_[tail_];
+    sample = (int16_t)((int32_t)buf_[tail_] * g_volume / 255);
     tail_ = (tail_ + 1) & kMask;
     return true;
 }

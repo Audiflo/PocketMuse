@@ -250,11 +250,12 @@ bool PlaylistManager::getEntry(int index, char* pathBuf, size_t bufSize) {
 bool PlaylistManager::toggleFavorite(const char* path) {
     if (!global_fs) return false;
 
-    if (isFavorite(path)) {
-        if (!removeLine_(kFavFile, path)) return false;
+    bool wasFav = isFavorite(path);
+    if (wasFav) {
+        if (!removeLine_(kFavFile, path)) return true;   // unchanged, still fav
     } else {
         File f = global_fs->open(kFavFile, "a");
-        if (!f) return false;
+        if (!f) return false;  // unchanged, still not fav
         f.println(path);
         f.close();
     }
@@ -263,7 +264,7 @@ bool PlaylistManager::toggleFavorite(const char* path) {
         cursor_.unload();
         cursor_.load(kFavFile, true);
     }
-    return true;
+    return !wasFav;
 }
 
 bool PlaylistManager::isFavorite(const char* path) {

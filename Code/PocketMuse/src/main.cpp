@@ -46,10 +46,8 @@ static void audioTask(void*) {
     vTaskDelay(pdMS_TO_TICKS(100));
 
     for (;;) {
-        if (player.state() == PlayerState::Playing) {
-            if (s_ringbuf.freeSpace() > 2048) {
-                player.tick();
-            }
+        if (s_ringbuf.freeSpace() > 2048) {
+            player.tick();
         }
         vTaskDelay(pdMS_TO_TICKS(1));
     }

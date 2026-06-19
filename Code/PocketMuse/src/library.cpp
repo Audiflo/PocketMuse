@@ -50,6 +50,10 @@ void Library::scanDir_(const char* dirname, int depth) {
             }
         } else {
             String name = entry.name();
+            if (name.startsWith("._")) {
+                entry = dir.openNextFile();
+                continue;
+            }
             if (name.endsWith(".mp3") || name.endsWith(".MP3")) {
                 String full = String(dirname) + "/" + name;
                 tracks_.push_back(full);

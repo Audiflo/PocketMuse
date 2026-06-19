@@ -93,7 +93,7 @@ void ui_update_oled() {
     u8g2.setCursor(152, 20);
     u8g2.print(timeStr);
 
-    // Bottom line: source + count
+    // Bottom line: source + count + volume
     u8g2.setCursor(0, 30);
     switch (g_playlistMgr.source()) {
         case PlaySource::Library:   u8g2.print("Library"); break;
@@ -101,6 +101,11 @@ void ui_update_oled() {
         case PlaySource::Playlist:  u8g2.print("Playlist"); break;
     }
     u8g2.printf(" [%d]", g_trackCount);
+
+    // Volume bar on right side
+    int volPct = (g_volume * 100 + 127) / 255;
+    u8g2.setCursor(152, 30);
+    u8g2.printf("V:%3d%%", volPct);
 
     u8g2.sendBuffer();
 }

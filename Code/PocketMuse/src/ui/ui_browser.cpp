@@ -87,10 +87,9 @@ void browser_process_key(char ch) {
         break;
     case 'f': case 'F':
         if (n > 0 && g_selIndex < n) {
-            const char* path = get_track_path(g_selIndex);
-            if (path && path[0]) {
-                g_playlistMgr.toggleFavorite(path);
-                g_isFavorite = g_playlistMgr.isFavorite(path);
+            char path[256];
+            if (get_track_path(g_selIndex, path, sizeof(path)) && path[0]) {
+                g_isFavorite = g_playlistMgr.toggleFavorite(path);
             }
         }
         g_needsRedraw = true;
@@ -175,8 +174,9 @@ void browser_render() {
         display.setFont(&Font5x7Fixed);
         display.setCursor(8, y);
 
-        const char* path = get_track_path(i);
+        char path[256];
         char label[64];
+        get_track_path(i, path, sizeof(path));
         get_display_name(path, label, sizeof(label));
 
         uint16_t maxChars = 54;

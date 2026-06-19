@@ -33,11 +33,12 @@ extern uint32_t g_nowDuration;
 extern float    g_nowProgress;
 extern int      g_nowTrackIndex;
 extern bool     g_isFavorite;
-extern PlayerState g_playState;
+extern volatile PlayerState g_playState;
 
 // Playback
 extern LoopMode g_loopMode;
 extern bool     g_shuffleEnabled;
+extern volatile uint8_t g_volume;
 
 // Player instance (defined in main.cpp)
 extern Player player;
@@ -71,4 +72,4 @@ void player_next_track();
 void player_prev_track();
 void player_cycle_source();
 void player_toggle_favorite();
-const char* get_track_path(int index);
+bool get_track_path(int index, char* buf, size_t bufSize);

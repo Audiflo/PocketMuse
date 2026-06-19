@@ -4,29 +4,29 @@
 #include "albumart.h"
 #include <cstring>
 
-const char* get_track_path(int index) {
-    static char buf[256];
+bool get_track_path(int index, char* buf, size_t bufSize) {
+    if (!buf || bufSize == 0) return false;
     buf[0] = '\0';
 
     switch (g_playlistMgr.source()) {
     case PlaySource::Library:
         if (index >= 0 && index < g_library.count()) {
             const String& p = g_library.path(index);
-            strncpy(buf, p.c_str(), sizeof(buf) - 1);
-            buf[sizeof(buf) - 1] = '\0';
+            strncpy(buf, p.c_str(), bufSize - 1);
+            buf[bufSize - 1] = '\0';
         }
         break;
     case PlaySource::Favorites:
     case PlaySource::Playlist:
-        g_playlistMgr.getEntry(index, buf, sizeof(buf));
+        g_playlistMgr.getEntry(index, buf, bufSize);
         break;
     }
-    return buf;
+    return buf[0] != '\0';
 }
 
 void player_play_index(int index) {
-    const char* path = get_track_path(index);
-    if (!path || !path[0]) return;
+    char path[256];
+    if (!get_track_path(index, path, sizeof(path)) || !path[0]) return;
 
     player.stop();
     player.play(path);
@@ -145,7 +145,6 @@ void player_cycle_source() {
 
 void player_toggle_favorite() {
     if (g_nowPath[0]) {
-        g_playlistMgr.toggleFavorite(g_nowPath);
-        g_isFavorite = g_playlistMgr.isFavorite(g_nowPath);
+        g_isFavorite = g_playlistMgr.toggleFavorite(g_nowPath);
     }
 }

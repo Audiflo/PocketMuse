@@ -17,7 +17,8 @@ uint32_t g_nowDuration     = 0;
 float    g_nowProgress     = 0.0f;
 int      g_nowTrackIndex   = -1;
 bool     g_isFavorite      = false;
-PlayerState g_playState    = PlayerState::Stopped;
+volatile PlayerState g_playState = PlayerState::Stopped;
 
 LoopMode g_loopMode        = LoopMode::None;
 bool     g_shuffleEnabled  = false;
+volatile uint8_t g_volume  = 200;

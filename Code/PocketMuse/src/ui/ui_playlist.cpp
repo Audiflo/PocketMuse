@@ -129,8 +129,9 @@ void playlist_render() {
         display.print(line);
 
         // Track name
-        const char* path = get_track_path(i);
+        char path[256];
         char label[56];
+        get_track_path(i, path, sizeof(path));
         get_display_name(path, label, sizeof(label));
 
         if ((int)strlen(label) > 46) {

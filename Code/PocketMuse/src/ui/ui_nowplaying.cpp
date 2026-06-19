@@ -45,9 +45,15 @@ void nowplaying_process_key(char ch) {
         if (n > 0) player_next_track();
         g_needsRedraw = true;
         break;
-    case 24: // UP - volume up (placeholder)
+    case 24: // UP - volume up
+        if (g_volume < 245) g_volume += 10;
+        else g_volume = 255;
+        g_needsRedraw = true;
         break;
-    case 25: // DOWN - volume down (placeholder)
+    case 25: // DOWN - volume down
+        if (g_volume > 10) g_volume -= 10;
+        else g_volume = 0;
+        g_needsRedraw = true;
         break;
     case 'b': case 'B':
         g_appMode = MODE_BROWSER;
@@ -61,8 +67,7 @@ void nowplaying_process_key(char ch) {
         break;
     case 'f': case 'F': {
         if (g_nowPath[0]) {
-            g_playlistMgr.toggleFavorite(g_nowPath);
-            g_isFavorite = g_playlistMgr.isFavorite(g_nowPath);
+            g_isFavorite = g_playlistMgr.toggleFavorite(g_nowPath);
         }
         g_needsRedraw = true;
         break;
@@ -204,7 +209,14 @@ void nowplaying_render() {
     if (g_loopMode != LoopMode::None) col += 35;
 
     display.setCursor(col, statusY);
-    if (g_shuffleEnabled) display.print("Sf");
+    if (g_shuffleEnabled) {
+        display.print("Sf");
+        col += 30;
+    }
+
+    // Volume
+    display.setCursor(col, statusY);
+    display.printf("V:%d", (g_volume * 100 + 127) / 255);
 
     // Play/pause status
     int playStatusY = statusY + 14;

@@ -63,6 +63,7 @@ private:
 
     bool     seek_pending_;
     uint32_t seek_pos_;
+    volatile bool paused_;
 
     LoopMode loop_mode_;
     bool     shuffle_;
