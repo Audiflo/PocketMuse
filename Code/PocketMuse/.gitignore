@@ -1,0 +1,9 @@
+.pio/
+.pioenvs/
+.piolibdeps/
+*.o
+*.a
+*.bin
+sdkconfig
+sdkconfig.old
+.DS_Store
