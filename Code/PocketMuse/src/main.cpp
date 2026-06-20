@@ -88,7 +88,7 @@ static void audioTask(void*) {
             }
         }
 
-        if (s_ringbuf.freeSpace() > 2048) {
+        if (s_ringbuf.available() < 2048) {
             player.tick();
         }
 
