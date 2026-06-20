@@ -1,26 +1,119 @@
 #include <globals.h>
-#include "ringbuf.h"
-#include "decoder.h"
-#include "player.h"
+#include "AudioTools.h"
+#include "AudioTools/CoreAudio/AudioPlayer.h"
+#include "AudioTools/CoreAudio/AudioPWM.h"
+#include "AudioTools/AudioCodecs/CodecHelix.h"
+#include "AudioTools/Disk/AudioSource.h"
 #include "muse.h"
-#include "output/output_pwm.h"
-#include "output/output_usb.h"
-
-extern volatile uint32_t g_isr_count;
 
 #if OTA_APP
 
-static RingBuffer s_ringbuf;
-static Decoder s_decoder(s_ringbuf);
-Player player(s_decoder, s_ringbuf);
-static PWMAudioOutput s_pwm(s_ringbuf, BZ_PIN);
+using namespace audio_tools;
 
+// Audio pipeline components (global so callbacks can reach them)
+static AudioSourceCallback    s_source;       // callbacks open files from SD
+static DecoderHelix           s_decoder;      // MP3/AAC/WAV auto-detect
+static PWMAudioOutput         s_pwmOut;       // pull-model ISR -> ledc -> GPIO 17
+AudioPlayer                   s_player(s_source, s_pwmOut, s_decoder);
+
+// Currently-open audio file and its size (updated by callbacks)
+static File s_audioFile;
+static size_t s_fileSize = 0;
+
+// AudioSourceCallback: opens files via global_fs
+static Stream* onSelectStream(int index) {
+    if (s_audioFile) s_audioFile.close();
+
+    if (index == -1) {
+        // Called from AudioPlayer::setPath(path) -> source.selectStream(path)
+        const char* path = s_source.getPath();
+        if (!path || !path[0]) return nullptr;
+        s_audioFile = global_fs->open(path, "r");
+    } else {
+        // Direct index (not used in normal flow, but provide for completeness)
+        char path[256];
+        if (g_playlistMgr.source() == PlaySource::Library) {
+            if (index < 0 || index >= g_library.count()) return nullptr;
+            const String& p = g_library.path(index);
+            strncpy(path, p.c_str(), sizeof(path) - 1);
+            path[sizeof(path) - 1] = '\0';
+        } else {
+            if (!g_playlistMgr.getEntry(index, path, sizeof(path))) return nullptr;
+        }
+        s_audioFile = global_fs->open(path, "r");
+    }
+
+    if (!s_audioFile) return nullptr;
+    s_fileSize = s_audioFile.size();
+    return &s_audioFile;
+}
+
+// Called by AudioPlayer::next() on EOF: returns the next stream based on loop mode.
+static Stream* onNextStream(int offset) {
+    if (offset <= 0) return nullptr;
+
+    if (g_loopMode == LoopMode::One) {
+        const char* path = s_source.getPath();
+        if (!path || !path[0]) return nullptr;
+        if (s_audioFile) s_audioFile.close();
+        s_audioFile = global_fs->open(path, "r");
+        if (s_audioFile) {
+            s_fileSize = s_audioFile.size();
+            return &s_audioFile;
+        }
+        return nullptr;
+    }
+
+    if (g_loopMode == LoopMode::All) {
+        int next = (g_nowTrackIndex + 1) % g_trackCount;
+        char path[256];
+        if (!get_track_path(next, path, sizeof(path))) return nullptr;
+        if (s_audioFile) s_audioFile.close();
+        s_audioFile = global_fs->open(path, "r");
+        if (s_audioFile) {
+            s_fileSize = s_audioFile.size();
+            g_nowTrackIndex = next;
+            strncpy(g_nowPath, path, sizeof(g_nowPath) - 1);
+            g_nowPath[sizeof(g_nowPath) - 1] = '\0';
+            g_nowTitle[0] = '\0';
+            g_nowDuration = compute_duration(path);
+            g_nowProgress = 0.0f;
+            g_needsRedraw = true;
+            return &s_audioFile;
+        }
+        return nullptr;
+    }
+
+    return nullptr;
+}
+
+// Playback control helpers (called from ui_*.cpp)
+void music_stop() {
+    s_player.setActive(false);
+}
+
+void music_play(const char* path) {
+    s_player.setAutoFade(true);
+    s_player.setPath(path);
+    s_player.play();
+}
+
+void music_pause() {
+    s_player.setAutoFade(false);
+    s_player.setActive(false);
+}
+
+void music_resume() {
+    s_player.play();
+}
+
+// appTask: UI, progress, volume
 static void appTask(void*) {
     vTaskDelay(pdMS_TO_TICKS(200));
     for (;;) {
         processKB_APP();
 
-        // Touch slider: volume control in all modes (rate-limited)
+        // Touch slider: volume
         {
             static unsigned long lastTouchMs = 0;
             unsigned long now = millis();
@@ -31,30 +124,28 @@ static void appTask(void*) {
             }
             if (scroll > 0 && g_volume < 245) {
                 g_volume += 10;
+                s_player.setVolume(g_volume / 255.0f);
                 g_needsRedraw = true;
             } else if (scroll < 0 && g_volume > 10) {
                 g_volume -= 10;
+                s_player.setVolume(g_volume / 255.0f);
                 g_needsRedraw = true;
             }
         }
 
-        // Update progress from player
-        if (player.state() == PlayerState::Playing) {
-            g_nowProgress = player.progress();
+        // Progress from file position
+        if (s_audioFile && s_fileSize > 0) {
+            g_nowProgress = (float)s_audioFile.position() / s_fileSize;
         }
 
-        // Detect track end and auto-advance
-        static PlayerState prevState = PlayerState::Stopped;
-        PlayerState curState = player.state();
-        if (prevState == PlayerState::Playing && curState == PlayerState::Stopped) {
-            if (g_nowTrackIndex >= 0 && g_trackCount > 0) {
-                if (g_loopMode == LoopMode::All || g_nowTrackIndex + 1 < g_trackCount) {
-                    player_next_track();
-                }
-            }
+        // Update global play state
+        if (s_player.isActive()) {
+            g_playState = PlayerState::Playing;
+        } else if (g_nowTrackIndex >= 0 && g_nowPath[0]) {
+            g_playState = PlayerState::Paused;
+        } else {
+            g_playState = PlayerState::Stopped;
         }
-        prevState = curState;
-        g_playState = curState;
 
         ui_update_oled();
         vTaskDelay(pdMS_TO_TICKS(50));
@@ -62,91 +153,40 @@ static void appTask(void*) {
     }
 }
 
-static void audioTask(void*) {
-    vTaskDelay(pdMS_TO_TICKS(100));
-
-    static constexpr size_t kBatchSamples = 256;
-    int16_t batch[kBatchSamples];
-
-    uint8_t lastVolume = 255;
-
-    uint32_t last_isr = 0;
-    unsigned long lastDebug = 0;
-
-    for (;;) {
-        // Debug: print ISR rate and decoder stats every ~5 seconds
-        {
-            unsigned long now = millis();
-            static unsigned long lastLog = 0;
-            if (now - lastLog >= 5000) {
-                lastLog = now;
-                uint32_t cur = g_isr_count;
-                uint32_t delta = cur - last_isr;
-                last_isr = cur;
-                Serial.printf("[DBG] ISR=%u delta/5s=%u rate=%u Hz  freeSpace=%zu\n",
-                    cur, delta, delta / 5, s_ringbuf.freeSpace());
-            }
-        }
-
-        if (s_ringbuf.available() < 2048) {
-            player.tick();
-        }
-
-        // Drain decoded samples out of the shared ring buffer
-        size_t count = 0;
-        while (count < kBatchSamples) {
-            int16_t sample;
-            if (!s_ringbuf.read(sample)) break;
-            batch[count++] = sample;
-        }
-
-
-        // Push g_volume changes through to PWM
-        uint8_t vol = g_volume;
-        if (vol != lastVolume) {
-            int8_t pwmVol = (int8_t)((int)vol * 32 / 255) - 16;
-            s_pwm.setVolume(pwmVol);
-            lastVolume = vol;
-        }
-
-        if (count > 0) {
-            static bool bdumped = false;
-            if (!bdumped) {
-                bdumped = true;
-                Serial.printf("[BUF] head=%zu tail=%zu avail=%zu free=%zu  count=%zu\n",
-                    s_ringbuf.debugHead(), s_ringbuf.debugTail(),
-                    s_ringbuf.available(), s_ringbuf.freeSpace(), count);
-                int n = count < 48 ? count : 48;
-                Serial.printf("[BUF] %d samples -> pwm:", n);
-                for (int i = 0; i < n; i++) Serial.printf(" %d", batch[i]);
-                Serial.println();
-            }
-
-            size_t written = 0;
-            while (written < count) {
-                size_t n = s_pwm.write(batch + written, count - written);
-                if (n == 0) break;
-                written += n;
-            }
-            if (written < (size_t)count) {
-                static bool warned = false;
-                if (!warned) {
-                    warned = true;
-                    Serial.printf("[BUF] UNDERFLOW: wrote %zu / %zu samples\n", written, (size_t)count);
-                }
-            }
-        }
-
-        vTaskDelay(pdMS_TO_TICKS(1));
-    }
-}
-
+// Application entry points (called from PocketMage framework)
 void APP_INIT() {
-    // Restore saved volume
+    // Restore volume
     prefs.begin("PocketMuse", true);
     g_volume = prefs.getUChar("volume", 200);
     prefs.end();
 
+    // Configure PWMAudioOutput
+    // Match the expected audio format (most MP3s are 44100 Hz stereo)
+    // so the decoder notification chain doesn't need to reconfigure mid-stream.
+    auto cfg = s_pwmOut.defaultConfig();
+    cfg.start_pin = BZ_PIN;
+    cfg.channels = 2;
+    cfg.sample_rate = 44100;
+    cfg.bits_per_sample = 16;
+    cfg.buffer_size = 1024;
+    cfg.buffers = 4;
+    s_pwmOut.begin(cfg);
+
+    // Set up AudioSourceCallback
+    s_source.setCallbackSelectStream(onSelectStream);
+
+    // Initialize the pipeline (setupFade, volume_out.begin, etc.)
+    // without selecting a stream or activating playback.
+    s_player.begin(-1, false);
+
+    // Enable auto-next for gapless track advancement
+    s_player.setAutoNext(true);
+    s_source.setCallbackNextStream(onNextStream);
+
+    // Set volume
+    s_player.setVolume(g_volume / 255.0f);
+
+    // Scan library
     if (global_fs) {
         g_library.scan();
         g_playlistMgr.begin();
@@ -168,9 +208,7 @@ void processKB_APP() {
         return;
     }
     if (ch == 12 || ch == 27 || ch == 65) {
-        if (player.state() != PlayerState::Stopped) {
-            player.stop();
-        }
+        music_stop();
         prefs.begin("PocketMuse", false);
         prefs.putUChar("volume", g_volume);
         prefs.end();
@@ -223,15 +261,12 @@ void einkHandler(void* parameter) {
 
 void setup() {
     PocketMage_INIT();
-    player.setOutput(&s_pwm);
-    s_pwm.begin(44100);
     xTaskCreatePinnedToCore(appTask, "appTask", 32768, NULL, 2, NULL, 1);
-    xTaskCreatePinnedToCore(audioTask, "audioTask", 32768, NULL, 5, NULL, 0);
     APP_INIT();
 }
 
 void loop() {
-    vTaskDelay(pdMS_TO_TICKS(100));
+    s_player.copy();
 }
 
 #endif

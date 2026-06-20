@@ -1,9 +1,22 @@
 #pragma once
 #include <Arduino.h>
 #include <stdint.h>
-#include "player.h"
 #include "library.h"
 #include "playlist.h"
+
+// Player state
+enum class PlayerState : uint8_t {
+    Stopped,
+    Playing,
+    Paused,
+};
+
+// Loop mode
+enum class LoopMode : uint8_t {
+    None,
+    One,
+    All,
+};
 
 // App modes
 enum AppMode : uint8_t {
@@ -40,9 +53,6 @@ extern LoopMode g_loopMode;
 extern bool     g_shuffleEnabled;
 extern volatile uint8_t g_volume;
 
-// Player instance (defined in main.cpp)
-extern Player player;
-
 // UI prototypes
 void browser_init();
 void browser_process_key(char ch);
@@ -73,3 +83,10 @@ void player_prev_track();
 void player_cycle_source();
 void player_toggle_favorite();
 bool get_track_path(int index, char* buf, size_t bufSize);
+
+// Low-level playback control
+void music_stop();
+void music_play(const char* path);
+void music_pause();
+void music_resume();
+uint32_t compute_duration(const char* path);

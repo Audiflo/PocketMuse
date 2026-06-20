@@ -25,10 +25,10 @@ void nowplaying_process_key(char ch) {
     switch (ch) {
     case 32: case 13: // Space or Enter
         if (g_playState == PlayerState::Playing) {
-            player.pause();
+            music_pause();
             g_playState = PlayerState::Paused;
         } else if (g_playState == PlayerState::Paused) {
-            player.resume();
+            music_resume();
             g_playState = PlayerState::Playing;
         } else {
             if (g_nowTrackIndex >= 0 && g_nowTrackIndex < n) {
@@ -73,19 +73,15 @@ void nowplaying_process_key(char ch) {
         break;
     }
     case 's': case 'S':
-        player.toggleShuffle();
-        g_shuffleEnabled = player.isShuffle();
+        g_shuffleEnabled = !g_shuffleEnabled;
         g_needsRedraw = true;
         break;
     case 'l': case 'L': {
-        LoopMode m = player.loopMode();
-        switch (m) {
-            case LoopMode::None: m = LoopMode::One; break;
-            case LoopMode::One:  m = LoopMode::All; break;
-            case LoopMode::All:  m = LoopMode::None; break;
+        switch (g_loopMode) {
+            case LoopMode::None: g_loopMode = LoopMode::One; break;
+            case LoopMode::One:  g_loopMode = LoopMode::All; break;
+            case LoopMode::All:  g_loopMode = LoopMode::None; break;
         }
-        player.setLoopMode(m);
-        g_loopMode = m;
         g_needsRedraw = true;
         break;
     }
