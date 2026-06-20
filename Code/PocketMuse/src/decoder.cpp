@@ -1,26 +1,24 @@
 #include "decoder.h"
 #include "ringbuf.h"
-#include <mp3dec.h>
+#define MINIMP3_IMPLEMENTATION
+#include "minimp3.h"
 #include <cstring>
 #include <algorithm>
 #include <Arduino.h>
 
 Decoder::Decoder(RingBuffer& rb)
     : rb_(rb)
-    , dec_(nullptr)
     , input_len_(0)
     , input_pos_(0)
     , sample_rate_(0)
     , num_channels_(0)
     , bitrate_(0)
 {
-    dec_ = MP3InitDecoder();
-    Serial.printf("[decoder] init: %s\n", dec_ ? "OK" : "FAILED (out of memory?)");
+    mp3dec_init(&dec_);
+    Serial.printf("[decoder] init: OK (minimp3)\n");
 }
 
-Decoder::~Decoder() {
-    if (dec_) MP3FreeDecoder(dec_);
-}
+Decoder::~Decoder() {}
 
 void Decoder::compact_() {
     if (input_pos_ >= input_len_) {
@@ -46,69 +44,59 @@ size_t Decoder::input(const uint8_t* data, size_t len) {
 }
 
 int Decoder::process() {
-    if (!dec_) return -1;
+    mp3dec_frame_info_t info;
+    int samples = mp3dec_decode_frame(&dec_, input_buf_ + input_pos_, input_len_ - input_pos_, output_buf_, &info);
 
-    size_t avail = input_len_ - input_pos_;
-    if (avail < 2) {
-        Serial.printf("[dec] underflow: no data (len=%u pos=%u)\n", input_len_, input_pos_);
-        return 0;
+    input_pos_ += info.frame_bytes;
+
+    if (samples <= 0) {
+        return info.frame_bytes > 0 ? 0 : 0;
     }
 
-    int off = MP3FindSyncWord(input_buf_ + input_pos_, avail);
-    if (off < 0) {
-        Serial.printf("[dec] no sync word in %u bytes (pos=%u len=%u)\n",
-            avail, input_pos_, input_len_);
-        input_pos_ = input_len_;
-        return 0;
-    }
-    input_pos_ += off;
+    sample_rate_    = info.hz;
+    num_channels_   = info.channels;
+    bitrate_        = info.bitrate_kbps;
 
-    const unsigned char* inp  = input_buf_ + input_pos_;
-    size_t               left = input_len_ - input_pos_;
-
-    int ret = MP3Decode(dec_, &inp, &left, output_buf_, 0);
-
-    // Advance past whatever helix consumed
-    input_pos_ = (const uint8_t*)inp - input_buf_;
-
-    if (ret < 0) {
-        if (ret == ERR_MP3_INDATA_UNDERFLOW ||
-            ret == ERR_MP3_MAINDATA_UNDERFLOW) {
-            return 0;
-        }
-        // Corrupt frame, skip one frame's worth (~2KB worst case)
-        if (input_pos_ + 2048 <= input_len_) {
-            input_pos_ += 2048;
-        } else {
-            input_pos_ = input_len_;
-        }
-        return ret;
-    }
-
-    // Update stream info
-    MP3FrameInfo info;
-    MP3GetLastFrameInfo(dec_, &info);
-    Serial.printf("[dec] sr=%d ch=%d samps=%d\n", info.samprate, info.nChans, info.outputSamps);
-    sample_rate_    = info.samprate;
-    num_channels_   = info.nChans;
-    bitrate_        = info.bitrate;
-
-    int total = info.outputSamps;
+    int total = samples;
     if (total > kOutputSamples) total = kOutputSamples;
+
+    static int framedump = 0;
+    if (framedump < 5 && total > 0) {
+        int nsamp = (info.channels == 2) ? total * 2 : total;
+        int nshow = nsamp < 48 ? nsamp : 48;
+        Serial.printf("[DEC#%d] %d ch total=%d pairs=%d (sr=%d):", framedump, info.channels, nsamp, (info.channels == 2) ? total : total, info.hz);
+        for (int i = 0; i < nshow; i++) Serial.printf(" %d", output_buf_[i]);
+        Serial.println();
+        framedump++;
+    }
+
     size_t written = 0;
-    for (int i = 0; i < total; i++) {
-        if (rb_.write(output_buf_[i])) {
-            written++;
-        } else {
-            break;
+    if (info.channels == 2) {
+        // minimp3 returns samples-per-channel. For stereo this means
+        // output_buf_ has total*2 interleaved L,R pairs. Downmix to mono.
+        int pairs = total;
+        for (int i = 0; i < pairs; i++) {
+            int32_t mixed = ((int32_t)output_buf_[i * 2] + (int32_t)output_buf_[i * 2 + 1]) / 2;
+            if (rb_.write((int16_t)mixed)) {
+                written++;
+            } else {
+                break;
+            }
+        }
+    } else {
+        for (int i = 0; i < total; i++) {
+            if (rb_.write(output_buf_[i])) {
+                written++;
+            } else {
+                break;
+            }
         }
     }
     return written;
 }
 
 void Decoder::reset() {
-    if (dec_) MP3FreeDecoder(dec_);
-    dec_ = MP3InitDecoder();
+    mp3dec_init(&dec_);
     input_len_ = 0;
     input_pos_ = 0;
     sample_rate_  = 0;

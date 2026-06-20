@@ -14,6 +14,8 @@ public:
     size_t available() const;
     size_t freeSpace() const;
     void reset();
+    size_t debugHead() const { return head_; }
+    size_t debugTail() const { return tail_; }
 
 private:
     int16_t buf_[kSize];

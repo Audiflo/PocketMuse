@@ -6,6 +6,8 @@
 #include "output/output_pwm.h"
 #include "output/output_usb.h"
 
+extern volatile uint32_t g_isr_count;
+
 #if OTA_APP
 
 static RingBuffer s_ringbuf;
@@ -17,6 +19,24 @@ static void appTask(void*) {
     vTaskDelay(pdMS_TO_TICKS(200));
     for (;;) {
         processKB_APP();
+
+        // Touch slider: volume control in all modes (rate-limited)
+        {
+            static unsigned long lastTouchMs = 0;
+            unsigned long now = millis();
+            int scroll = 0;
+            if (now - lastTouchMs >= 200) {
+                lastTouchMs = now;
+                scroll = TOUCH().getScrollVector();
+            }
+            if (scroll > 0 && g_volume < 245) {
+                g_volume += 10;
+                g_needsRedraw = true;
+            } else if (scroll < 0 && g_volume > 10) {
+                g_volume -= 10;
+                g_needsRedraw = true;
+            }
+        }
 
         // Update progress from player
         if (player.state() == PlayerState::Playing) {
@@ -45,33 +65,34 @@ static void appTask(void*) {
 static void audioTask(void*) {
     vTaskDelay(pdMS_TO_TICKS(100));
 
-    // Small batch buffer for draining s_ringbuf -> s_pwm. Batching avoids
-    // paying pwm_audio_write()'s per-call overhead (volume math +
-    // semaphore wait) once per single sample.
     static constexpr size_t kBatchSamples = 256;
     int16_t batch[kBatchSamples];
 
-    uint8_t lastVolume = 255; // sentinel outside g_volume's range, forces initial sync
+    uint8_t lastVolume = 255;
+
+    uint32_t last_isr = 0;
+    unsigned long lastDebug = 0;
 
     for (;;) {
-        // Decode more of the current file into s_ringbuf if there's room.
+        // Debug: print ISR rate and decoder stats every ~5 seconds
+        {
+            unsigned long now = millis();
+            static unsigned long lastLog = 0;
+            if (now - lastLog >= 5000) {
+                lastLog = now;
+                uint32_t cur = g_isr_count;
+                uint32_t delta = cur - last_isr;
+                last_isr = cur;
+                Serial.printf("[DBG] ISR=%u delta/5s=%u rate=%u Hz  freeSpace=%zu\n",
+                    cur, delta, delta / 5, s_ringbuf.freeSpace());
+            }
+        }
+
         if (s_ringbuf.freeSpace() > 2048) {
             player.tick();
         }
 
-        // Push g_volume changes (UI-driven, see nowplaying_process_key)
-        // through to the actual PWM output. Cheap to check every loop;
-        // only calls into pwm_audio when it actually changed.
-        uint8_t vol = g_volume;
-        if (vol != lastVolume) {
-            // g_volume is 0..255 (UI range); pwm_audio wants -16..16.
-            int8_t pwmVol = (int8_t)((int)vol * 32 / 255) - 16;
-            s_pwm.setVolume(pwmVol);
-            lastVolume = vol;
-        }
-
-        // Drain decoded samples out of the shared ring buffer and feed
-        // them to the active AudioOutput.
+        // Drain decoded samples out of the shared ring buffer
         size_t count = 0;
         while (count < kBatchSamples) {
             int16_t sample;
@@ -79,12 +100,40 @@ static void audioTask(void*) {
             batch[count++] = sample;
         }
 
+
+        // Push g_volume changes through to PWM
+        uint8_t vol = g_volume;
+        if (vol != lastVolume) {
+            int8_t pwmVol = (int8_t)((int)vol * 32 / 255) - 16;
+            s_pwm.setVolume(pwmVol);
+            lastVolume = vol;
+        }
+
         if (count > 0) {
+            static bool bdumped = false;
+            if (!bdumped) {
+                bdumped = true;
+                Serial.printf("[BUF] head=%zu tail=%zu avail=%zu free=%zu  count=%zu\n",
+                    s_ringbuf.debugHead(), s_ringbuf.debugTail(),
+                    s_ringbuf.available(), s_ringbuf.freeSpace(), count);
+                int n = count < 48 ? count : 48;
+                Serial.printf("[BUF] %d samples -> pwm:", n);
+                for (int i = 0; i < n; i++) Serial.printf(" %d", batch[i]);
+                Serial.println();
+            }
+
             size_t written = 0;
             while (written < count) {
                 size_t n = s_pwm.write(batch + written, count - written);
-                if (n == 0) break; // output buffer full; drop rest of batch rather than spin
+                if (n == 0) break;
                 written += n;
+            }
+            if (written < (size_t)count) {
+                static bool warned = false;
+                if (!warned) {
+                    warned = true;
+                    Serial.printf("[BUF] UNDERFLOW: wrote %zu / %zu samples\n", written, (size_t)count);
+                }
             }
         }
 
@@ -93,6 +142,11 @@ static void audioTask(void*) {
 }
 
 void APP_INIT() {
+    // Restore saved volume
+    prefs.begin("PocketMuse", true);
+    g_volume = prefs.getUChar("volume", 200);
+    prefs.end();
+
     if (global_fs) {
         g_library.scan();
         g_playlistMgr.begin();
@@ -117,6 +171,9 @@ void processKB_APP() {
         if (player.state() != PlayerState::Stopped) {
             player.stop();
         }
+        prefs.begin("PocketMuse", false);
+        prefs.putUChar("volume", g_volume);
+        prefs.end();
         KB().setKeyboardState(NORMAL);
         rebootToPocketMage();
         return;
@@ -169,7 +226,7 @@ void setup() {
     player.setOutput(&s_pwm);
     s_pwm.begin(44100);
     xTaskCreatePinnedToCore(appTask, "appTask", 32768, NULL, 2, NULL, 1);
-    xTaskCreatePinnedToCore(audioTask, "audioTask", 16384, NULL, 5, NULL, 0);
+    xTaskCreatePinnedToCore(audioTask, "audioTask", 32768, NULL, 5, NULL, 0);
     APP_INIT();
 }
 

@@ -194,9 +194,14 @@ void Player::tick() {
         ret = dec_.process();
     } while (ret > 0);
 
-    // Auto-start output at correct sample rate after first decode
-    if (output_ && !output_->isRunning() && dec_.sampleRate() > 0) {
-        output_->begin(dec_.sampleRate());
+    // Ensure output runs at the decoded sample rate.  begin() handles
+    // both first-start and on-the-fly reconfiguration when the rate
+    // changes (e.g.  following track with different sample rate).
+    if (output_ && dec_.sampleRate() > 0) {
+        int sr = dec_.sampleRate();
+        if (!output_->isRunning() || output_->sampleRate() != sr) {
+            output_->begin(sr);
+        }
     }
 
     // Update duration estimate after first decode

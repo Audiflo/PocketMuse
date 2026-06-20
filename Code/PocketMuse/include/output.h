@@ -9,6 +9,7 @@ public:
     virtual bool begin(int sampleRate = 44100) = 0;
     virtual bool stop() = 0;
     virtual bool isRunning() const = 0;
+    virtual int sampleRate() const { return 0; }
 
     virtual void pause() {}
     virtual void resume() {}

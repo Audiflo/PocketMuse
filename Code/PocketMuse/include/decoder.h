@@ -1,6 +1,7 @@
 #pragma once
 #include <stdint.h>
 #include <stddef.h>
+#include "minimp3.h"
 
 class RingBuffer;
 
@@ -18,13 +19,13 @@ public:
     int bitrate() const   { return bitrate_; }
 
 private:
-    static constexpr size_t kInputBufSize  = 8192;
+    static constexpr size_t kInputBufSize  = 16384;
     static constexpr size_t kOutputSamples = 2304;
 
     void compact_();
 
     RingBuffer& rb_;
-    void*       dec_;
+    mp3dec_t    dec_;
 
     uint8_t  input_buf_[kInputBufSize];
     size_t   input_len_;

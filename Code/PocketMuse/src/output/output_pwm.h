@@ -23,7 +23,7 @@ public:
     size_t write(const int16_t* data, size_t samples) override;
     size_t availableForWrite() const override;
 
-    int sampleRate() const { return sample_rate_; }
+    int sampleRate() const override { return sample_rate_; }
 
     // Volume in pwm_audio's native range: -16 (mute) .. 0 (unity) .. 16 (2x).
     // Call after begin().

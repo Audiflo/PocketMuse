@@ -12,9 +12,18 @@ PWMAudioOutput::~PWMAudioOutput() {
 }
 
 bool PWMAudioOutput::begin(int sampleRate) {
-    if (running_) return true;
+    if (sampleRate <= 0) sampleRate = 44100;
+    int prev_rate = sample_rate_;
+    sample_rate_ = sampleRate;
+    bool rate_changed = (sampleRate != prev_rate);
 
-    sample_rate_ = (sampleRate > 0) ? sampleRate : 44100;
+    if (running_ && !rate_changed) return true;
+
+    // Sample rate changed while already running so stop so we can reconfigure.
+    if (running_) {
+        pwm_audio_stop();   // flushes internal ringbuf, status -> IDLE
+        running_ = false;
+    }
 
     if (!initialized_) {
         pwm_audio_config_t pac = {};
