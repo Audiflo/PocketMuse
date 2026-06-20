@@ -49,16 +49,15 @@ int Decoder::process() {
 
     input_pos_ += info.frame_bytes;
 
-    if (samples <= 0) {
-        return info.frame_bytes > 0 ? 0 : 0;
-    }
+    if (info.frame_bytes == 0) return 0;  // no sync found, need more data
+    if (samples <= 0) return -1;          // frame consumed but no audio (Xing/Info header)
 
     sample_rate_    = info.hz;
     num_channels_   = info.channels;
     bitrate_        = info.bitrate_kbps;
 
-    int total = samples;
-    if (total > kOutputSamples) total = kOutputSamples;
+    int maxSamples = (int)(kOutputSamples / (info.channels > 0 ? info.channels : 1));
+    int total = (samples > maxSamples) ? maxSamples : samples;
 
     static int framedump = 0;
     if (framedump < 5 && total > 0) {

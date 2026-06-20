@@ -6,9 +6,10 @@
 // Thin AudioOutput adapter around Espressif's pwm_audio component (components/pwm_audio)
 class PWMAudioOutput : public AudioOutput {
 public:
-    // 8-bit duty resolution at 44.1kHz works well with pwm_audio's
-    // built-in timer-group ISR
+    // Hardware runs at 8-bit duty resolution. PCM input is 16-bit signed;
+    // pwm_audio shifts right by (16 - 8) = 8 internally.
     static constexpr ledc_timer_bit_t kResolution = LEDC_TIMER_8_BIT;
+    static constexpr int              kPcmBits    = 16;
     static constexpr size_t kRingBufLen = 1024 * 8;
 
     PWMAudioOutput(RingBuffer& rb, int pin);

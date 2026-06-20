@@ -44,7 +44,12 @@ bool PWMAudioOutput::begin(int sampleRate) {
     }
 
     // 16-bit signed PCM, mono, at the requested sample rate.
-    if (pwm_audio_set_param(sample_rate_, (ledc_timer_bit_t)16, 1) != ESP_OK) {
+    // Duty resolution is LEDC_TIMER_8_BIT; pwm_audio shifts 16-bit input
+    // right by (16 - 8) = 8 to fit. The cast is intentional — pwm_audio
+    // validates this field numerically, not as an ledc_timer_bit_t enum.
+    if (pwm_audio_set_param(sample_rate_,
+                            static_cast<ledc_timer_bit_t>(kPcmBits),
+                            1) != ESP_OK) {
         return false;
     }
 

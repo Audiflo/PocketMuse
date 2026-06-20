@@ -192,7 +192,7 @@ void Player::tick() {
     int ret;
     do {
         ret = dec_.process();
-    } while (ret > 0);
+    } while (ret != 0);
 
     // Ensure output runs at the decoded sample rate.  begin() handles
     // both first-start and on-the-fly reconfiguration when the rate
