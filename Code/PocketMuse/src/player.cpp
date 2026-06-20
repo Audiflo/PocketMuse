@@ -175,6 +175,18 @@ void Player::tick() {
         return;
     }
 
+    // Decode only as many frames as comfortably fit in the remaining
+    // ring buffer headroom, rather than draining the whole input chunk
+    // in one unconditional burst
+    static constexpr size_t kMaxSamplesPerFrame = 1152;
+
+    // If there's no room to decode into right now, skip the SD read
+    // too
+    if (rb_.freeSpace() < kMaxSamplesPerFrame) {
+        return;
+    }
+
+    unsigned long tk0 = millis();
     size_t bytes_read = file_.read(read_buf_, kReadBufSize);
     if (bytes_read == 0) {
         closeFile_();
@@ -191,6 +203,7 @@ void Player::tick() {
 
     int ret;
     do {
+        if (rb_.freeSpace() < kMaxSamplesPerFrame) break;
         ret = dec_.process();
     } while (ret != 0);
 
