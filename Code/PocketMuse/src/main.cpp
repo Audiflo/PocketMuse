@@ -1,7 +1,6 @@
 #include <globals.h>
 #include "AudioTools.h"
 #include "AudioTools/CoreAudio/AudioPlayer.h"
-#include "AudioTools/CoreAudio/AudioPWM.h"
 #include "AudioTools/AudioCodecs/CodecHelix.h"
 #include "AudioTools/Disk/AudioSource.h"
 #include "muse.h"
@@ -13,8 +12,8 @@ using namespace audio_tools;
 // Audio pipeline components (global so callbacks can reach them)
 static AudioSourceCallback    s_source;       // callbacks open files from SD
 static DecoderHelix           s_decoder;      // MP3/AAC/WAV auto-detect
-static PWMAudioOutput         s_pwmOut;       // pull-model ISR -> ledc -> GPIO 17
-AudioPlayer                   s_player(s_source, s_pwmOut, s_decoder);
+static I2SStream              s_i2sOut;       // I2S DMA output on GPIO 17
+AudioPlayer                   s_player(s_source, s_i2sOut, s_decoder);
 
 // Currently-open audio file and its size (updated by callbacks)
 static File s_audioFile;
@@ -160,17 +159,17 @@ void APP_INIT() {
     g_volume = prefs.getUChar("volume", 200);
     prefs.end();
 
-    // Configure PWMAudioOutput
-    // Match the expected audio format (most MP3s are 44100 Hz stereo)
-    // so the decoder notification chain doesn't need to reconfigure mid-stream.
-    auto cfg = s_pwmOut.defaultConfig();
-    cfg.start_pin = BZ_PIN;
-    cfg.channels = 2;
+    // Configure I2S output on BZ_PIN (GPIO 17).
+    // Single-pin mode: BCK and WS clocks generated internally, only DATA pin used.
+    // A simple RC low-pass filter on the pin converts the bitstream to analog audio.
+    auto cfg = s_i2sOut.defaultConfig();
+    cfg.pin_data = BZ_PIN;
+    cfg.pin_bck = -1;
     cfg.sample_rate = 44100;
+    cfg.channels = 2;
     cfg.bits_per_sample = 16;
-    cfg.buffer_size = 1024;
-    cfg.buffers = 4;
-    s_pwmOut.begin(cfg);
+    cfg.signal_type = PDM;
+    s_i2sOut.begin(cfg);
 
     // Set up AudioSourceCallback
     s_source.setCallbackSelectStream(onSelectStream);
