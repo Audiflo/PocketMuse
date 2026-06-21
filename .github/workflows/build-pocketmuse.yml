@@ -1,0 +1,52 @@
+name: Build PocketMuse
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: Code/PocketMuse
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: recursive
+
+      - name: Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: PlatformIO
+        run: |
+          pip install -U platformio
+
+      - name: Install just
+        uses: taiki-e/install-action@v2
+        with:
+          tool: just
+
+      - name: Build
+        shell: bash
+        run: |
+          just build
+
+      - name: Commit PocketMuse.tar if changed
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          file_pattern: Code/PocketMuse/PocketMuse.tar
+          commit_message: "chore: auto-build PocketMuse.tar"
+          commit_user_name: "github-actions[bot]"
+          commit_user_email: "github-actions[bot]@users.noreply.github.com"
