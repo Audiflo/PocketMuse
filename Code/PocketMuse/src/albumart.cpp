@@ -2,10 +2,199 @@
 #include <globals.h>
 #include <FS.h>
 #include <JPEGDEC.h>
+#include <PNGdec.h>
 #include <cstring>
 
+// Helpers
+static uint32_t readSyncsafeInt(const uint8_t* buf) {
+    return ((uint32_t)buf[0] << 21) |
+           ((uint32_t)buf[1] << 14) |
+           ((uint32_t)buf[2] <<  7) |
+           (uint32_t)buf[3];
+}
+
+// PNGdec file callbacks
+static void* pngOpenCb(const char* filename, int32_t* pSize) {
+    File* f = new File(global_fs->open(filename, "r"));
+    if (!*f) { delete f; return nullptr; }
+    *pSize = f->size();
+    return f;
+}
+
+static void pngCloseCb(void* pHandle) {
+    if (!pHandle) return;
+    delete static_cast<File*>(pHandle);
+}
+
+static int32_t pngReadCb(PNGFILE* pFile, uint8_t* buf, int32_t iLen) {
+    auto* f = static_cast<File*>(pFile->fHandle);
+    return f ? f->read(buf, iLen) : 0;
+}
+
+static int32_t pngSeekCb(PNGFILE* pFile, int32_t iPos) {
+    auto* f = static_cast<File*>(pFile->fHandle);
+    if (!f) return -1;
+    return f->seek(iPos) ? iPos : -1;
+}
+
+// Render context shared by JPEG and PNG code paths
+struct RenderCtx {
+    uint8_t* einkBuf;
+    int bufW, bufH;
+    int outX, outY;
+    int fullW, fullH;
+    int outW, outH;
+};
+
+// PNG-specific extension: Floyd–Steinberg dither state
+struct PngRenderCtx : RenderCtx {
+    int pixelType;          // PNG_PIXEL_xxx
+    int16_t* err;           // current-row error (size fullW + 2)
+    int16_t* nextErr;       // next-row accumulation (size fullW + 2)
+};
+
+// Grayscale extraction (single pixel from PNGDRAW)
+static int pixelToGray(PNGDRAW* pDraw, int x) {
+    // pDraw->pPalette is always non-null (points to ucPalette[] in the PNGIMAGE
+    // struct), even for non-palette images where it contains only zeros.
+    // Must check the pixel type, not the pointer.
+    uint8_t* p = pDraw->pPixels;
+    PngRenderCtx* ctx = (PngRenderCtx*)pDraw->pUser;
+    int type = ctx->pixelType;
+
+    if (type == PNG_PIXEL_INDEXED) {
+        uint8_t* pal = pDraw->pPalette;
+        int idx = p[x];
+        int r = pal[idx * 3];
+        int g = pal[idx * 3 + 1];
+        int b = pal[idx * 3 + 2];
+        return (r * 77 + g * 150 + b * 29) >> 8;
+    }
+    if (type == PNG_PIXEL_TRUECOLOR || type == PNG_PIXEL_TRUECOLOR_ALPHA) {
+        int i = x * (type == PNG_PIXEL_TRUECOLOR_ALPHA ? 4 : 3);
+        int r = p[i];
+        int g = p[i + 1];
+        int b = p[i + 2];
+        return (r * 77 + g * 150 + b * 29) >> 8;
+    }
+    // Grayscale / grayscale+alpha
+    if (type == PNG_PIXEL_GRAY_ALPHA)
+        return p[x * 2];
+    return p[x];
+}
+
+// PNG draw callback: Floyd–Steinberg dither + nearest-neighbour scale
+static int pngDrawCb(PNGDRAW* pDraw) {
+    PngRenderCtx* ctx = (PngRenderCtx*)pDraw->pUser;
+    if (!ctx || !ctx->einkBuf) return 0;
+
+    int y        = pDraw->y;
+    int w        = pDraw->iWidth;
+    int fullW    = ctx->fullW;
+    int outH     = ctx->outH;
+    int outW     = ctx->outW;
+    int16_t* err = ctx->err;
+    int16_t* nxt = ctx->nextErr;
+
+    int oy = y * outH / ctx->fullH;
+    bool writeOutput = (oy < outH);
+
+    int dstRowBytes = (ctx->bufW + 7) / 8;
+    int prevOx = -1;
+
+    for (int x = 0; x < w; x++) {
+        int gray = pixelToGray(pDraw, x);
+        int v = gray + err[x + 1];
+        if (v < 0) v = 0;
+        if (v > 255) v = 255;
+        int bit = v > 127 ? 1 : 0;         // 1 = white, 0 = black
+        int qErr = v - (bit ? 255 : 0);     // always ≤ 0 with this threshold
+
+        // Floyd–Steinberg error diffusion
+        err[x + 2]    += (qErr * 7) / 16;   // right
+        nxt[x]        += (qErr * 5) / 16;   // bottom
+        nxt[x + 1]    += (qErr * 1) / 16;   // bottom-right
+        if (x > 0)
+            nxt[x - 1] += (qErr * 3) / 16;  // bottom-left
+
+        if (!writeOutput) continue;
+
+        // Nearest-neighbour downscale
+        int ox = x * outW / fullW;
+        if (ox == prevOx) continue;
+        prevOx = ox;
+        if (ox >= outW) continue;
+
+        int einkX = ctx->outX + ox;
+        int einkY = ctx->outY + oy;
+        if (einkX >= ctx->bufW || einkY >= ctx->bufH) continue;
+
+        int idx = einkY * dstRowBytes + (einkX >> 3);
+        if (idx >= ctx->bufH * dstRowBytes) continue;
+
+        if (!bit) {
+            ctx->einkBuf[idx] |=  (1 << (7 - (einkX & 7)));
+        } else {
+            ctx->einkBuf[idx] &= ~(1 << (7 - (einkX & 7)));
+        }
+    }
+
+    // Swap error buffers for next row
+    ctx->err     = nxt;
+    ctx->nextErr = err;
+    memset(ctx->nextErr, 0, (fullW + 2) * sizeof(int16_t));
+    return 1;
+}
+
+// JPEG draw callback
+static int jpegDrawCb(JPEGDRAW* pDraw) {
+    RenderCtx* ctx = (RenderCtx*)pDraw->pUser;
+    if (!ctx || !ctx->einkBuf) return 0;
+
+    uint8_t* src  = (uint8_t*)pDraw->pPixels;
+    int srcW      = pDraw->iWidth;
+    int srcH      = pDraw->iHeight;
+    int srcRowB   = (srcW + 7) / 8;
+    int srcBaseY  = pDraw->y;
+
+    int dstRowB   = (ctx->bufW + 7) / 8;
+
+    for (int sy = 0; sy < srcH; sy++) {
+        int fy = srcBaseY + sy;
+        if (fy >= ctx->fullH) break;
+
+        int oy = fy * ctx->outH / ctx->fullH;
+        if (oy >= ctx->outH) continue;
+        int einkY = ctx->outY + oy;
+        if (einkY >= ctx->bufH) continue;
+
+        for (int sx = 0; sx < srcW; sx++) {
+            int fx = pDraw->x + sx;
+            if (fx >= ctx->fullW) break;
+
+            int ox = fx * ctx->outW / ctx->fullW;
+            if (ox >= ctx->outW) continue;
+            int einkX = ctx->outX + ox;
+            if (einkX >= ctx->bufW) continue;
+
+            int bit = (src[sy * srcRowB + (sx >> 3)] >> (7 - (sx & 7))) & 1;
+
+            int idx = einkY * dstRowB + (einkX >> 3);
+            if (idx < ctx->bufH * dstRowB) {
+                if (!bit) {
+                    ctx->einkBuf[idx] |=  (1 << (7 - (einkX & 7)));
+                } else {
+                    ctx->einkBuf[idx] &= ~(1 << (7 - (einkX & 7)));
+                }
+            }
+        }
+    }
+    return 1;
+}
+
+// AlbumArt implementation
 AlbumArt::AlbumArt()
-    : has_art_(false), is_jpeg_(false), img_w_(0), img_h_(0)
+    : format_(kNone), img_w_(0), img_h_(0)
 {
 }
 
@@ -19,13 +208,7 @@ bool AlbumArt::ensureMuseDir_() {
     return true;
 }
 
-static uint32_t readSyncsafeInt(const uint8_t* buf) {
-    return ((uint32_t)buf[0] << 21) |
-           ((uint32_t)buf[1] << 14) |
-           ((uint32_t)buf[2] <<  7) |
-           (uint32_t)buf[3];
-}
-
+// ID3v2 APIC extraction
 bool AlbumArt::extractAPIC_(const char* mp3Path) {
     if (!global_fs) return false;
 
@@ -42,14 +225,13 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
 
     if (ver < 3 || ver > 4) { mp3.close(); return false; }
 
-    // Skip extended header
     if (flags & 0x40) {
         uint8_t ext[4];
         if (mp3.read(ext, 4) != 4) { mp3.close(); return false; }
         uint32_t extSize = (ver == 4) ? readSyncsafeInt(ext)
             : ((uint32_t)ext[0] << 24 | (uint32_t)ext[1] << 16 |
                (uint32_t)ext[2] <<  8 | ext[3]);
-        mp3.seek(extSize - 4, SeekCur);
+        mp3.seek(extSize, SeekCur);
     }
 
     bool footer = (ver == 4) && (flags & 0x10);
@@ -70,10 +252,10 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
         memcpy(id, fhdr, 4);
         if (id[0] == '\0') break;
 
-        uint32_t fsize = ((uint32_t)fhdr[4] << 24) |
-                         ((uint32_t)fhdr[5] << 16) |
-                         ((uint32_t)fhdr[6] <<  8) |
-                         fhdr[7];
+        uint32_t fsize = (ver == 4)
+            ? readSyncsafeInt(fhdr + 4)
+            : ((uint32_t)fhdr[4] << 24 | (uint32_t)fhdr[5] << 16 |
+               (uint32_t)fhdr[6] <<  8 | fhdr[7]);
         if (fsize == 0 || fsize > remain) break;
 
         if (strcmp(id, "APIC") != 0) {
@@ -82,7 +264,7 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
             continue;
         }
 
-        // APIC body: encoding(1) + MIME(null-term) + type(1) + desc(null-term) + image_data
+        // APIC body
         uint8_t encoding;
         if (mp3.read(&encoding, 1) != 1) break;
         fsize--; remain--;
@@ -93,8 +275,6 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
             fsize--; remain--;
             if (b == 0) break;
         }
-
-        is_jpeg_ = true;
 
         if (fsize == 0) break;
         mp3.seek(1, SeekCur);
@@ -134,7 +314,12 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
     mp3.close();
 
     if (found) {
-        has_art_ = true;
+        format_ = kJPEG;   // tentative, detectFormat_() will correct
+        if (!detectFormat_()) {
+            global_fs->remove(kCachePath);
+            format_ = kNone;
+            return false;
+        }
     } else {
         global_fs->remove(kCachePath);
     }
@@ -142,90 +327,67 @@ bool AlbumArt::extractAPIC_(const char* mp3Path) {
     return found;
 }
 
+// File-format probing (JPEG vs PNG)
+bool AlbumArt::detectFormat_() {
+    if (!global_fs) return false;
+    File f = global_fs->open(kCachePath, "r");
+    if (!f) return false;
+
+    uint8_t magic[4];
+    int n = f.read(magic, 4);
+    f.close();
+    if (n < 4) return false;
+
+    if (magic[0] == 0xFF && magic[1] == 0xD8) {
+        format_ = kJPEG;
+        return true;
+    }
+    if (magic[0] == 0x89 && magic[1] == 'P' && magic[2] == 'N' && magic[3] == 'G') {
+        format_ = kPNG;
+        return true;
+    }
+    return false;   // unknown format
+}
+
+// Lifecycle
 bool AlbumArt::load(const char* mp3Path) {
-    if (has_art_) clear();
+    if (format_ != kNone) clear();
     if (!ensureMuseDir_()) return false;
     return extractAPIC_(mp3Path);
 }
 
 void AlbumArt::clear() {
-    if (has_art_ && global_fs) {
+    if (format_ != kNone && global_fs) {
         global_fs->remove(kCachePath);
     }
-    has_art_ = false;
-    is_jpeg_ = false;
+    format_ = kNone;
     img_w_ = img_h_ = 0;
 }
 
-// Context passed to the JPEGDEC draw callback
-struct RenderCtx {
-    uint8_t* einkBuf;
-    int bufW, bufH;
-    int outX, outY;
-    int fullW, fullH; // full-res decoded dimensions
-    int outW, outH;   // target output dimensions
-};
-
-// Callback receives packed 1-bit data (Floyd-Steinberg dithered by JPEGDEC).
-// Maps full-resolution pixels to target dimensions via nearest-neighbor.
-static int artDrawCb(JPEGDRAW* pDraw) {
-    RenderCtx* ctx = (RenderCtx*)pDraw->pUser;
-    if (!ctx || !ctx->einkBuf) return 0;
-
-    uint8_t* src = (uint8_t*)pDraw->pPixels;
-    int srcW = pDraw->iWidth;
-    int srcH = pDraw->iHeight;
-    int srcRowBytes = (srcW + 7) / 8;
-    int srcBaseY = pDraw->y;
-
-    int dstRowBytes = (ctx->bufW + 7) / 8;
-
-    for (int sy = 0; sy < srcH; sy++) {
-        int fy = srcBaseY + sy;  // row in the full-res decoded image
-        if (fy >= ctx->fullH) break;
-
-        int oy = fy * ctx->outH / ctx->fullH;
-        if (oy >= ctx->outH) continue;
-        int einkY = ctx->outY + oy;
-        if (einkY >= ctx->bufH) continue;
-
-        for (int sx = 0; sx < srcW; sx++) {
-            int fx = pDraw->x + sx;
-            if (fx >= ctx->fullW) break;
-
-            int ox = fx * ctx->outW / ctx->fullW;
-            if (ox >= ctx->outW) continue;
-            int einkX = ctx->outX + ox;
-            if (einkX >= ctx->bufW) continue;
-
-            // Read 1-bit pixel from packed source (MSB first)
-            int bit = (src[sy * srcRowBytes + (sx >> 3)] >> (7 - (sx & 7))) & 1;
-
-            // Write to E-Ink 1bpp buffer (also MSB first)
-            int idx = einkY * dstRowBytes + (einkX >> 3);
-            if (idx < ctx->bufH * dstRowBytes) {
-            if (!bit) {
-                ctx->einkBuf[idx] |= (1 << (7 - (einkX & 7)));
-            } else {
-                ctx->einkBuf[idx] &= ~(1 << (7 - (einkX & 7)));
-            }
-            }
-        }
-    }
-
-    return 1;
-}
-
+// Render to 1-bit e-ink buffer
 bool AlbumArt::render1Bit(uint8_t* einkBuf, int bufW, int bufH,
                           int outX, int outY, int maxSize)
 {
-    if (!has_art_ || !global_fs) return false;
+    if (format_ == kNone || !global_fs) return false;
 
     File file = global_fs->open(kCachePath, "r");
     if (!file) return false;
 
+    if (format_ == kJPEG)
+        return renderJPEG_(file, einkBuf, bufW, bufH, outX, outY, maxSize);
+    if (format_ == kPNG)
+        return renderPNG_(file, einkBuf, bufW, bufH, outX, outY, maxSize);
+
+    file.close();
+    return false;
+}
+
+// JPEG render path (delegates to JPEGDEC with ONE_BIT_DITHERED)
+bool AlbumArt::renderJPEG_(File& file, uint8_t* einkBuf, int bufW, int bufH,
+                           int outX, int outY, int maxSize)
+{
     JPEGDEC jpeg;
-    if (!jpeg.open(file, artDrawCb)) {
+    if (!jpeg.open(file, jpegDrawCb)) {
         file.close();
         return false;
     }
@@ -237,14 +399,13 @@ bool AlbumArt::render1Bit(uint8_t* einkBuf, int bufW, int bufH,
         return false;
     }
 
-    // Determine subsampling to compute MCU dimensions
     int ss  = jpeg.getSubSample();
     int mcuCX, mcuCY;
     switch (ss) {
         case 0x12: mcuCX = 8;  mcuCY = 16; break;
         case 0x21: mcuCX = 16; mcuCY = 8;  break;
         case 0x22: mcuCX = 16; mcuCY = 16; break;
-        default:   mcuCX = 8;  mcuCY = 8;  break; // 0x00/0x11
+        default:   mcuCX = 8;  mcuCY = 8;  break;
     }
 
     float scale = (float)maxSize / (imgW > imgH ? imgW : imgH);
@@ -256,13 +417,9 @@ bool AlbumArt::render1Bit(uint8_t* einkBuf, int bufW, int bufH,
     img_w_ = outW;
     img_h_ = outH;
 
-    // Decode at full resolution into strips of ~128 pixels wide
     int stripMCUs = 128 / mcuCX;
     if (stripMCUs < 1) stripMCUs = 1;
 
-    // ONE_BIT_DITHERED mode overrides iMaxMCUs to the full image MCU width
-    // so the dither buffer must hold the grayscale
-    // output for the entire image row, not just the strip.
     int ditherW = ((imgW + mcuCX - 1) / mcuCX) * mcuCX;
     int ditherSize = ditherW * mcuCY;
     uint8_t* ditherBuf = new (std::nothrow) uint8_t[ditherSize];
@@ -271,7 +428,6 @@ bool AlbumArt::render1Bit(uint8_t* einkBuf, int bufW, int bufH,
         return false;
     }
 
-    // Output context for the callback
     RenderCtx ctx;
     ctx.einkBuf = einkBuf;
     ctx.bufW  = bufW;
@@ -292,6 +448,73 @@ bool AlbumArt::render1Bit(uint8_t* einkBuf, int bufW, int bufH,
     jpeg.close();
     file.close();
     delete[] ditherBuf;
-
     return ok;
+}
+
+// PNG render path
+bool AlbumArt::renderPNG_(File& file, uint8_t* einkBuf, int bufW, int bufH,
+                          int outX, int outY, int maxSize)
+{
+    // PNGIMAGE embeds a 32KB zlib buffer so it must be heap-allocated to avoid
+    // stack overflow on the ~4 KB appTask stack.
+    auto* png = new (std::nothrow) PNG;
+    if (!png) { file.close(); return false; }
+
+    if (png->open(kCachePath, pngOpenCb, pngCloseCb, pngReadCb, pngSeekCb, pngDrawCb)
+        != PNG_SUCCESS) {
+        delete png; file.close();
+        return false;
+    }
+
+    int imgW = png->getWidth();
+    int imgH = png->getHeight();
+    if (imgW <= 0 || imgH <= 0) {
+        png->close(); delete png; file.close();
+        return false;
+    }
+
+    float scale = (float)maxSize / (imgW > imgH ? imgW : imgH);
+    int outW = (int)(imgW * scale);
+    int outH = (int)(imgH * scale);
+    if (outW < 1) outW = 1;
+    if (outH < 1) outH = 1;
+
+    img_w_ = outW;
+    img_h_ = outH;
+
+    // Allocate Floyd–Steinberg error buffers (full width + margin)
+    int errSize = (imgW + 2) * sizeof(int16_t);
+    auto* err0 = new (std::nothrow) int16_t[imgW + 2];
+    auto* err1 = new (std::nothrow) int16_t[imgW + 2];
+    if (!err0 || !err1) {
+        delete[] err0; delete[] err1;
+        png->close(); delete png; file.close();
+        return false;
+    }
+    memset(err0, 0, errSize);
+    memset(err1, 0, errSize);
+
+    PngRenderCtx ctx;
+    ctx.einkBuf   = einkBuf;
+    ctx.bufW      = bufW;
+    ctx.bufH      = bufH;
+    ctx.outX      = outX;
+    ctx.outY      = outY;
+    ctx.fullW     = imgW;
+    ctx.fullH     = imgH;
+    ctx.outW      = outW;
+    ctx.outH      = outH;
+    ctx.pixelType = png->getPixelType();
+    ctx.err       = err0;
+    ctx.nextErr   = err1;
+
+    int rc = png->decode(&ctx, PNG_FAST_PALETTE);
+    png->close();
+    delete png;
+    file.close();
+
+    delete[] err0;
+    delete[] err1;
+
+    return rc == PNG_SUCCESS;
 }
