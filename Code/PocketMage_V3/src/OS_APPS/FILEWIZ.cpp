@@ -547,6 +547,8 @@ void einkHandler_FILEWIZ() {
         updateRecentFilesList();
 
         // Draw the file list
+        u8g2f.setFont(u8g2_font_ncenR10_tf);
+        u8g2f.setFontMode(1);
         for (int i = 0; i < 10; i++) {
           String dispPath = PM_SDAUTO().getFilesListIndex(i);
           
@@ -556,8 +558,8 @@ void einkHandler_FILEWIZ() {
                dispPath = "..." + dispPath.substring(dispPath.length() - 27);
             }
             
-            display.setCursor(30, 54 + (17 * i));
-            display.print(dispPath);
+            u8g2f.setCursor(30, 54 + (17 * i));
+            u8g2f.print(dispPath);
           }
         }
 
