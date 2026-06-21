@@ -14,7 +14,7 @@ static constexpr const char* TAG = "COMM";
 
 // CONFIG
 #define MAX_CHAT_MSGS 50
-#define BUBBLE_MAX_CHARS 40
+#define BUBBLE_MAX_CHARS 46
 #define MAX_VISIBLE_LINES 10
 
 // TYPES
@@ -249,16 +249,11 @@ void processKB_COMM() {
   if (currentState == CHAT_VIEW) {
       int maxScrollIndex = 0;
       if (msgCount > 0) {
-          u8g2f.setFont(u8g2_font_courB10_tf);
-          u8g2f.setFontMode(1);
-          int ascent = u8g2f.getFontAscent();
-          int lineH = ascent - u8g2f.getFontDescent();
-          int lineSpacing = lineH + 2;
           int totalH = 0;
           int top = msgCount - 1;
           while (top >= 0) {
               std::vector<String> lines = wrapText(msgs[top].content, BUBBLE_MAX_CHARS);
-              int bH = (lines.size() * lineSpacing) + lineH + 21;
+              int bH = (lines.size() * 10) + 12 + 10 + 4; 
               if (totalH + bH > 214) { top++; break; }
               totalH += bH;
               if (top == 0) break;
@@ -426,16 +421,15 @@ void einkHandler_COMM() {
     } else {
       // Safely perform native partial window update without blanking the rest of the screen
       display.fillRect(0, 28, 16, 218, GxEPD_WHITE);
-      u8g2f.setFont(u8g2_font_ncenR10_tf);
-      u8g2f.setFontMode(1);
-      u8g2f.setForegroundColor(GxEPD_BLACK);
+      display.setTextColor(GxEPD_BLACK);
+      display.setFont(&FreeSans9pt7b);
       
       for (int i = 0; i < vis; i++) {
         int idx = scrollTop + i;
         if (idx == selPeer) {
           int yPos = 36 + i * 20;
-          u8g2f.setCursor(4, yPos);
-          u8g2f.print(">");
+          display.setCursor(4, yPos);
+          display.print(">");
         }
       }
       
@@ -453,19 +447,17 @@ void einkHandler_COMM() {
 
   // Top bar
   display.fillRect(0, 0, display.width(), 20, GxEPD_BLACK);
-  u8g2f.setForegroundColor(GxEPD_WHITE);
+  display.setTextColor(GxEPD_WHITE);
+  display.setFont(&FreeSans9pt7b);
 
   if (currentState == PEER_LIST) {
-    u8g2f.setFont(u8g2_font_ncenR10_tf);
-    u8g2f.setFontMode(1);
-    u8g2f.setCursor(4, 16);
-    u8g2f.print("Select Room");
-    u8g2f.setFont(u8g2_font_6x10_tf);
-    u8g2f.setFontMode(1);
-    u8g2f.setCursor(164, 16);
-    u8g2f.print("Me " + String(myMacStr));
-    u8g2f.setCursor(290, 16);
-    u8g2f.print("P: " + String(mesh_now_get_peer_count()));
+    display.setCursor(4, 16);
+    display.print("Select Room");
+    display.setFont(&Font5x7Fixed);
+    display.setCursor(164, 14);
+    display.print("Me " + String(myMacStr));
+    display.setCursor(270, 14);
+    display.print("P: " + String(mesh_now_get_peer_count()));
 
     int totalRooms = 1 + mesh_now_get_peer_count();
     mesh_peer_t* allPeers = mesh_now_get_peers();
@@ -475,8 +467,7 @@ void einkHandler_COMM() {
     int scrollTop = max(selPeer - vis / 2, 0);
     if (scrollTop + vis > totalRooms) scrollTop = max(totalRooms - vis, 0);
     
-    u8g2f.setFont(u8g2_font_ncenR10_tf);
-    u8g2f.setFontMode(1);
+    display.setFont(&FreeSans9pt7b);
     for (int i = 0; i < vis; i++) {
       int idx = scrollTop + i;
       if (idx >= totalRooms) break;
@@ -499,14 +490,14 @@ void einkHandler_COMM() {
         }
       }
       
-      u8g2f.setForegroundColor(GxEPD_BLACK);
+      display.setTextColor(GxEPD_BLACK);
       
       if (selected) {
-        u8g2f.setCursor(4, yPos);
-        u8g2f.print(">");
+        display.setCursor(4, yPos);
+        display.print(">");
       }
-      u8g2f.setCursor(20, yPos);
-      u8g2f.print(label);
+      display.setCursor(20, yPos);
+      display.print(label);
     }
     
     // Scrollbar (Extended to bottom)
@@ -520,19 +511,18 @@ void einkHandler_COMM() {
     }
   } else {
     if (chatMode == LOCAL_CHAT) {
-      u8g2f.setCursor(4, 16);
-      u8g2f.print("Local Chat");
+      display.setCursor(4, 16);
+      display.print("Local Chat");
     } else {
       String name = displayName(peerMacStr);
-      u8g2f.setCursor(4, 16);
-      u8g2f.print("> " + name);
+      display.setCursor(4, 16);
+      display.print("> " + name);
     }
-    u8g2f.setFont(u8g2_font_6x10_tf);
-    u8g2f.setFontMode(1);
-    u8g2f.setCursor(164, 16);
-    u8g2f.print(chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct");
-    u8g2f.setCursor(290, 16);
-    u8g2f.print("P: " + String(mesh_now_get_peer_count()));
+    display.setFont(&Font5x7Fixed);
+    display.setCursor(164, 14);
+    display.print(chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct");
+    display.setCursor(270, 14);
+    display.print("P: " + String(mesh_now_get_peer_count()));
   }
 
   // Separator line
@@ -540,20 +530,15 @@ void einkHandler_COMM() {
 
   // Message area (CHAT_VIEW only)
   if (currentState == CHAT_VIEW) {
-    u8g2f.setFont(u8g2_font_courB10_tf);
-    u8g2f.setFontMode(1);
-
-    int ascent = u8g2f.getFontAscent();
-    int lineH = ascent - u8g2f.getFontDescent();
-    int lineSpacing = lineH + 2;
-
+    display.setFont(&Font5x7Fixed);
+    
     int maxScrollIndex = 0;
     if (msgCount > 0) {
         int totalH = 0;
         int top = msgCount - 1;
         while (top >= 0) {
             std::vector<String> lines = wrapText(msgs[top].content, BUBBLE_MAX_CHARS);
-            int bH = (lines.size() * lineSpacing) + lineH + 21;
+            int bH = (lines.size() * 10) + 12 + 10 + 4; 
             if (totalH + bH > 214) { top++; break; }
             totalH += bH;
             if (top == 0) break;
@@ -565,73 +550,63 @@ void einkHandler_COMM() {
     if (autoScroll) chatScrollIndex = maxScrollIndex;
     if (chatScrollIndex > (ulong)maxScrollIndex) chatScrollIndex = maxScrollIndex;
 
-    int y = 26;
+    int y = 26; 
     int barWidth = 3;
-
+    
     for (int i = chatScrollIndex; i < msgCount && y < 240; i++) {
       ChatMsg* m = &msgs[i];
       std::vector<String> lines = wrapText(m->content, BUBBLE_MAX_CHARS);
-
+      
       String nameText = displayName(m->sender);
       String timeText = String(m->hr) + ":" + (m->mn < 10 ? "0" : "") + String(m->mn);
-
-      int nameW = u8g2f.getUTF8Width(nameText.c_str());
-      u8g2f.setFont(u8g2_font_6x10_tf);
-      u8g2f.setFontMode(1);
-      int timeW = u8g2f.getUTF8Width(timeText.c_str());
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
-      int metaW = nameW + timeW + 10;
-
+      
+      int nameW = nameText.length() * 6;
+      int timeW = timeText.length() * 6;
+      int metaW = nameW + timeW + 10; // Extra inner-gap between name and time
+      
       int textW = 0;
       for (const String& l : lines) {
-        int lw = u8g2f.getUTF8Width(l.c_str());
+        int lw = l.length() * 6;
         if (lw > textW) textW = lw;
       }
 
-      int bubbleW = max(textW, metaW) + 16;
-      int bubbleH = (lines.size() * lineSpacing) + lineH + 21;
-
+      int bubbleW = max(textW, metaW) + 16; // 8px padding on both sides
+      int bubbleH = (lines.size() * 10) + 12 + 10;
+      
+      // Shift left to make room for scrollbar
       int x = m->sentByLocal ? (display.width() - bubbleW - 6 - (barWidth + 2)) : 6;
-
+      
       if (m->sentByLocal) {
           display.fillRoundRect(x, y, bubbleW, bubbleH, 10, GxEPD_BLACK);
-          u8g2f.setForegroundColor(GxEPD_WHITE);
+          display.setTextColor(GxEPD_WHITE);
       } else {
           display.drawRoundRect(x, y, bubbleW, bubbleH, 10, GxEPD_BLACK);
-          u8g2f.setForegroundColor(GxEPD_BLACK);
+          display.setTextColor(GxEPD_BLACK);
       }
-
-      int nameY = y + 8 + ascent;
-      u8g2f.setCursor(x + 8, nameY);
-      u8g2f.print(nameText);
-
-      u8g2f.setFont(u8g2_font_6x10_tf);
-      u8g2f.setFontMode(1);
-      u8g2f.setCursor(x + bubbleW - 8 - timeW, nameY);
-      u8g2f.print(timeText);
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
-
-      display.drawFastHLine(x + 8, nameY + 2, bubbleW - 16, m->sentByLocal ? GxEPD_WHITE : GxEPD_BLACK);
-
-      int msgY = nameY + 2 + 1 + 4 + ascent;
-      for (size_t l = 0; l < lines.size(); l++) {
-          u8g2f.setCursor(x + 8, msgY + l * lineSpacing);
-          u8g2f.print(lines[l]);
+      
+      display.setCursor(x + 8, y + 11);
+      display.print(nameText);
+      
+      display.setCursor(x + bubbleW - 8 - timeW, y + 11);
+      display.print(timeText);
+      
+      display.drawFastHLine(x + 8, y + 14, bubbleW - 16, m->sentByLocal ? GxEPD_WHITE : GxEPD_BLACK);
+      
+      for(size_t l=0; l<lines.size(); l++){
+          display.setCursor(x + 8, y + 26 + (l*10));
+          display.print(lines[l]);
       }
-
-      y += bubbleH + 4;
+      
+      y += bubbleH + 4; 
     }
 
     if (maxScrollIndex > 0) {
-      float avgBubbleH = (lineSpacing * 3 + lineH + 21);
-      float visibleRatio = 214.0 / ((maxScrollIndex + 1) * avgBubbleH);
+      float visibleRatio = 214.0 / ((maxScrollIndex + 1) * 30.0); 
       if (visibleRatio > 1.0) visibleRatio = 1.0;
       int handleHeight = max((int)(214 * visibleRatio), 15);
       float scrollFraction = (float)chatScrollIndex / maxScrollIndex;
       int handleY = 26 + scrollFraction * (214 - handleHeight);
-
+      
       display.fillRect(display.width() - barWidth - 1, handleY, barWidth, handleHeight, GxEPD_BLACK);
     }
   }
