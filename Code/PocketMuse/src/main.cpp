@@ -4,6 +4,7 @@
 #include "AudioTools/AudioCodecs/CodecHelix.h"
 #include "AudioTools/Disk/AudioSource.h"
 #include "muse.h"
+#include "metacache.h"
 
 #if OTA_APP
 
@@ -19,47 +20,122 @@ AudioPlayer                   s_player(s_source, s_i2sOut, s_decoder);
 static File s_audioFile;
 static size_t s_fileSize = 0;
 
-// AudioSourceCallback: opens files via global_fs
-static Stream* onSelectStream(int index) {
-    if (s_audioFile) s_audioFile.close();
+// FileLoop for LoopMode::One (wraps current file for endless replay)
+static FileLoop s_fileLoop;
+static bool s_useLoop = false;
 
-    if (index == -1) {
-        // Called from AudioPlayer::setPath(path) -> source.selectStream(path)
-        const char* path = s_source.getPath();
-        if (!path || !path[0]) return nullptr;
-        s_audioFile = global_fs->open(path, "r");
-    } else {
-        // Direct index (not used in normal flow, but provide for completeness)
-        char path[256];
-        if (g_playlistMgr.source() == PlaySource::Library) {
-            if (index < 0 || index >= g_library.count()) return nullptr;
-            const String& p = g_library.path(index);
-            strncpy(path, p.c_str(), sizeof(path) - 1);
-            path[sizeof(path) - 1] = '\0';
-        } else {
-            if (!g_playlistMgr.getEntry(index, path, sizeof(path))) return nullptr;
-        }
-        s_audioFile = global_fs->open(path, "r");
+// Metadata cache
+static MetadataCache s_metaCache;
+static int s_metaFields = 0;
+
+// Metadata callback (fires during s_player.copy())
+static void onMetadata(MetaDataType type, const char* str, int len) {
+    switch (type) {
+        case Title:
+            strncpy(g_nowTitle, str, sizeof(g_nowTitle) - 1);
+            g_nowTitle[sizeof(g_nowTitle) - 1] = '\0';
+            s_metaFields |= 1;
+            break;
+        case Artist:
+            strncpy(g_nowArtist, str, sizeof(g_nowArtist) - 1);
+            g_nowArtist[sizeof(g_nowArtist) - 1] = '\0';
+            s_metaFields |= 2;
+            break;
+        case Album:
+            strncpy(g_nowAlbum, str, sizeof(g_nowAlbum) - 1);
+            g_nowAlbum[sizeof(g_nowAlbum) - 1] = '\0';
+            s_metaFields |= 4;
+            break;
+        default: break;
+    }
+    // Cache when all three fields are received
+    if (s_metaFields == 7 && g_nowPath[0]) {
+        s_metaCache.save(g_nowPath, g_nowTitle, g_nowArtist, g_nowAlbum);
+    }
+}
+
+// Pre-read metadata from file (faster than waiting for streaming callback)
+static void pre_read_metadata(const char* path) {
+    if (!path || !path[0] || !global_fs) return;
+
+    g_nowTitle[0] = '\0';
+    g_nowArtist[0] = '\0';
+    g_nowAlbum[0] = '\0';
+    s_metaFields = 0;
+
+    // Check cache first
+    if (s_metaCache.load(path, g_nowTitle, sizeof(g_nowTitle),
+                         g_nowArtist, sizeof(g_nowArtist),
+                         g_nowAlbum, sizeof(g_nowAlbum))) {
+        return;
     }
 
-    if (!s_audioFile) return nullptr;
-    s_fileSize = s_audioFile.size();
+    // Cache miss — quick pre-read of first 10 KB
+    File f = global_fs->open(path, "r");
+    if (!f) return;
+
+    uint8_t buf[10240];
+    size_t n = f.read(buf, sizeof(buf));
+    f.close();
+    if (n == 0) return;
+
+    MetaDataID3 meta;
+    meta.setCallback(onMetadata);
+    meta.begin();
+    meta.write(buf, n);
+    meta.end();
+
+    if (g_nowTitle[0] || g_nowArtist[0] || g_nowAlbum[0]) {
+        s_metaCache.save(path, g_nowTitle, g_nowArtist, g_nowAlbum);
+    }
+}
+
+// AudioSourceCallbacks
+static Stream* openStream(const char* path, size_t& fileSize) {
+    if (!path || !path[0]) return nullptr;
+    File f = global_fs->open(path, "r");
+    if (!f) return nullptr;
+    fileSize = f.size();
+
+    if (g_loopMode == LoopMode::One) {
+        s_fileLoop.end();
+        s_fileLoop.setFile(f);
+        s_fileLoop.setLoopCount(-1);
+        s_fileLoop.begin();
+        s_useLoop = true;
+        return &s_fileLoop;
+    }
+
+    s_audioFile = f;
+    s_useLoop = false;
     return &s_audioFile;
 }
 
-// Called by AudioPlayer::next() on EOF: returns the next stream based on loop mode.
+static Stream* onSelectStream(int index) {
+    s_fileLoop.end();
+    if (s_audioFile) s_audioFile.close();
+
+    if (index == -1) {
+        return openStream(s_source.getPath(), s_fileSize);
+    }
+
+    char path[256];
+    if (g_playlistMgr.source() == PlaySource::Library) {
+        if (index < 0 || index >= g_library.count()) return nullptr;
+        strncpy(path, g_library.path(index).c_str(), sizeof(path) - 1);
+        path[sizeof(path) - 1] = '\0';
+    } else {
+        if (!g_playlistMgr.getEntry(index, path, sizeof(path))) return nullptr;
+    }
+    return openStream(path, s_fileSize);
+}
+
+// Called by AudioPlayer::next() on EOF for auto-advance
 static Stream* onNextStream(int offset) {
     if (offset <= 0) return nullptr;
 
     if (g_loopMode == LoopMode::One) {
-        const char* path = s_source.getPath();
-        if (!path || !path[0]) return nullptr;
-        if (s_audioFile) s_audioFile.close();
-        s_audioFile = global_fs->open(path, "r");
-        if (s_audioFile) {
-            s_fileSize = s_audioFile.size();
-            return &s_audioFile;
-        }
+        // FileLoop handles endless replay; this should never be called
         return nullptr;
     }
 
@@ -67,20 +143,23 @@ static Stream* onNextStream(int offset) {
         int next = (g_nowTrackIndex + 1) % g_trackCount;
         char path[256];
         if (!get_track_path(next, path, sizeof(path))) return nullptr;
+        s_fileLoop.end();
         if (s_audioFile) s_audioFile.close();
-        s_audioFile = global_fs->open(path, "r");
-        if (s_audioFile) {
-            s_fileSize = s_audioFile.size();
-            g_nowTrackIndex = next;
-            strncpy(g_nowPath, path, sizeof(g_nowPath) - 1);
-            g_nowPath[sizeof(g_nowPath) - 1] = '\0';
-            g_nowTitle[0] = '\0';
-            g_nowDuration = compute_duration(path);
-            g_nowProgress = 0.0f;
-            g_needsRedraw = true;
-            return &s_audioFile;
-        }
-        return nullptr;
+
+        File f = global_fs->open(path, "r");
+        if (!f) return nullptr;
+        s_fileSize = f.size();
+        s_audioFile = f;
+        s_useLoop = false;
+
+        g_nowTrackIndex = next;
+        strncpy(g_nowPath, path, sizeof(g_nowPath) - 1);
+        g_nowPath[sizeof(g_nowPath) - 1] = '\0';
+        g_nowDuration = compute_duration(path);
+        g_nowProgress = 0.0f;
+        pre_read_metadata(path);
+        g_needsRedraw = true;
+        return &s_audioFile;
     }
 
     return nullptr;
@@ -92,6 +171,7 @@ void music_stop() {
 }
 
 void music_play(const char* path) {
+    pre_read_metadata(path);
     s_player.setAutoFade(true);
     s_player.setPath(path);
     s_player.play();
@@ -133,7 +213,11 @@ static void appTask(void*) {
         }
 
         // Progress from file position
-        if (s_audioFile && s_fileSize > 0) {
+        if (s_useLoop) {
+            if (s_fileLoop.file() && s_fileSize > 0) {
+                g_nowProgress = (float)s_fileLoop.file().position() / s_fileSize;
+            }
+        } else if (s_audioFile && s_fileSize > 0) {
             g_nowProgress = (float)s_audioFile.position() / s_fileSize;
         }
 
@@ -181,6 +265,9 @@ void APP_INIT() {
     // Enable auto-next for gapless track advancement
     s_player.setAutoNext(true);
     s_source.setCallbackNextStream(onNextStream);
+
+    // Set up metadata callback (fires during copy() via built-in MetaDataID3)
+    s_player.setMetadataCallback(onMetadata);
 
     // Set volume
     s_player.setVolume(g_volume / 255.0f);

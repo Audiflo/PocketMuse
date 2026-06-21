@@ -1,10 +1,13 @@
 #include <globals.h>
 #include "muse.h"
-#include "metadata.h"
 #include "albumart.h"
+#include "metacache.h"
+#include "AudioTools/Disk/WAVFileInfo.h"
 #include <cstring>
 #include <vector>
 #include <algorithm>
+
+using namespace audio_tools;
 
 // Fisher-Yates shuffle state
 static std::vector<int> s_shuffleIdx;
@@ -54,51 +57,18 @@ uint32_t compute_duration(const char* path) {
 
     uint32_t duration = 0;
 
-    // Check for WAV
-    uint8_t hdr[12];
-    if (f.read(hdr, 12) == 12) {
-        if (memcmp(hdr, "RIFF", 4) == 0 && memcmp(hdr + 8, "WAVE", 4) == 0) {
-            // Scan chunks for fmt and data
-            uint16_t channels = 0;
-            uint32_t sampleRate = 0;
-            uint16_t bitsPerSample = 0;
-            uint32_t dataSize = 0;
-
-            while (f.available() >= 8) {
-                uint8_t chunk[8];
-                if (f.read(chunk, 8) != 8) break;
-                uint32_t chunkSize = chunk[4] | (chunk[5] << 8) | (chunk[6] << 16) | (chunk[7] << 24);
-
-                if (memcmp(chunk, "fmt ", 4) == 0) {
-                    uint8_t fmt[16];
-                    size_t readSize = chunkSize < 16 ? chunkSize : 16;
-                    if (f.read(fmt, readSize) != readSize) break;
-                    channels = fmt[2] | (fmt[3] << 8);
-                    sampleRate = fmt[4] | (fmt[5] << 8) | (fmt[6] << 16) | (fmt[7] << 24);
-                    bitsPerSample = fmt[14] | (fmt[15] << 8);
-                    // Skip remaining chunk bytes
-                    if (chunkSize > readSize) f.seek(f.position() + chunkSize - readSize);
-                } else if (memcmp(chunk, "data", 4) == 0) {
-                    dataSize = chunkSize;
-                    break;
-                } else {
-                    // Skip this chunk
-                    f.seek(f.position() + chunkSize);
-                }
-            }
-
-            if (sampleRate > 0 && channels > 0 && bitsPerSample > 0) {
-                uint32_t bytesPerSec = sampleRate * channels * (bitsPerSample / 8);
-                if (bytesPerSec > 0) {
-                    duration = dataSize / bytesPerSec;
-                }
-            }
+    // Check for WAV using WAVFileInfo
+    WAVFileInfo wav;
+    WAVAudioInfo info;
+    if (wav.getInfo(f, info) && info.data_length > 0) {
+        uint32_t bytesPerSec = info.sample_rate * info.channels * (info.bits_per_sample / 8);
+        if (bytesPerSec > 0) {
+            duration = info.data_length / bytesPerSec;
         }
     }
 
-    // If not WAV (or WAV parsing failed), try MPEG frame header for bitrate
+    // If not WAV, try MPEG frame header for bitrate
     if (duration == 0) {
-        // Reset and look for MPEG sync word (0xFFE0)
         f.seek(0);
         uint8_t buf[4];
         size_t pos = 0;
@@ -111,48 +81,39 @@ uint32_t compute_duration(const char* path) {
             int b2 = f.read();
             if (b2 < 0) break;
             pos++;
-            if ((b2 & 0xE0) != 0xE0) continue; // sync bits
+            if ((b2 & 0xE0) != 0xE0) continue;
 
             buf[0] = 0xFF;
             buf[1] = b2;
             if (f.read(buf + 2, 2) != 2) break;
             pos += 2;
 
-            // Parse frame header
             int version = (buf[1] >> 3) & 3;
             int layer = (buf[1] >> 1) & 3;
             int bitrateIdx = buf[2] >> 4;
 
             if (version == 1 || layer == 0 || bitrateIdx == 0 || bitrateIdx == 15) {
-                // Invalid header, keep scanning
                 continue;
             }
 
-            // MPEG1 bitrate table (kbps) for Layer III
             static const int bitrate_mp3[15] = {
                 0, 32, 40, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320
             };
 
             int bitrate = 0;
-            // version: 3=MPEG1, 2=MPEG2, 0=MPEG2.5
-            // layer: 3=Layer I, 2=Layer II, 1=Layer III
             if (version == 3 && layer == 1) {
-                // MPEG1 Layer III
                 bitrate = bitrate_mp3[bitrateIdx];
             } else if (version == 3 && layer == 2) {
-                // MPEG1 Layer II
                 static const int table_l2[15] = {
                     0, 32, 48, 56, 64, 80, 96, 112, 128, 160, 192, 224, 256, 320, 384
                 };
                 bitrate = table_l2[bitrateIdx];
             } else if (version == 3 && layer == 3) {
-                // MPEG1 Layer I
                 static const int table_l1[15] = {
                     0, 32, 64, 96, 128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448
                 };
                 bitrate = table_l1[bitrateIdx];
             } else if (version == 2 || version == 0) {
-                // MPEG2/2.5 Layer III
                 static const int table_v2_l3[15] = {
                     0, 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160
                 };
@@ -160,7 +121,6 @@ uint32_t compute_duration(const char* path) {
             }
 
             if (bitrate > 0) {
-                // Duration = fileSize * 8 / (bitrate * 1000)
                 uint64_t bits = (uint64_t)fileSize * 8;
                 duration = bits / ((uint64_t)bitrate * 1000);
             }
@@ -183,22 +143,7 @@ void player_play_index(int index) {
     g_nowAlbum[0] = '\0';
     g_nowDuration = 0;
 
-    if (global_fs) {
-        File f = global_fs->open(path, "r");
-        if (f) {
-            SongMetadata meta;
-            if (parseID3v2(f, meta) || parseID3v1(f, meta)) {
-                strncpy(g_nowTitle, meta.title.c_str(), sizeof(g_nowTitle) - 1);
-                strncpy(g_nowArtist, meta.artist.c_str(), sizeof(g_nowArtist) - 1);
-                strncpy(g_nowAlbum, meta.album.c_str(), sizeof(g_nowAlbum) - 1);
-            }
-            f.close();
-        }
-    }
-
-    if (g_nowTitle[0] == '\0') {
-        get_display_name(path, g_nowTitle, sizeof(g_nowTitle));
-    }
+    get_display_name(path, g_nowTitle, sizeof(g_nowTitle));
 
     strncpy(g_nowPath, path, sizeof(g_nowPath) - 1);
     g_nowPath[sizeof(g_nowPath) - 1] = '\0';

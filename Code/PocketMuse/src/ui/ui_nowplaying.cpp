@@ -1,7 +1,6 @@
 #include <globals.h>
 #include "muse.h"
 #include "albumart.h"
-#include "metadata.h"
 
 static constexpr int kArtX = 8;
 static constexpr int kArtY = 28;
