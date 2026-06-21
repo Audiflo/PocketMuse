@@ -3,6 +3,7 @@
 #include "AudioTools/CoreAudio/AudioPlayer.h"
 #include "AudioTools/AudioCodecs/CodecHelix.h"
 #include "AudioTools/Disk/AudioSource.h"
+#include "AudioTools/Disk/FileLoop.h"
 #include "muse.h"
 #include "metacache.h"
 
@@ -27,6 +28,23 @@ static bool s_useLoop = false;
 // Metadata cache
 static MetadataCache s_metaCache;
 static int s_metaFields = 0;
+
+// Reconfigure I2S when decoder detects a new sample rate (fires before audio data flows)
+class I2SConfigRelay : public AudioInfoSupport {
+    void setAudioInfo(AudioInfo info) override {
+        if (info.sample_rate == 0) return;
+        auto cfg = s_i2sOut.defaultConfig();
+        cfg.pin_data      = BZ_PIN;
+        cfg.pin_bck       = -1;
+        cfg.sample_rate   = info.sample_rate;
+        cfg.channels      = info.channels;
+        cfg.bits_per_sample = info.bits_per_sample;
+        cfg.signal_type   = PDM;
+        s_i2sOut.begin(cfg);
+    }
+    AudioInfo audioInfo() override { return {}; }
+};
+static I2SConfigRelay s_i2sRelay;
 
 // Metadata callback (fires during s_player.copy())
 static void onMetadata(MetaDataType type, const char* str, int len) {
@@ -157,7 +175,9 @@ static Stream* onNextStream(int offset) {
         g_nowPath[sizeof(g_nowPath) - 1] = '\0';
         g_nowDuration = compute_duration(path);
         g_nowProgress = 0.0f;
+        g_isFavorite = g_playlistMgr.isFavorite(path);
         pre_read_metadata(path);
+        nowplaying_cache_art(path);
         g_needsRedraw = true;
         return &s_audioFile;
     }
@@ -265,6 +285,9 @@ void APP_INIT() {
     // Enable auto-next for gapless track advancement
     s_player.setAutoNext(true);
     s_source.setCallbackNextStream(onNextStream);
+
+    // Wire decoder audio-info callback (reconfigures I2S when sample rate changes)
+    s_decoder.addNotifyAudioChange(s_i2sRelay);
 
     // Set up metadata callback (fires during copy() via built-in MetaDataID3)
     s_player.setMetadataCallback(onMetadata);

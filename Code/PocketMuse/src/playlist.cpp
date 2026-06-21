@@ -36,13 +36,13 @@ bool PlaylistCursor::load(const char* m3uPath, bool isFav) {
     if (!f) return false;
 
     bool ok = isFav ? parseFavs_(f) : parseM3U_(f);
+    file_size_ = f.size();
     f.close();
 
     if (!ok || count_ == 0) { unload(); return false; }
 
     strncpy(path_, m3uPath, sizeof(path_) - 1);
     path_[sizeof(path_) - 1] = '\0';
-    file_size_ = f.size();
     return true;
 }
 
