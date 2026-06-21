@@ -12,34 +12,17 @@ void playlist_process_key(char ch) {
     int n = g_trackCount;
 
     switch (ch) {
-    case 24: // UP
+    case 19: // LEFT
         if (g_selIndex > 0) {
             g_selIndex--;
             if (g_selIndex < g_plScroll) g_plScroll = g_selIndex;
             g_needsRedraw = true;
         }
         break;
-    case 25: // DOWN
+    case 21: // RIGHT
         if (g_selIndex < n - 1) {
             g_selIndex++;
             if (g_selIndex >= g_plScroll + kMaxVis) g_plScroll = g_selIndex - kMaxVis + 1;
-            g_needsRedraw = true;
-        }
-        break;
-    case 19: // LEFT
-        if (g_selIndex > 0) {
-            g_selIndex -= kMaxVis;
-            if (g_selIndex < 0) g_selIndex = 0;
-            g_plScroll = g_selIndex;
-            g_needsRedraw = true;
-        }
-        break;
-    case 21: // RIGHT
-        if (g_selIndex < n - 1) {
-            g_selIndex += kMaxVis;
-            if (g_selIndex >= n) g_selIndex = n - 1;
-            g_plScroll = g_selIndex - kMaxVis + 1;
-            if (g_plScroll < 0) g_plScroll = 0;
             g_needsRedraw = true;
         }
         break;
@@ -155,10 +138,10 @@ void playlist_render() {
     char footer[64];
     if (g_playlistMgr.source() == PlaySource::Playlist) {
         snprintf(footer, sizeof(footer),
-            "UP/DOWN:nav SPC:play D:del B:back ?:help");
+            "L/R:nav SPC:play D:del B:back ?:help");
     } else {
         snprintf(footer, sizeof(footer),
-            "UP/DOWN:nav SPC:play B:back ?:help");
+            "L/R:nav SPC:play B:back ?:help");
     }
     draw_footer(footer);
 

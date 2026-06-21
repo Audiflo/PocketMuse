@@ -29,20 +29,17 @@ static bool s_useLoop = false;
 static MetadataCache s_metaCache;
 static int s_metaFields = 0;
 
-// Reconfigure I2S when decoder detects a new sample rate (fires before audio data flows)
+// Deferred I2S reconfiguration: decoder notifies us on its call stack, but we
+// apply the new config from loop() where it's safe to tear down and restart I2S.
+static AudioInfo s_pendingAudio;
+static AudioInfo s_activeAudio;
+
 class I2SConfigRelay : public AudioInfoSupport {
     void setAudioInfo(AudioInfo info) override {
         if (info.sample_rate == 0) return;
-        auto cfg = s_i2sOut.defaultConfig();
-        cfg.pin_data      = BZ_PIN;
-        cfg.pin_bck       = -1;
-        cfg.sample_rate   = info.sample_rate;
-        cfg.channels      = info.channels;
-        cfg.bits_per_sample = info.bits_per_sample;
-        cfg.signal_type   = PDM;
-        s_i2sOut.begin(cfg);
+        s_pendingAudio = info;
     }
-    AudioInfo audioInfo() override { return {}; }
+    AudioInfo audioInfo() override { return s_pendingAudio; }
 };
 static I2SConfigRelay s_i2sRelay;
 
@@ -274,6 +271,9 @@ void APP_INIT() {
     cfg.bits_per_sample = 16;
     cfg.signal_type = PDM;
     s_i2sOut.begin(cfg);
+    s_activeAudio.sample_rate = 44100;
+    s_activeAudio.channels = 2;
+    s_activeAudio.bits_per_sample = 16;
 
     // Set up AudioSourceCallback
     s_source.setCallbackSelectStream(onSelectStream);
@@ -375,6 +375,18 @@ void setup() {
 }
 
 void loop() {
+    if (s_pendingAudio.sample_rate != 0 &&
+        s_pendingAudio.sample_rate != s_activeAudio.sample_rate) {
+        auto cfg = s_i2sOut.defaultConfig();
+        cfg.pin_data      = BZ_PIN;
+        cfg.pin_bck       = -1;
+        cfg.sample_rate   = s_pendingAudio.sample_rate;
+        cfg.channels      = s_pendingAudio.channels;
+        cfg.bits_per_sample = s_pendingAudio.bits_per_sample;
+        cfg.signal_type   = PDM;
+        s_i2sOut.begin(cfg);
+        s_activeAudio = s_pendingAudio;
+    }
     s_player.copy();
 }
 

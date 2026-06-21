@@ -248,7 +248,7 @@ void nowplaying_render() {
     display.print(timeBuf);
 
     // Footer
-    draw_footer("SPC:pause < >:skip B:browser P:plist ?:help");
+    draw_footer("SPC:pause < >:skip /\\/:vol B:browser P:plist ?:help");
 
     EINK().refresh();
 }

@@ -43,32 +43,16 @@ void browser_process_key(char ch) {
     int page = kMaxVis;
 
     switch (ch) {
-    case 24: // UP
+    case 19: // LEFT - prev track
         if (g_selIndex > 0) {
             g_selIndex--;
             if (g_selIndex < g_scrollOffset) g_scrollOffset = g_selIndex;
             g_needsRedraw = true;
         }
         break;
-    case 25: // DOWN
+    case 21: // RIGHT - next track
         if (g_selIndex < n - 1) {
             g_selIndex++;
-            if (g_selIndex >= g_scrollOffset + kMaxVis) g_scrollOffset = g_selIndex - kMaxVis + 1;
-            g_needsRedraw = true;
-        }
-        break;
-    case 19: // LEFT - prev page
-        if (g_selIndex > 0) {
-            g_selIndex -= page;
-            if (g_selIndex < 0) g_selIndex = 0;
-            if (g_selIndex < g_scrollOffset) g_scrollOffset = g_selIndex;
-            g_needsRedraw = true;
-        }
-        break;
-    case 21: // RIGHT - next page
-        if (g_selIndex < n - 1) {
-            g_selIndex += page;
-            if (g_selIndex >= n) g_selIndex = n - 1;
             if (g_selIndex >= g_scrollOffset + kMaxVis) g_scrollOffset = g_selIndex - kMaxVis + 1;
             g_needsRedraw = true;
         }
@@ -191,10 +175,10 @@ void browser_render() {
     char footer[64] = {};
     if (g_playlistMgr.source() == PlaySource::Playlist) {
         snprintf(footer, sizeof(footer),
-            "UP/DOWN:nav SPC:play P:src F:fav D:del ?:help");
+            "L/R:nav SPC:play P:src F:fav D:del ?:help");
     } else {
         snprintf(footer, sizeof(footer),
-            "UP/DOWN:nav SPC:play P:src F:fav L:loop ?:help");
+            "L/R:nav SPC:play P:src F:fav L:loop ?:help");
     }
     draw_footer(footer);
 

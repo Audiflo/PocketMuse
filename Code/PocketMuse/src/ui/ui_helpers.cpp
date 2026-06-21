@@ -121,8 +121,8 @@ void ui_show_help() {
 
     struct Row { const char* key; const char* desc; };
     Row rows[] = {
-        { "UP/DOWN",  "Navigate lists"             },
-        { "LEFT/RIGHT","Page scroll / skip track"    },
+        { "LEFT/RIGHT","Navigate / skip track"       },
+        { "UP/DOWN",  "Volume (Now Playing)"         },
         { "SPACE",    "Play / pause"                },
         { "ENTER",    "Select / play"               },
         { "P",        "Cycle source (Lib/Fav/Pl)"    },
