@@ -18,7 +18,7 @@ long lastInput = 0;
 static int cursor_pos = 0;
 
 void HOME_INIT() {
-  u8g2f.setForegroundColor(GxEPD_BLACK);
+  display.setTextColor(GxEPD_BLACK);
   display.setRotation(1);
   CurrentAppState = HOME;
   currentLine     = "";
@@ -143,7 +143,7 @@ String commandSelect(String command) {
     TERMINAL_INIT();
   }
   /////////////////////////////
-  else if (command == "bluetooth" || command == "bt") {
+  else if (command == "bluetooth" || command == "bt" || command == "4") {
     // OPEN BLUETOOTH
   }
   /////////////////////////////
@@ -159,7 +159,7 @@ String commandSelect(String command) {
   else if (command == "journ" || command == "journal" || command == "daily" || command == "8") {
     JOURNAL_INIT();
   }
-  else if (command == "chat" || command == "msg" || command == "4") {
+  else if (command == "chat" || command == "msg") {
     COMM_INIT();
   }
   else if (command == "version" || command == "ver") {
@@ -208,6 +208,8 @@ String commandSelect(String command) {
 void drawHome() {
   EINK().resetDisplay();
 
+  int16_t x1, y1;
+  uint16_t charWidth, charHeight;
   uint8_t appsPerRow = 5; // Number of apps per row
   uint8_t spacingX = 60;  // Horizontal spacing
   uint8_t spacingY = 60;  // Vertical spacing
@@ -215,8 +217,7 @@ void drawHome() {
   uint8_t startX = 20;    // Initial X position
   uint8_t startY = 20;    // Initial Y position
 
-  u8g2f.setFont(u8g2_font_ncenR10_tf);
-  u8g2f.setFontMode(1);
+  display.setFont(&FreeSerif9pt7b);
   for (int i = 0; i < sizeof(appIcons) / sizeof(appIcons[0]); i++) {
     int row = i / appsPerRow;
     int col = i % appsPerRow;
@@ -226,12 +227,11 @@ void drawHome() {
     if (row == 2) yPos += 10;
 
     display.drawBitmap(xPos, yPos, appIcons[i], iconSize, iconSize, GxEPD_BLACK);
-    int w = u8g2f.getUTF8Width(appStateNames[i].c_str());
-    u8g2f.setCursor(xPos + (iconSize / 2) - (w / 2), yPos + iconSize + 13);
-    u8g2f.print(appStateNames[i]);
+    display.getTextBounds(appStateNames[i], 0, 0, &x1, &y1, &charWidth, &charHeight);
+    display.setCursor(xPos + (iconSize / 2) - (charWidth / 2), yPos + iconSize + 13);
+    display.print(appStateNames[i]);
   }
-  u8g2f.setFont(u8g2_font_courB10_tf);
-  u8g2f.setFontMode(1);
+  display.setFont(&FreeMonoBold9pt7b);
 
   // Draw sideload app rounded rect
   //display.drawRoundRect(startX-15, (3*spacingY) - iconSize, (5*spacingX)+10, spacingY + 10, 15, GxEPD_BLACK);
@@ -453,11 +453,10 @@ void einkHandler_HOME() {
 
           int loopCount = std::min((int)tasks.size(), 7);
           for (int i = 0; i < loopCount; i++) {
-            u8g2f.setFont(u8g2_font_ncenR10_tf);
-            u8g2f.setFontMode(1);
+            display.setFont(&FreeSerif9pt7b);
             // PRINT TASK NAME
-            u8g2f.setCursor(151, 68 + (25 * i));
-            u8g2f.print(tasks[i][0].c_str());
+            display.setCursor(151, 68 + (25 * i));
+            display.print(tasks[i][0].c_str());
           }
         }
 
