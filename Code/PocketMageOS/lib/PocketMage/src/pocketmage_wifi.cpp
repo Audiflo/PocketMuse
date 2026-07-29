@@ -57,6 +57,7 @@ void PocketMageWifi::begin() {
 void PocketMageWifi::stop() {
   if (_taskHandle) {
     if (_state != WifiRadioState::Off && _state != WifiRadioState::TurningOff) {
+      esp_wifi_disconnect();
       if (_wifiEventHandler) {
         esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, _wifiEventHandler);
         _wifiEventHandler = nullptr;
@@ -299,13 +300,20 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
     case WIFI_EVENT_STA_START:
       setStatus("WiFi started");
       break;
-    case WIFI_EVENT_STA_CONNECTED:
+    case WIFI_EVENT_STA_CONNECTED: {
+      auto* connected = static_cast<wifi_event_sta_connected_t*>(data);
       setStatus("WiFi connected");
       _connectError[0] = 0;
       _retryCount = 0;
+      size_t len = connected->ssid_len;
+      if (len > sizeof(_connectedSSID) - 1)
+        len = sizeof(_connectedSSID) - 1;
+      memcpy(_connectedSSID, connected->ssid, len);
+      _connectedSSID[len] = 0;
       _state = WifiRadioState::Connected;
       publishEvent();
       break;
+    }
     case WIFI_EVENT_STA_DISCONNECTED: {
       auto* disconn = static_cast<wifi_event_sta_disconnected_t*>(data);
       _state = WifiRadioState::On;
@@ -352,10 +360,12 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
         esp_wifi_scan_get_ap_num(&num);
         if (_scanResults)
           free(_scanResults);
+        if (num > MAX_SCAN_RESULTS)
+          num = MAX_SCAN_RESULTS;
         _scanResults = (wifi_ap_record_t*)malloc(sizeof(wifi_ap_record_t) * MAX_SCAN_RESULTS);
         if (_scanResults) {
           esp_wifi_scan_get_ap_records(&num, _scanResults);
-          _scanResultCount = num > MAX_SCAN_RESULTS ? MAX_SCAN_RESULTS : num;
+          _scanResultCount = num;
         } else {
           _scanResultCount = 0;
         }
