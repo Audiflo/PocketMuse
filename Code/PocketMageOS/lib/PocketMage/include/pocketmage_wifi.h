@@ -59,6 +59,7 @@ class PocketMageWifi {
   String getConnectedSSID() const;
   String getIpAddress() const;
   int getRssi() const;
+  String getLastError() const;
 
   // Scan results
   uint16_t getScanResultCount() const;
@@ -125,6 +126,13 @@ class PocketMageWifi {
   char _pendingPassword[65];
   bool _pendingSave;
 
+  // Retry state
+  uint8_t _retryCount;
+  unsigned long _retryAt;
+  char _retrySSID[33];
+  char _retryPassword[65];
+  char _connectError[64];
+
   // Scan results
   wifi_ap_record_t* _scanResults;
   uint16_t _scanResultCount;
@@ -133,8 +141,6 @@ class PocketMageWifi {
   // FreeRTOS handles
   TaskHandle_t _taskHandle;
   QueueHandle_t _commandQueue;
-  EventGroupHandle_t _eventGroup;
-
   // ESP handles
   esp_netif_t* _staNetif;
   esp_event_handler_instance_t _wifiEventHandler;
@@ -147,17 +153,13 @@ class PocketMageWifi {
   // Event callback
   WifiEventCallback _eventCallback;
 
-  // Event bits
-  static constexpr uint32_t BIT_CONNECTED = BIT0;
-  static constexpr uint32_t BIT_DISCONNECTED = BIT1;
-  static constexpr uint32_t BIT_SCAN_DONE = BIT2;
-  static constexpr uint32_t BIT_CONNECT_FAIL = BIT3;
-
   // Flags
   bool _initialized;
   bool _autoConnectEnabled;
-  unsigned long _lastScanTime;
-  static constexpr unsigned long AUTO_SCAN_INTERVAL = 15000;  // 15 seconds
+  static constexpr unsigned long AUTO_SCAN_INTERVAL = 15000;
+  static constexpr uint8_t MAX_RETRIES = 5;
+  static constexpr unsigned long RETRY_BASE_DELAY_MS = 1000;
+  static constexpr unsigned long RETRY_MAX_DELAY_MS = 30000;
 };
 
 // Global accessor for convenience
