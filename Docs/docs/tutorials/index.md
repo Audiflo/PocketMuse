@@ -15,7 +15,7 @@ Welcome to the PocketMage tutorials section! Here you'll find guides for setup, 
 ## Development
 
 - [Build Environments & PlatformIO Setup](../development/build-environments.md)
-- [OTA App Template](https://github.com/ashtf8/PocketMage_PDA/blob/main/Code/PocketMage_V3/src/APP_TEMPLATE.cpp)
+- [OTA App Template](https://github.com/ashtf8/PocketMage_PDA/blob/main/Code/PocketMageOS/src/APP_TEMPLATE.cpp)
 
 ## Scripting
 

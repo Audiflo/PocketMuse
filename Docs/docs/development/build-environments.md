@@ -30,7 +30,7 @@ PocketMage firmware is built with [PlatformIO](https://platformio.org/). There a
    ```
 
 2. Install the [PlatformIO IDE](https://docs.platformio.org/en/latest/integration/ide/vscode.html#ide-vscode) extension in VS Code.
-3. Open the PocketMage source folder in VS Code. PlatformIO will detect the `platformio.ini` and prompt you to pick a folder - select `Code/PocketMage_V3/`.
+3. Open the PocketMage source folder in VS Code. PlatformIO will detect the `platformio.ini` and prompt you to pick a folder - select `Code/PocketMageOS/`.
 4. Build using the PlatformIO toolbar (checkmark icon) or the command palette.
 5. The first build takes longer as it downloads toolchains and compiles libraries.
 
@@ -46,7 +46,7 @@ The same steps as Linux work on macOS. No additional setup required.
 
 ## OTA Apps
 
-OTA apps are compiled with the `OTA_APP` environment. The entry point API is defined in [APP_TEMPLATE.cpp](https://github.com/ashtf8/PocketMage_PDA/blob/main/Code/PocketMage_V3/src/APP_TEMPLATE.cpp).
+OTA apps are compiled with the `OTA_APP` environment. The entry point API is defined in [APP_TEMPLATE.cpp](https://github.com/ashtf8/PocketMage_PDA/blob/main/Code/PocketMageOS/src/APP_TEMPLATE.cpp).
 
 For a full walkthrough, watch the [OTA app development video](https://www.youtube.com/watch?v=3Ytc-3-BbMM).
 

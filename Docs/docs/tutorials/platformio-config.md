@@ -29,7 +29,7 @@ The Pocket Mage project has some information about building the project [in this
 
 ![VS Code window configured for PlatformIO build](./PlatformIO_in_VS_Code_Build.png)
 
-5. Verify that your environment is working by buildlng either BlankApp or PocketMage_V3. For either, the first compilation will be significantly slower as it builds all the object files for the libraries. Subsequent builds will be much faster.
+5. Verify that your environment is working by buildlng either BlankApp or PocketMageOS. For either, the first compilation will be significantly slower as it builds all the object files for the libraries. Subsequent builds will be much faster.
 
 ## Setting up a Macintosh Build Environment
 
