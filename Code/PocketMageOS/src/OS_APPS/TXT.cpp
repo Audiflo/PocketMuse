@@ -1477,12 +1477,14 @@ inline uint8_t getFastOledCharWidth(uint16_t unicode, bool bold, bool italic, bo
 // OLED Editor
 void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
   u8g2.clearBuffer();
-  initOledWidthCache();
 
-  int display_w = u8g2.getDisplayWidth();
+  const int display_w = u8g2.getDisplayWidth();
+  const int bodyY = 18;
+  const int cursorH = 23;
+
   int total_pixel_width = 0;
   int cursor_pixel_offset = 0;
-  
+
   bool currentWordBold = false;
   bool currentWordItalic = false;
 
@@ -1490,7 +1492,14 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
   bool italic = false;
   bool inlineCode = false;
 
-  // --- PASS 1: Single-sweep UTF-8 width and cursor calculation ---
+  auto charWidth = [&](uint16_t code, bool isSpecial) -> int {
+    if (isSpecial) {
+      return FontEngine::oledCharWidth(code, FontStyle::Tiny);
+    }
+      return FontEngine::oledCharWidth(code, FontStyle::Medium);
+    };
+
+    // --- PASS 1: Single-sweep UTF-8 width and cursor calculation ---
   uint16_t i = 0;
   while (i < line.len) {
     uint16_t start_i = i;
@@ -1508,14 +1517,12 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
           case 3: bold = !bold; italic = !italic; break;
         }
       }
-      total_pixel_width += getFastOledCharWidth('*', false, false, true);
+      total_pixel_width += charWidth('*', true);
     } else if (unicode == '`') {
       inlineCode = !inlineCode;
-      total_pixel_width += getFastOledCharWidth('`', false, false, true);
+      total_pixel_width += charWidth('`', true);
     } else {
-      int w = getFastOledCharWidth(unicode, bold, italic, false);
-      if (italic) w -= 3; 
-      total_pixel_width += w;
+      total_pixel_width += charWidth(unicode, false);
     }
 
     if (start_i < cursor_pos) cursor_pixel_offset = total_pixel_width;
@@ -1537,11 +1544,13 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
 
   // --- PASS 2: Render UTF-8 characters ---
   int xpos = line_start;
-  bold = false; 
+  bold = false;
   italic = false;
   inlineCode = false;
 
-  if (cursor_pos == 0) u8g2.drawVLine(xpos, 1, 22);
+  FontEngine::setOledStyle(FontStyle::Medium);
+
+  if (cursor_pos == 0) u8g2.drawVLine(xpos, 1, cursorH);
 
   i = 0;
   while (i < line.len) {
@@ -1560,30 +1569,30 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
           case 3: bold = !bold; italic = !italic; break;
         }
       }
-      
+
       FontEngine::setOledStyle(FontStyle::Tiny);
       int w = FontEngine::oledCharWidth('*', FontStyle::Tiny);
-      if (xpos + w >= 0 && xpos <= display_w) u8g2.drawGlyph(xpos, 8, '*'); 
+      if (xpos + w >= 0 && xpos <= display_w) FontEngine::oledDrawGlyph(xpos, 8, '*');
       xpos += w;
+      FontEngine::setOledStyle(FontStyle::Medium);
     } else if (unicode == '`') {
       inlineCode = !inlineCode;
       FontEngine::setOledStyle(FontStyle::Tiny);
       int w = FontEngine::oledCharWidth('`', FontStyle::Tiny);
-      if (xpos + w >= 0 && xpos <= display_w) u8g2.drawGlyph(xpos, 8, '`'); 
+      if (xpos + w >= 0 && xpos <= display_w) FontEngine::oledDrawGlyph(xpos, 8, '`');
       xpos += w;
+      FontEngine::setOledStyle(FontStyle::Medium);
     } else {
-      setFontOLED(line.type, bold, italic);
-      int char_w = getFastOledCharWidth(unicode, bold, italic, false);
+      int char_w = charWidth(unicode, false);
 
       if (xpos + char_w >= 0 && xpos <= display_w) {
-        u8g2.drawGlyph(xpos, 20, unicode); 
+        FontEngine::oledDrawGlyph(xpos, bodyY, unicode);
       }
-      
+
       xpos += char_w;
-      if (italic) xpos -= 3;
     }
 
-    if (cursor_pos == i) u8g2.drawVLine(xpos, 1, 22);
+    if (cursor_pos == i) u8g2.drawVLine(xpos, 1, cursorH);
   }
 
   // Draw progress bar if on the last line
