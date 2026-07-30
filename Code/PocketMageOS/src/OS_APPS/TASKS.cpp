@@ -443,20 +443,8 @@ void einkHandler_TASKS() {
 
           FontEngine::setEinkStyle(FontStyle::Body);
           for (int i = startIdx; i < endIdx; i++) {
-            
-            // Dynamic Truncation Calculation (Max 198px width)
-            String tName = tasks[i][0];
-            int w = FontEngine::einkTextWidth(tName);
-            
-            if (w > 192) { // 227-29 = 198px, using 192px to allow room for ".."
-              while (w > 180 && tName.length() > 0) {
-                tName.remove(tName.length() - 1);
-                w = FontEngine::einkTextWidth(tName);
-              }
-              tName += "..";
-            }
+            String tName = truncateWithEllipsis(tasks[i][0], 180);
 
-            // PRINT TASK NAME
             FontEngine::einkDraw(29, 54 + (17 * displayRow), tName.c_str());
             
             // PRINT TASK DUE DATE
@@ -465,15 +453,7 @@ void einkHandler_TASKS() {
             displayRow++;
           }
 
-          // DRAW SCROLLBAR
-          if (maxScroll > 0) {
-            float visibleRatio = (float)MAX_FILES / tasks.size();
-            int handleHeight = max((int)(174 * visibleRatio), 15);
-            float scrollFraction = (float)taskScrollIndex / maxScroll;
-            int handleY = 38 + scrollFraction * (174 - handleHeight);
-            
-            display.fillRect(311, handleY, 3, handleHeight, GxEPD_BLACK);
-          }
+          drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, 311, 38, 174, 3);
         }
         else EINK().drawStatusBar("No Tasks! Add New Task (N)");
 
@@ -501,20 +481,8 @@ void einkHandler_TASKS() {
 
           FontEngine::setEinkStyle(FontStyle::Body);
           for (int i = startIdx; i < endIdx; i++) {
-            
-            // Dynamic Truncation Calculation (Max 198px width)
-            String tName = tasks[i][0];
-            int w = FontEngine::einkTextWidth(tName);
-            
-            if (w > 192) { // 227-29 = 198px, using 192px to allow room for ".."
-              while (w > 180 && tName.length() > 0) {
-                tName.remove(tName.length() - 1);
-                w = FontEngine::einkTextWidth(tName);
-              }
-              tName += "..";
-            }
+            String tName = truncateWithEllipsis(tasks[i][0], 180);
 
-            // PRINT TASK NAME
             FontEngine::einkDraw(29, 54 + (17 * displayRow), tName.c_str());
             
             // PRINT TASK DUE DATE
@@ -523,15 +491,7 @@ void einkHandler_TASKS() {
             displayRow++;
           }
 
-          // DRAW SCROLLBAR
-          if (maxScroll > 0) {
-            float visibleRatio = (float)MAX_FILES / tasks.size();
-            int handleHeight = max((int)(174 * visibleRatio), 15);
-            float scrollFraction = (float)taskScrollIndex / maxScroll;
-            int handleY = 38 + scrollFraction * (174 - handleHeight);
-            
-            display.fillRect(311, handleY, 3, handleHeight, GxEPD_BLACK);
-          }
+          drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, 311, 38, 174, 3);
         }
         
         switch (newTaskState) {

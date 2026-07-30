@@ -840,7 +840,7 @@ void einkHandler_APPLOADER() {
     case MENU:
       if (newState) {
         newState = false;
-        EINK().resetDisplay(false);
+        beginEinkScreen(true);
         display.drawBitmap(0, 0, _appLoader, 320, 218, GxEPD_BLACK);
 
         loadAndDrawAppIcon(42 , 146, 1, true, 7);  // OTA1
@@ -848,10 +848,7 @@ void einkHandler_APPLOADER() {
         loadAndDrawAppIcon(174, 146, 3, true, 7);  // OTA3
         loadAndDrawAppIcon(238, 146, 4, true, 7);  // OTA4
 
-        EINK().drawStatusBar("Type Letter A-D:");
-
-        //EINK().multiPassRefresh(2);
-        EINK().refresh();
+        endEinkScreen("Type Letter A-D:", EinkRefresh::Normal);
       }
       break;
   }

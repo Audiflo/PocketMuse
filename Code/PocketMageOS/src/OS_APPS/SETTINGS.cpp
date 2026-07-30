@@ -259,8 +259,7 @@ void processKB_SETTINGS() {
 void einkHandler_SETTINGS() {
   if (newState) {
     newState = false;
-
-    EINK().resetDisplay();
+    beginEinkScreen();
     display.drawBitmap(0, 0, _settings, 320, 218, GxEPD_BLACK);
 
     FontEngine::setEinkStyle(FontStyle::Body);
@@ -291,9 +290,7 @@ void einkHandler_SETTINGS() {
     // OLED_MAX_FPS
     FontEngine::einkDraw(163, 42, String(OLED_MAX_FPS).c_str());
 
-    EINK().drawStatusBar("Type a Command:");
-
-    EINK().multiPassRefresh(2);
+    endEinkScreen("Type a Command:");
   }
 }
 #endif

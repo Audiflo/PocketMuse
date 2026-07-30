@@ -524,10 +524,9 @@ void einkHandler_FILEWIZ() {
     case WIZ0_:
       if (newState) {
         newState = false;
-        EINK().resetDisplay();
+        beginEinkScreen();
 
         // DRAW APP
-        EINK().drawStatusBar("Select a File (0-9)");
         display.drawBitmap(0, 0, fileWizardallArray[0], 320, 218, GxEPD_BLACK);
 
         // Update the backend array with the newest files
@@ -548,15 +547,13 @@ void einkHandler_FILEWIZ() {
           }
         }
 
-        EINK().multiPassRefresh(2);
+        endEinkScreen("Select a File (0-9)");
       }
       break;
     case WIZ1_:
       if (newState) {
         newState = false;
-        EINK().resetDisplay();
-
-        // DRAW APP
+        beginEinkScreen();
         EINK().drawStatusBar("- " + PM_SDAUTO().getWorkingFile());
         display.drawBitmap(0, 0, fileWizardallArray[1], 320, 218, GxEPD_BLACK);
 

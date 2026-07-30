@@ -1,6 +1,7 @@
 #include "pocketmage_layout.h"
 #include <pocketmage_font/pocketmage_font.h>
 #include <GxEPD2_BW.h>
+#include <vector>
 
 // Forward-declare the global E-Ink display (declared in pocketmage_eink.h)
 using PanelT   = GxEPD2_310_GDEQ031T10;
@@ -64,21 +65,19 @@ String truncateWithEllipsis(const String& text, int maxWidthPx) {
   return text.substring(0, lo) + dots;
 }
 
-void drawScrollbar(int totalLines, int visibleLines, int scrollIndex, int barWidth) {
-  int maxScroll = totalLines - visibleLines;
-  if (maxScroll <= 0) return;
-
-  int barX = display.width() - barWidth;
-
-  float visibleRatio = (float)visibleLines / totalLines;
-  int handleHeight = max((int)(display.height() * visibleRatio), 15);
-
-  float scrollFraction = (float)scrollIndex / maxScroll;
-  if (scrollFraction > 1.0f) scrollFraction = 1.0f;
-  int handleY = scrollFraction * (display.height() - handleHeight);
-
-  display.fillRect(barX, handleY, barWidth, handleHeight, GxEPD_BLACK);
-
-  display.drawFastHLine(barX, display.height() - 1, barWidth, GxEPD_WHITE);
-  display.drawFastHLine(barX, 0, barWidth, GxEPD_WHITE);
+std::vector<String> wordWrap(const String& text, int maxWidthPx, FontStyle style) {
+  std::vector<String> lines;
+  FontEngine::setEinkStyle(style);
+  const char* s = text.c_str();
+  size_t len = text.length();
+  size_t pos = 0;
+  while (pos < len) {
+    size_t n = sliceThatFits(s + pos, len - pos, maxWidthPx);
+    if (n == 0) n = 1;
+    String line(s + pos, n);
+    line.trim();
+    lines.push_back(line);
+    pos += n;
+  }
+  return lines;
 }

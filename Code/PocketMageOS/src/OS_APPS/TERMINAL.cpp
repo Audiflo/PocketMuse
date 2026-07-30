@@ -287,23 +287,8 @@ void updateTerminalDisp() {
     y += yStep;
   }
 
-  // Draw Terminal Scrollbar
-  if (maxScroll > 0) {
-    int barWidth = 3;
-    int barX = display.width() - barWidth - 1;
-    
-    float visibleRatio = (float)termLinesPerPage / terminalOutputs.size();
-    int handleHeight = max((int)(display.height() * visibleRatio), 15);
-    
-    float scrollFraction = (float)termScrollIndex / maxScroll;
-    int handleY = scrollFraction * (display.height() - handleHeight);
-    
-    display.fillRect(barX, handleY, barWidth, handleHeight, fgColor);
-
-    // Ensure bar never visually touches top/bottom edges
-    display.drawFastHLine(barX, display.height()-1,barWidth, bgColor);
-    display.drawFastHLine(barX, 0,barWidth, bgColor);
-  }
+  drawScrollbar(terminalOutputs.size(), termLinesPerPage, termScrollIndex,
+                display.width() - 4, 0, -1, 3, false, fgColor, bgColor);
 
   u8g2f.setForegroundColor(GxEPD_BLACK);
   EINK().refresh();

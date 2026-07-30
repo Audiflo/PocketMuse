@@ -174,10 +174,8 @@ void einkHandler_JOURNAL() {
     case J_MENU:
       if (newState) {
         newState = false;
-
-        EINK().resetDisplay(); // Clear the uninitialized buffer correctly
+        beginEinkScreen();
         drawJMENU();
-
         EINK().multiPassRefresh(2);
       }
       break;

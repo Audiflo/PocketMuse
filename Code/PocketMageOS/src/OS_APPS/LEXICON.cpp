@@ -331,12 +331,10 @@ void einkHandler_LEXICON() {
     case MENU:
       if (newState) {
         newState = false;
-        EINK().resetDisplay(false);
+        beginEinkScreen(true);
         display.drawBitmap(0, 0, _lex0, 320, 218, GxEPD_BLACK);
 
-        EINK().drawStatusBar("Type a Word:");
-
-        EINK().multiPassRefresh(2);
+        endEinkScreen("Type a Word:");
       }
       break;
       
@@ -344,8 +342,7 @@ void einkHandler_LEXICON() {
       if (newState) {
         newState = false;
         
-
-        EINK().resetDisplay(); 
+        beginEinkScreen();
 
         display.drawBitmap(0, 0, _lex1, 320, 218, GxEPD_BLACK);
         u8g2f.setForegroundColor(GxEPD_BLACK);
@@ -361,57 +358,15 @@ void einkHandler_LEXICON() {
         int maxW = display.width() - (2 * LEX_MARGIN);
         int cursorY = 87;
 
-        String currentLine = "";
-        String currentWord = "";
-
-        // Iterate through every character in the definition string
-        for (int i = 0; i <= defText.length(); i++) {
-          char c = (i < defText.length()) ? defText[i] : ' '; // Treat end of string as a space to flush the last word
-
-          // If we hit a space, a newline, or the end of the string, process the word
-          if (c == ' ' || c == '\n' || i == defText.length()) {
-            if (currentWord.length() > 0) {
-              String testLine = currentLine;
-              if (testLine.length() > 0) testLine += " ";
-              testLine += currentWord;
-
-              // Measure the line with the new word added
-              int w = FontEngine::einkTextWidth(testLine);
-
-              // If it exceeds the max width, wrap it to the next line
-              if (w > maxW && currentLine.length() > 0) {
-                FontEngine::einkDraw(LEX_MARGIN, cursorY, currentLine);
-                cursorY += LEX_LINE_HEIGHT;
-                currentLine = currentWord; // Start the next line with the word that didn't fit
-              } else {
-                currentLine = testLine; // Word fits, append it to the current line
-              }
-              currentWord = ""; // Reset word buffer
-            }
-
-            // If the character itself was a newline, force a wrap immediately
-            if (c == '\n') {
-              FontEngine::einkDraw(LEX_MARGIN, cursorY, currentLine);
-              cursorY += LEX_LINE_HEIGHT;
-              currentLine = "";
-            }
-          } else {
-            // Build the current word character by character
-            currentWord += c;
+        auto wrappedLines = wordWrap(defText, maxW, FontStyle::Body);
+        for (const auto& line : wrappedLines) {
+          if (line.length() > 0) {
+            FontEngine::einkDraw(LEX_MARGIN, cursorY, line);
           }
+          cursorY += LEX_LINE_HEIGHT;
         }
 
-        // Flush any remaining text in the buffer after the loop ends
-        if (currentLine.length() > 0) {
-          FontEngine::einkDraw(LEX_MARGIN, cursorY, currentLine);
-        }
-
-        EINK().drawStatusBar("Type a New Word:");
-
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
-        EINK().refresh();
+        endEinkScreen("Type a New Word:", EinkRefresh::ForceFull);
       }
       break;
   }

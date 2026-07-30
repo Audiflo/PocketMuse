@@ -241,16 +241,9 @@ void processKB_USB() {
 void einkHandler_USB() {
   if (newState) {
     newState = false;
-    
-    display.fillScreen(GxEPD_WHITE);
-
-    // Display Status Bar
-    EINK().drawStatusBar("Connect to a Computer:");
-
-    // Display Background
+    beginEinkScreen();
     display.drawBitmap(0, 0, _usb, 320, 218, GxEPD_BLACK);
-
-    EINK().multiPassRefresh(2);
+    endEinkScreen("Connect to a Computer:");
   }
 }
 #endif
