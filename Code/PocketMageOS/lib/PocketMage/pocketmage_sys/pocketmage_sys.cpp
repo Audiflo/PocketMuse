@@ -489,3 +489,15 @@ void stringToVector(String inputText) {
   }
 }
 
+pocketmage::ScopedCpuBoost::ScopedCpuBoost() {
+  prevFreq_ = getCpuFrequencyMhz();
+  if (prevFreq_ != 240) {
+    setCpuSpeed(240);
+    delay(50);
+  }
+}
+
+pocketmage::ScopedCpuBoost::~ScopedCpuBoost() {
+  if (SAVE_POWER) setCpuSpeed(POWER_SAVE_FREQ);
+}
+

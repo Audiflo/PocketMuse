@@ -35,7 +35,7 @@ void applicationEinkHandler() {
       einkHandler_TASKS();
       break;
     case SETTINGS:
-      einkHandler_settings();
+      einkHandler_SETTINGS();
       break;
     case USB_APP:
       einkHandler_USB();
@@ -117,7 +117,7 @@ void processKB() {
       processKB_TASKS();
       break;
     case SETTINGS:
-      processKB_settings();
+      processKB_SETTINGS();
       break;
     case USB_APP:
       processKB_USB();

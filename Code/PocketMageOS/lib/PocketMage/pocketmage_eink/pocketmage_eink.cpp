@@ -63,24 +63,23 @@ void PocketmageEink::setFastFullRefresh(bool setting) {
 }
 
 void PocketmageEink::statusBar(const String& input, bool fullWindow) {
-  FontEngine::setEinkStyle(FontStyle::MonoBold);
-  u8g2f.setForegroundColor(GxEPD_BLACK);
-  u8g2f.setBackgroundColor(GxEPD_WHITE);
-  if (!fullWindow){
+  if (!fullWindow) {
     display_.setPartialWindow(0, display_.height() - 20, display_.width(), 20);
-    display_.fillRect(0, display_.height() - 26, display_.width(), 26, GxEPD_WHITE);
-    display_.drawRect(0, display_.height() - 20, display_.width(), 20, GxEPD_BLACK);
-    FontEngine::einkDraw(4, display_.height() - 6, input);
+    drawStatusBar(input);
+  } else {
+    FontEngine::setEinkStyle(FontStyle::MonoBold);
+    u8g2f.setForegroundColor(GxEPD_BLACK);
+    u8g2f.setBackgroundColor(GxEPD_WHITE);
   }
   display_.drawRect(display_.width() - 30, display_.height() - 20, 30, 20, GxEPD_BLACK);
 }
 
 void PocketmageEink::drawStatusBar(const String& input) {
-  display_.fillRect(0, display_.height() - 26, display_.width(), 26, GxEPD_WHITE);
-  display_.drawRect(0, display_.height() - 20, display_.width(), 20, GxEPD_BLACK);
   FontEngine::setEinkStyle(FontStyle::MonoBold);
   u8g2f.setForegroundColor(GxEPD_BLACK);
   u8g2f.setBackgroundColor(GxEPD_WHITE);
+  display_.fillRect(0, display_.height() - 26, display_.width(), 26, GxEPD_WHITE);
+  display_.drawRect(0, display_.height() - 20, display_.width(), 20, GxEPD_BLACK);
   FontEngine::einkDraw(4, display_.height() - 6, input);
 }
 

@@ -38,7 +38,7 @@ bool isLeapYear(int year) {
 }
 
 void drawJMENU() {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -99,7 +99,7 @@ void drawJMENU() {
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 // Loops
@@ -132,7 +132,7 @@ void processKB_JOURNAL() {
         }
 
         if (uiDate.length() == 10) {
-          SDActive = true;
+          PM_SDAUTO().beginIO();
           pocketmage::setCpuSpeed(240);
           delay(50);
 
@@ -151,7 +151,7 @@ void processKB_JOURNAL() {
           currentJournal = fileName;
 
           if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-          SDActive = false;
+          PM_SDAUTO().endIO();
           
           // Pass execution to the text editor
           TXT_INIT_JournalMode();

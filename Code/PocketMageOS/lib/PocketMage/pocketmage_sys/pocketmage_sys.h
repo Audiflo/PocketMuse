@@ -27,6 +27,16 @@ namespace pocketmage{
   bool setRebootFlagOTA();
   void checkRebootOTA();
   void IRAM_ATTR PWR_BTN_irq();
+
+  class ScopedCpuBoost {
+  public:
+    ScopedCpuBoost();
+    ~ScopedCpuBoost();
+    ScopedCpuBoost(const ScopedCpuBoost&) = delete;
+    ScopedCpuBoost& operator=(const ScopedCpuBoost&) = delete;
+  private:
+    int prevFreq_ = 240;
+  };
 }
 
 // ===================== SYSTEM SETUP =====================

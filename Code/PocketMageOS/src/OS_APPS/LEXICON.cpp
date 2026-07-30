@@ -89,7 +89,7 @@ void LEXICON_INIT() {
 
 void loadDefinitions(String input) {
   OLED().oledWord("Loading Definitions");
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -100,7 +100,7 @@ void loadDefinitions(String input) {
   String word = query.word;
 
   if (word.length() == 0 || PM_SDAUTO().getNoSD()) {
-    SDActive = false;
+    PM_SDAUTO().endIO();
     if (SAVE_POWER)
       pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     return;
@@ -108,7 +108,7 @@ void loadDefinitions(String input) {
 
   char firstChar = tolower(word[0]);
   if (firstChar < 'a' || firstChar > 'z') {
-    SDActive = false;
+    PM_SDAUTO().endIO();
     if (SAVE_POWER)
       pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     return;
@@ -119,7 +119,7 @@ void loadDefinitions(String input) {
   File file = global_fs->open(filePath);
   if (!file) {
     OLED().sysMessage("Missing Dictionary!",2000);
-    SDActive = false;
+    PM_SDAUTO().endIO();
     if (SAVE_POWER)
       pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     return;
@@ -182,7 +182,7 @@ void loadDefinitions(String input) {
 
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 void processKB_LEXICON() {
@@ -215,23 +215,11 @@ void processKB_LEXICON() {
         }                                       
         // SHIFT Recieved
         else if (inchar == 17) {
-          if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) {
-            KB().setKeyboardState(NORMAL);
-          } else if (KB().getKeyboardState() == FUNC) {
-            KB().setKeyboardState(FN_SHIFT);
-          } else {
-            KB().setKeyboardState(SHIFT);
-          }
+          KB().toggleShift();
         }
         // FN Recieved
         else if (inchar == 18) {
-          if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) {
-            KB().setKeyboardState(NORMAL);
-          } else if (KB().getKeyboardState() == SHIFT) {
-            KB().setKeyboardState(FN_SHIFT);
-          } else {
-            KB().setKeyboardState(FUNC);
-          }
+          KB().toggleFn();
         }
         // BKSP Recieved
         else if (inchar == 8) {

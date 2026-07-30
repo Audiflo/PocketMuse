@@ -16,6 +16,36 @@ static PocketmageOled pm_oled(u8g2);
 // 256x32 SPI OLED display object
 U8G2_SSD1326_ER_256X32_F_4W_HW_SPI u8g2(U8G2_R2, OLED_CS, OLED_DC, OLED_RST);
 
+struct FontSlot { FontStyle style; int yBias; };
+
+static void drawKeyboardModifier(bool centered) {
+  FontEngine::setOledStyle(FontStyle::Tiny);
+  int state = KB().getKeyboardState();
+  if (state < 1 || state > 3) return;
+  const uint16_t dw = u8g2.getDisplayWidth();
+  const uint16_t dh = u8g2.getDisplayHeight();
+  static const char* labels[] = { "SHIFT", "FN", "FN+SHIFT" };
+  const char* label = labels[state - 1];
+  int tw = FontEngine::oledTextWidth(label);
+  FontEngine::oledDraw(centered ? (dw - tw) / 2 : dw - tw, dh, label);
+}
+
+static int pickFont(const String& text, int maxWidth, const FontSlot* table, int count, int& y, int& x) {
+  const uint16_t dw = u8g2.getDisplayWidth();
+  for (int i = 0; i < count; i++) {
+    FontEngine::setOledStyle(table[i].style);
+    if (FontEngine::oledTextWidth(text) < maxWidth) {
+      y = 16 + table[i].yBias;
+      x = (dw - FontEngine::oledTextWidth(text)) / 2;
+      return i;
+    }
+  }
+  FontEngine::setOledStyle(table[count - 1].style);
+  y = 16 + table[count - 1].yBias;
+  x = dw - FontEngine::oledTextWidth(text);
+  return -1;
+}
+
 // Setup for Oled Class
 void setupOled() {
   u8g2.begin();
@@ -49,37 +79,17 @@ void PocketmageOled::oledWord(String word, bool allowLarge, bool showInfo, Strin
     }
   }
 
-  FontEngine::setOledStyle(FontStyle::OledWord);
-  if (FontEngine::oledTextWidth(word) < dw) {
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(word)) / 2, 16 + 3, word);
-    u8g2_.sendBuffer();
-    return;
-  }
+  static const FontSlot cascade[] = {
+    {FontStyle::OledWord, 3},
+    {FontStyle::Heading3, 2},
+    {FontStyle::BodyBold, 1},
+    {FontStyle::Status,   0},
+  };
 
-  FontEngine::setOledStyle(FontStyle::Heading3);
-  if (FontEngine::oledTextWidth(word) < dw) {
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(word)) / 2, 16 + 2, word);
-    u8g2_.sendBuffer();
-    return;
-  }
-
-  FontEngine::setOledStyle(FontStyle::BodyBold);
-  if (FontEngine::oledTextWidth(word) < dw) {
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(word)) / 2, 16 + 1, word);
-    u8g2_.sendBuffer();
-    return;
-  }
-
-  FontEngine::setOledStyle(FontStyle::Status);
-  if (FontEngine::oledTextWidth(word) < dw) {
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(word)) / 2, 16, word);
-    u8g2_.sendBuffer();
-    return;
-  } else {
-    FontEngine::oledDraw(dw - FontEngine::oledTextWidth(word), 16, word);
-    u8g2_.sendBuffer();
-    return;
-  }
+  int y = 16, x = 0;
+  pickFont(word, dw, cascade, 4, y, x);
+  FontEngine::oledDraw(x, y, word);
+  u8g2_.sendBuffer();
 }
 
 void PocketmageOled::sysMessage(String msg, int showTime) {
@@ -89,38 +99,17 @@ void PocketmageOled::sysMessage(String msg, int showTime) {
   const uint16_t dw = u8g2_.getDisplayWidth();
   const uint16_t dh = u8g2_.getDisplayHeight();
 
-  int y_offset = 0;
-  int x_offset = 0;
+  static const FontSlot cascade[] = {
+    {FontStyle::Heading2, 3 + 5},
+    {FontStyle::OledWord, 2 + 5},
+    {FontStyle::BodyBold, 1 + 5},
+    {FontStyle::Status,   5},
+  };
 
-  // --- 1. Find the largest font that fits and calculate offsets ---
-  FontEngine::setOledStyle(FontStyle::Heading2);
-  if (FontEngine::oledTextWidth(msg) < dw - 8) {
-    y_offset = 16 + 3 + 5;
-    x_offset = (dw - FontEngine::oledTextWidth(msg)) / 2;
-  } else {
-    FontEngine::setOledStyle(FontStyle::OledWord);
-    if (FontEngine::oledTextWidth(msg) < dw - 8) {
-      y_offset = 16 + 2 + 5;
-      x_offset = (dw - FontEngine::oledTextWidth(msg)) / 2;
-    } else {
-      FontEngine::setOledStyle(FontStyle::BodyBold);
-      if (FontEngine::oledTextWidth(msg) < dw - 8) {
-        y_offset = 16 + 1 + 5;
-        x_offset = (dw - FontEngine::oledTextWidth(msg)) / 2;
-      } else {
-        FontEngine::setOledStyle(FontStyle::Status);
-        if (FontEngine::oledTextWidth(msg) < dw - 8) {
-          y_offset = 16 + 5;
-          x_offset = (dw - FontEngine::oledTextWidth(msg)) / 2;
-        } else {
-          y_offset = 16 + 5;
-          x_offset = dw - FontEngine::oledTextWidth(msg);
-        }
-      }
-    }
-  }
+  int y_offset = 16, x_offset = 0;
+  pickFont(msg, dw - 8, cascade, 4, y_offset, x_offset);
 
-  // --- 2. Raise message animation ---
+  // --- Raise message animation ---
   for (int y = dh; y > 0; y -= 2) {
     u8g2_.clearBuffer();
     FontEngine::oledDraw(x_offset, y + y_offset, msg);
@@ -129,10 +118,10 @@ void PocketmageOled::sysMessage(String msg, int showTime) {
     delay(5);
   }
 
-  // --- 3. Hold ---
+  // --- Hold ---
   vTaskDelay(pdMS_TO_TICKS(showTime));
 
-  // --- 4. Lower message animation ---
+  // --- Lower message animation ---
   for (int y = 0; y <= dh; y += 2) {
     u8g2_.clearBuffer();
     FontEngine::oledDraw(x_offset, y + y_offset, msg);
@@ -183,24 +172,7 @@ void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, St
     FontEngine::setOledStyle(FontStyle::Tiny);
     FontEngine::oledDraw(0, dh, bottomMsg);
 
-    // Draw FN/Shift indicator
-    int state = KB().getKeyboardState();
-    switch (state) {
-      case 1:
-        FontEngine::setOledStyle(FontStyle::Tiny);
-        FontEngine::oledDraw((dw - FontEngine::oledTextWidth("SHIFT")), dh, "SHIFT");
-        break;
-      case 2:
-        FontEngine::setOledStyle(FontStyle::Tiny);
-        FontEngine::oledDraw((dw - FontEngine::oledTextWidth("FN")), dh, "FN");
-        break;
-      case 3:
-        FontEngine::setOledStyle(FontStyle::Tiny);
-        FontEngine::oledDraw((dw - FontEngine::oledTextWidth("FN+SHIFT")), dh, "FN+SHIFT");
-        break;
-      default:
-        break;
-    }
+    drawKeyboardModifier(false);
   }
 
   // DRAW LINE TEXT
@@ -255,22 +227,7 @@ void PocketmageOled::infoBar() {
   const uint16_t dw = u8g2_.getDisplayWidth();
   const uint16_t dh = u8g2_.getDisplayHeight();
 
-  FontEngine::setOledStyle(FontStyle::Tiny);
-  int state = KB().getKeyboardState();
-
-  switch (state) {
-    case 1:
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth("SHIFT")) / 2, dh, "SHIFT");
-    break;
-    case 2:
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth("FN")) / 2, dh, "FN");
-    break;
-    case 3:
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth("FN+SHIFT")) / 2, dh, "FN+SHIFT");
-    break;
-    default:
-    break;
-  }
+  drawKeyboardModifier(true);
 
   int infoWidth = 16;
 

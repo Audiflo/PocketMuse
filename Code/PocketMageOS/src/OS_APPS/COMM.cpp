@@ -102,7 +102,7 @@ static std::vector<String> wrapTextPx(const String& text, FontStyle style) {
 // SD LOGGING
 static void logToSD(const ChatMsg* m) {
   if (PM_SDAUTO().getNoSD() || !global_fs) return;
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   global_fs->mkdir("/chat");
   char path[64];
   if (chatMode == LOCAL_CHAT) {
@@ -118,7 +118,7 @@ static void logToSD(const ChatMsg* m) {
     f.printf("%u|%s|%s\n", m->timestamp, m->sender, m->content);
     f.close();
   }
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 // MESSAGE BUFFER
@@ -343,14 +343,10 @@ void processKB_COMM() {
             OLED().oledWord("Chat");
         }
         else if (ch == 17) {
-            if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(SHIFT);
+            KB().toggleShift();
         }
         else if (ch == 18) {
-            if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(FUNC);
+            KB().toggleFn();
         }
         else if (ch == 8) { 
             if (chatInputBuffer.length() > 0 && chatCursorPos != 0) {

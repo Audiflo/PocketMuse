@@ -61,7 +61,7 @@ void CALENDAR_INIT() {
 
 #pragma region Event Data Management
 void updateEventArray() {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -77,7 +77,7 @@ void updateEventArray() {
   if (!file) {
     ESP_LOGE(TAG, "Failed to open file for reading: %s", file.path());
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-    SDActive = false;
+    PM_SDAUTO().endIO();
     return;
   }
 
@@ -115,7 +115,7 @@ void updateEventArray() {
   file.close();  
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 void sortEventsByDate(std::vector<std::vector<String>> &calendarEvents) {
@@ -125,7 +125,7 @@ void sortEventsByDate(std::vector<std::vector<String>> &calendarEvents) {
 }
 
 void updateEventsFile() {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
   
@@ -153,7 +153,7 @@ void updateEventsFile() {
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 void addEvent(String eventName, String startDate, String startTime , String duration, String repeat, String note) {
@@ -1079,14 +1079,10 @@ void processKB_CALENDAR() {
             currentLine = "";
           }                                       
           else if (inchar == 17) {
-            if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(SHIFT);
+            KB().toggleShift();
           }
           else if (inchar == 18) {
-            if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(FUNC);
+            KB().toggleFn();
           }
           else if (inchar == 32) { currentLine += " "; }
           else if (inchar == 8) {                  
@@ -1137,13 +1133,11 @@ void processKB_CALENDAR() {
             commandSelectWeek(currentLine);
             currentLine = "";
           }                                       
-          else if (inchar == 17) {                                  
-            if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(NORMAL);
-            else KB().setKeyboardState(SHIFT);
+          else if (inchar == 17) {
+            KB().toggleShift();
           }
-          else if (inchar == 18) {                                  
-            if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(NORMAL);
-            else KB().setKeyboardState(FUNC);
+          else if (inchar == 18) {
+            KB().toggleFn();
           }
           else if (inchar == 32) { currentLine += " "; }
           else if (inchar == 8) {                  

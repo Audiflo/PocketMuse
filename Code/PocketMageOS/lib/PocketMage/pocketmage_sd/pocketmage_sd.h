@@ -33,6 +33,9 @@ public:
   void copyFile(String oldFile, String newFile);
   void appendToFile(String path, String inText);
 
+  void beginIO();
+  void endIO();
+
   // Getters / Setters
   bool    getNoSD()          const { return noSD_; }
   void    setNoSD(bool v)          { noSD_ = v; }

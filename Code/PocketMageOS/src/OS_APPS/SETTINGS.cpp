@@ -237,7 +237,7 @@ String settingCommandSelect(String command) {
   }
 }
 
-void processKB_settings() {
+void processKB_SETTINGS() {
   String command = "";
   String returnText = "";
 
@@ -256,7 +256,7 @@ void processKB_settings() {
   }
 }
 
-void einkHandler_settings() {
+void einkHandler_SETTINGS() {
   if (newState) {
     newState = false;
 

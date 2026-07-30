@@ -49,9 +49,9 @@ void USBAppShutdown() {
 static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize) {
   if (usb_is_shutting_down) return -1; // Safety Lock
   
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   if (!card || card->csd.sector_size == 0) {
-    SDActive = false;
+    PM_SDAUTO().endIO();
     return -1;
   }
   
@@ -59,20 +59,20 @@ static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t 
   for (uint32_t i = 0; i < bufsize / secSize; ++i) {
     esp_err_t err = sdmmc_write_sectors(card, buffer + i * secSize, lba + i, 1);
     if (err != ESP_OK) {
-      SDActive = false;
+      PM_SDAUTO().endIO();
       return -1;
     }
   }
-  SDActive = false;
+  PM_SDAUTO().endIO();
   return bufsize;
 }
 
 static int32_t onRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize) {
   if (usb_is_shutting_down) return -1; // Safety Lock
   
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   if (!card || card->csd.sector_size == 0) {
-    SDActive = false;
+    PM_SDAUTO().endIO();
     return -1;
   }
   
@@ -80,24 +80,24 @@ static int32_t onRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufs
   for (uint32_t i = 0; i < bufsize / secSize; ++i) {
     esp_err_t err = sdmmc_read_sectors(card, (uint8_t*)buffer + i * secSize, lba + i, 1);
     if (err != ESP_OK) {
-      SDActive = false;
+      PM_SDAUTO().endIO();
       return -1;
     }
   }
-  SDActive = false;
+  PM_SDAUTO().endIO();
   return bufsize;
 }
 
 static bool onStartStop(uint8_t power_condition, bool start, bool eject) {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   ESP_LOGI(TAG, "MSC Start/Stop: power=%u, start=%d, eject=%d\n", power_condition, start, eject);
 
-  SDActive = false;
+  PM_SDAUTO().endIO();
   return true;
 }
 
 static void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   if (event_base == ARDUINO_USB_EVENTS) {
     switch (event_id) {
       case ARDUINO_USB_STARTED_EVENT: ESP_LOGI(TAG, "USB Connected"); break;
@@ -106,7 +106,7 @@ static void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t eve
       case ARDUINO_USB_RESUME_EVENT:  ESP_LOGI(TAG, "USB Resumed"); break;
     }
   }
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 void USB_INIT() {

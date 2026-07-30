@@ -46,7 +46,7 @@ void sortTasksByDueDate(std::vector<std::vector<String>> &tasks) {
 }
 
 void updateTasksFile() {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
 
   const char* tempFile = "/sys/tasks.tmp";
@@ -77,7 +77,7 @@ void updateTasksFile() {
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 void addTask(String taskName, String dueDate, String priority, String completed) {
@@ -87,7 +87,7 @@ void addTask(String taskName, String dueDate, String priority, String completed)
 }
 
 void updateTaskArray() {
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
 
   const char* tasksFile = "/sys/tasks.txt";
@@ -100,7 +100,7 @@ void updateTaskArray() {
     } else {
         ESP_LOGE(TAG, "Failed to create tasks file.");
         if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-        SDActive = false;
+        PM_SDAUTO().endIO();
         return;
     }
   }
@@ -109,7 +109,7 @@ void updateTaskArray() {
   if (!file) {
     ESP_LOGE(TAG, "Failed to open file to read: %s", tasksFile);
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-    SDActive = false;
+    PM_SDAUTO().endIO();
     return;
   }
 
@@ -148,7 +148,7 @@ void updateTaskArray() {
   file.close(); 
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  PM_SDAUTO().endIO();
 }
 
 void deleteTask(int index) {

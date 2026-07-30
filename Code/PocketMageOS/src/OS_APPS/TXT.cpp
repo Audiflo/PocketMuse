@@ -1189,7 +1189,7 @@ void saveMarkdownFile(const String& path) {
     return;
   }
 
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240); 
   delay(50);
 
@@ -1203,8 +1203,8 @@ void saveMarkdownFile(const String& path) {
   if (!file) {
     OLED().sysMessage("SAVE FAILED - OPEN ERR",2000);
     ESP_LOGE("SD", "Failed to open file for writing: %s", savePath.c_str());
-    SDActive = false;
-    if (SAVE_POWER) pocketmage::setCpuSpeed(80);
+    PM_SDAUTO().endIO();
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     return;
   }
 
@@ -1262,8 +1262,8 @@ void saveMarkdownFile(const String& path) {
 
   OLED().sysMessage("Saved: " + savePath,1000);
 
-  if (SAVE_POWER) pocketmage::setCpuSpeed(80); 
-  SDActive = false;
+  if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ); 
+  PM_SDAUTO().endIO();
 }
 
 bool loadMarkdownFile(const String& path) {
@@ -1375,8 +1375,8 @@ bool loadMarkdownFile(const String& path) {
   }
 
   if (SAVE_POWER)
-    pocketmage::setCpuSpeed(80);
-  SDActive = false;
+    pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+  PM_SDAUTO().endIO();
 
   OLED().sysMessage("FILE LOADED",500);
 
@@ -1389,7 +1389,7 @@ void newMarkdownFile(const String& path) {
     return;
   }
 
-  SDActive = true;
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240); 
   delay(50);
 
@@ -1401,8 +1401,8 @@ void newMarkdownFile(const String& path) {
   if (!file) {
     OLED().sysMessage("CREATE FAILED",2000);
     ESP_LOGE("SD", "Failed to create file: %s", savePath.c_str());
-    SDActive = false;
-    if (SAVE_POWER) pocketmage::setCpuSpeed(80);
+    PM_SDAUTO().endIO();
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     return;
   }
   file.close(); 
@@ -1418,8 +1418,8 @@ void newMarkdownFile(const String& path) {
   topVisibleLine = 0;
   updateScreen = true;
 
-  if (SAVE_POWER) pocketmage::setCpuSpeed(80); 
-  SDActive = false;
+  if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ); 
+  PM_SDAUTO().endIO();
 }
 
 #pragma region OLED Editor
@@ -1715,15 +1715,10 @@ void editor(char inchar) {
     }
 
     else if (inchar == 17) {
-      if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-      else if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(FN_SHIFT);
-      else KB().setKeyboardState(SHIFT);
+      KB().toggleShift();
     }
-
     else if (inchar == 18) {
-      if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-      else if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(FN_SHIFT);
-      else KB().setKeyboardState(FUNC);
+      KB().toggleFn();
     }
 
     // BKSP Recieved
@@ -2137,14 +2132,10 @@ void processKB_TXT_NEW() {
             inputBuffer = "";
           }
           else if (inchar == 17) {
-            if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(SHIFT);
+            KB().toggleShift();
           }
           else if (inchar == 18) {
-            if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(FUNC);
+            KB().toggleFn();
           }
           else if (inchar == 32) {
           }
@@ -2199,14 +2190,10 @@ void processKB_TXT_NEW() {
             inputBuffer = "";
           }
           else if (inchar == 17) {
-            if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(SHIFT);
+            KB().toggleShift();
           }
           else if (inchar == 18) {
-            if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(FUNC);
+            KB().toggleFn();
           }
           else if (inchar == 32) {
           }

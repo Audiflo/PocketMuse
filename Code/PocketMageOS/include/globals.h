@@ -107,8 +107,8 @@ void processKB_TASKS();
 
 // <settings.cpp>
 void SETTINGS_INIT();
-void processKB_settings();
-void einkHandler_settings();
+void processKB_SETTINGS();
+void einkHandler_SETTINGS();
 String settingCommandSelect(String command);
 
 // <USB.cpp>

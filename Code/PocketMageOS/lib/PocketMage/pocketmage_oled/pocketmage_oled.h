@@ -34,9 +34,6 @@ public:
 private:
   U8G2                  &u8g2_;        // class reference to hardware oled object
   volatile bool OLEDPowerSave_;
- 
-  // helpers
-  uint16_t strWidth(const String& s) const;
 };
 
 void setupOled();

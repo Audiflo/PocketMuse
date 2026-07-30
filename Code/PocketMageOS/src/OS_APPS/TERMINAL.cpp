@@ -1610,14 +1610,10 @@ void processKB_TERMINAL() {
             newState = true;
           }
           else if (inchar == 17) { // SHIFT
-            if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == FUNC) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(SHIFT);
+            KB().toggleShift();
           }
           else if (inchar == 18) { // FUNC
-            if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) KB().setKeyboardState(NORMAL);
-            else if (KB().getKeyboardState() == SHIFT) KB().setKeyboardState(FN_SHIFT);
-            else KB().setKeyboardState(FUNC);
+            KB().toggleFn();
           }
           else if (inchar == 8) { // BKSP
             if (terminalCommand.length() > 0) {
@@ -1692,23 +1688,11 @@ void processKB_TERMINAL() {
           }
           // SHIFT Recieved
           else if (inchar == 17) {
-            if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) {
-              KB().setKeyboardState(NORMAL);
-            } else if (KB().getKeyboardState() == FUNC) {
-              KB().setKeyboardState(FN_SHIFT);
-            } else {
-              KB().setKeyboardState(SHIFT);
-            }
+            KB().toggleShift();
           }
           // FN Recieved
           else if (inchar == 18) {
-            if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) {
-              KB().setKeyboardState(NORMAL);
-            } else if (KB().getKeyboardState() == SHIFT) {
-              KB().setKeyboardState(FN_SHIFT);
-            } else {
-              KB().setKeyboardState(FUNC);
-            }
+            KB().toggleFn();
           }
           // BKSP Recieved
           else if (inchar == 8) {

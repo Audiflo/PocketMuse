@@ -90,7 +90,7 @@ String renderWizMini(String folder, int8_t scrollDelta) {
 
   // Reload directory if folder changed
   if (folder != prevFolder) {
-    SDActive = true;
+    PM_SDAUTO().beginIO();
     pocketmage::setCpuSpeed(240);
 
     scroll = 0;
@@ -145,7 +145,7 @@ String renderWizMini(String folder, int8_t scrollDelta) {
 
     if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-    SDActive = false;
+    PM_SDAUTO().endIO();
   }
 
   // Empty folder
@@ -246,23 +246,10 @@ String fileWizardMini(bool allowRecentSelect, String rootDir, char inchar_) {
 
       // HANDLE INPUTS
       if (inchar == 17) {
-        if (KB().getKeyboardState() == SHIFT || KB().getKeyboardState() == FN_SHIFT) {
-          KB().setKeyboardState(NORMAL);
-        } else if (KB().getKeyboardState() == FUNC) {
-          KB().setKeyboardState(FN_SHIFT);
-        } else {
-          KB().setKeyboardState(SHIFT);
-        }
+        KB().toggleShift();
       }
-      // FN Recieved
       else if (inchar == 18) {
-        if (KB().getKeyboardState() == FUNC || KB().getKeyboardState() == FN_SHIFT) {
-          KB().setKeyboardState(NORMAL);
-        } else if (KB().getKeyboardState() == SHIFT) {
-          KB().setKeyboardState(FN_SHIFT);
-        } else {
-          KB().setKeyboardState(FUNC);
-        }
+        KB().toggleFn();
       }
       // Left received
       else if (inchar == 19) {

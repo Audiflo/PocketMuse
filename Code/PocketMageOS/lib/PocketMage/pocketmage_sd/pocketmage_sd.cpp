@@ -21,6 +21,9 @@ static PocketmageSD pm_sd;
 PocketmageSD& PM_SD()      { return pm_sd; }
 PocketmageSD& PM_SDAUTO()  { return pm_sd; }
 
+void PocketmageSD::beginIO() { SDActive = true; }
+void PocketmageSD::endIO()   { SDActive = false; }
+
 static int countVisibleCharsFile(fs::FS &fs, const char* path) {
   File f = fs.open(path, "r");
   if (!f || f.isDirectory()) return 0;
@@ -367,7 +370,7 @@ void PocketmageSD::saveFile() {
     OLED().sysMessage("SAVE FAILED - No SD!",5000);
     return;
   }
-  SDActive = true;
+  beginIO();
   if (getCpuFrequencyMhz() != 240) {
     pocketmage::setCpuSpeed(240);
     delay(50);
@@ -388,12 +391,12 @@ void PocketmageSD::saveFile() {
   keypad.enableInterrupts();
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 void PocketmageSD::writeMetadata(const String& path) {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
-  SDActive = true;
+  beginIO();
   if (getCpuFrequencyMhz() != 240) {
     pocketmage::setCpuSpeed(240);
     delay(50);
@@ -454,7 +457,7 @@ void PocketmageSD::writeMetadata(const String& path) {
 
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 void PocketmageSD::loadFile(bool showOLED) {
@@ -463,7 +466,7 @@ void PocketmageSD::loadFile(bool showOLED) {
     OLED().sysMessage("LOAD FAILED - No SD!",5000);
     return;
   }
-  SDActive = true;
+  beginIO();
   if (getCpuFrequencyMhz() != 240) {
     pocketmage::setCpuSpeed(240);
     delay(50);
@@ -485,7 +488,7 @@ void PocketmageSD::loadFile(bool showOLED) {
   }
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 void PocketmageSD::delFile(String fileName) {
@@ -494,7 +497,7 @@ void PocketmageSD::delFile(String fileName) {
     OLED().sysMessage("DELETE FAILED - No SD!",5000);
     return;
   }
-  SDActive = true;
+  beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -509,11 +512,11 @@ void PocketmageSD::delFile(String fileName) {
   keypad.enableInterrupts();
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 void PocketmageSD::deleteMetadata(String path) {
-  SDActive = true;
+  beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -556,7 +559,7 @@ void PocketmageSD::renFile(String oldFile, String newFile) {
     OLED().sysMessage("RENAME FAILED - No SD!",5000);
     return;
   }
-  SDActive = true;
+  beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -573,11 +576,11 @@ void PocketmageSD::renFile(String oldFile, String newFile) {
   keypad.enableInterrupts();
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 void PocketmageSD::renMetadata(String oldPath, String newPath) {
-  SDActive = true;
+  beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
   const char* metaPath = SYS_METADATA_FILE;
@@ -631,7 +634,7 @@ void PocketmageSD::copyFile(String oldFile, String newFile) {
     OLED().sysMessage("COPY FAILED - No SD!",5000);
     return;
   }
-  SDActive = true;
+  beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -652,7 +655,7 @@ void PocketmageSD::copyFile(String oldFile, String newFile) {
 
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 void PocketmageSD::appendToFile(String path, String inText) {
@@ -661,7 +664,7 @@ void PocketmageSD::appendToFile(String path, String inText) {
     OLED().sysMessage("OP FAILED - No SD!",5000);
     return;
   }
-  SDActive = true;
+  beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -674,7 +677,7 @@ void PocketmageSD::appendToFile(String path, String inText) {
 
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-  SDActive = false;
+  endIO();
 }
 
 // ===================== low-level operations =====================
