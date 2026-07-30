@@ -489,27 +489,3 @@ void stringToVector(String inputText) {
   }
 }
 
-String removeChar(String str, char character) {
-  String result = "";
-  for (size_t i = 0; i < str.length(); i++) {
-    if (str[i] != character) {
-      result += str[i];
-    }
-  }
-  return result;
-}
-
-int stringToInt(String str) {
-  str.trim();  // Remove leading/trailing whitespace
-
-  if (str.length() == 0)
-    return -1;
-
-  for (int i = 0; i < str.length(); i++) {
-    if (!isDigit(str.charAt(i))) {
-      return -1;  // Invalid character found
-    }
-  }
-
-  return str.toInt();  // Safe to convert
-}

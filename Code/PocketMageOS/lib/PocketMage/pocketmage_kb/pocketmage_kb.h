@@ -14,29 +14,29 @@ extern Adafruit_TCA8418 keypad;
 // ===================== KB CLASS =====================
 class PocketmageKB {
 public:
-  volatile bool TCA8418_event_ = false;  // Keypad interrupt event
+  volatile bool TCA8418_event_ = false;
   explicit PocketmageKB(Adafruit_TCA8418 &kp) : keypad_(kp) {}
 
-  using KbStateFn = std::function<int()>;
+  void setKeyboardState(int kbState)      { kbState_ = kbState; }
+  int  getKeyboardState() const           { return kbState_; }
 
-  void setKeyboardState(int kbState)                       { kbState_ = kbState;}
-  int getKeyboardState() const                               { return kbState_; }
-  // Main methods
+  void toggleShift();
+  void toggleFn();
+  bool acceptKey();
+
   char updateKeypress();
   void checkUSBKB();
-  void disableInterrupts()                           { keypad_.disableInterrupts(); }
-  void enableInterrupts()                             { keypad_.enableInterrupts(); }
-  void flush()                                                   { keypad_.flush(); }
-  void setTCA8418Event()                              {      TCA8418_event_ = true; }
+  void disableInterrupts()                { keypad_.disableInterrupts(); }
+  void enableInterrupts()                 { keypad_.enableInterrupts(); }
+  void flush()                            { keypad_.flush(); }
+  void setTCA8418Event()                  { TCA8418_event_ = true; }
 
 private:
-  Adafruit_TCA8418      &keypad_; // class reference to hardware keypad object
-  int                   kbState_        = 0;
-
-  volatile int*         prevTimeMillis_ = nullptr;
+  Adafruit_TCA8418 &keypad_;
+  int               kbState_       = 0;
+  unsigned long     lastKeyMillis_ = 0;
 };
 
-void wireKB();
 void setupKB(int kb_irq_pin);
 // Interrupt handler stored in IRAM for fast interrupt response
 PocketmageKB& KB();

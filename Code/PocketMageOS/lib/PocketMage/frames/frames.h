@@ -188,7 +188,6 @@ void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, 
 void drawFrameBox(int usableX, int usableY, int usableWidth, int usableHeight,bool invert);
 int computeCursorX(Frame &frame, bool rightAlign, bool centerAlign, int16_t x1, uint16_t lineWidth);
   // String formatting
-static size_t sliceThatFits(const char* s, size_t n, int maxTextWidth);
 std::vector<String> sourceToVector(const TextSource* src);
 String frameChoiceString(const Frame& f);  
   //scroll

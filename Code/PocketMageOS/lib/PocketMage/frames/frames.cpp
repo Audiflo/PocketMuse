@@ -104,41 +104,6 @@ Frames Class:
 int alignDown8(int v) { return v - (v % 8); }
 int alignUp8(int v)   { return (v % 8) ? v + (8 - (v % 8)) : v; }
 
-size_t sliceThatFits(const char* s, size_t n, int maxTextWidth) {
-  if (!s || n == 0) return 0;
-
-  static char buf[256]; 
-  const size_t cap = sizeof(buf) - 1;
-
-  size_t best = 0, lastSpace = SIZE_MAX;
-  size_t i = 0;
-  size_t len = 0;
-
-  while (i < n && len < cap) {
-    char c = s[i];
-
-    if (c == '\n' || c == '\r') return (best > 0) ? best : 1;
-
-    if (c == ' ') lastSpace = i;
-
-    buf[len++] = c;
-    buf[len] = '\0';
-
-    int w = FontEngine::einkTextWidth(buf);
-    if (w > maxTextWidth) break;
-
-    best = i + 1;
-    ++i;
-  }
-
-  const bool overflowed = (i < n) || (len >= cap);
-  if (best == 0) return (n ? 1 : 0);
-
-  if (overflowed && lastSpace != SIZE_MAX && lastSpace + 1 <= best) {
-    return lastSpace + 1;
-  }
-  return best;
-}
 // GET TOTAL LINES OF SOURCE !!
 inline long totalLines(const Frame& frame) {
   return frame.source ? (long)frame.source->size() : 0L;

@@ -8,6 +8,8 @@
 #include <pocketmage_wifi/pocketmage_wifi.h>
 #include <pocketmage_font/pocketmage_font.h>
 #include <pocketmage_sys/pocketmage_sys.h>
+#include <pocketmage_layout/pocketmage_layout.h>
+#include <pocketmage_io/pocketmage_io.h>
 #include <MP2722.h>
 #include <frames/frames.h>
 #include <config.h>

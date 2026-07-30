@@ -663,8 +663,6 @@ void close_USBHID(void) {
 
 #pragma region keymaps
 // ===================== Keymaps =====================
-char currentKB[4][10];            // Current keyboard layout (remove)
-
 char keysArray[4][10] = {
     { 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p' },
     { 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l',   8 },  // 8:BKSP
@@ -709,16 +707,10 @@ void setupKB(int KB_irq_pin) {
     while (1);
   }
   keypad.matrix(4, 10);
-  wireKB();
   attachInterrupt(digitalPinToInterrupt(KB_irq_pin), KB_irq_handler, FALLING);
   //keypad.flush();
   KB().setTCA8418Event();
   keypad.enableInterrupts();
-}
-
-// Wire function for keyboard class
-// add any global references here + add set function to class header file
-void wireKB() {
 }
 
 // Access for other apps
@@ -726,6 +718,34 @@ PocketmageKB& KB() { return pm_kb; }
 
 
 // ===================== public functions =====================
+
+void PocketmageKB::toggleShift() {
+  if (kbState_ == SHIFT || kbState_ == FN_SHIFT)
+    kbState_ = NORMAL;
+  else if (kbState_ == FUNC)
+    kbState_ = FN_SHIFT;
+  else
+    kbState_ = SHIFT;
+}
+
+void PocketmageKB::toggleFn() {
+  if (kbState_ == FUNC || kbState_ == FN_SHIFT)
+    kbState_ = NORMAL;
+  else if (kbState_ == SHIFT)
+    kbState_ = FN_SHIFT;
+  else
+    kbState_ = FUNC;
+}
+
+bool PocketmageKB::acceptKey() {
+  unsigned long now = millis();
+  if (now - lastKeyMillis_ >= KB_COOLDOWN) {
+    lastKeyMillis_ = now;
+    return true;
+  }
+  return false;
+}
+
 char PocketmageKB::updateKeypress() {
   // --- 1. UTF-8 Multi-Byte Buffer ---
   static char utf8Buffer[8] = {0};

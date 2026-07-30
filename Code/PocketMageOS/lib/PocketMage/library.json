@@ -32,6 +32,6 @@
     "build": {
         "includeDir": ".",
         "srcDir": ".",
-        "srcFilter": ["+<*>"]
+        "srcFilter": ["+<**>"]
     }
 }
