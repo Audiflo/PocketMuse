@@ -6,6 +6,8 @@
 #include <pocketmage_bz.h>
 #include <pocketmage_touch.h>
 #include <pocketmage_clock.h>
+#include <pocketmage_wifi.h>
+#include <pocketmage_font.h>
 #include <pocketmage_sys.h>
 #include <MP2722.h>
 #include <frames.h>

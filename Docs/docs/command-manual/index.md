@@ -221,7 +221,7 @@ Manage and install .tar apps to OTA slots. Commands are case-insensitive.
 - **( S )** | Swap app in selected slot (choose a .tar file)
 - **( D )** | Delete app in selected slot
 - **(FN) + ( < )** | Exit app / return to menu
-- **Progress Bar** | Shows extraction (0–50%) and installation (50–100%) status
+- **Progress Bar** | Shows extraction (0-50%) and installation (50-100%) status
 
 ---
 

@@ -172,12 +172,10 @@ void checkTimeout() {
             ESP_LOGE(TAG, "text sleep mode");
             EINK().setFullRefreshAfter(FULL_REFRESH_AFTER + 1);
             display.setFullWindow();
-            u8g2f.setFont(u8g2_font_courB10_tf);
-            u8g2f.setFontMode(1);
+            FontEngine::setEinkStyle(FontStyle::MonoBold);
 
             display.fillRect(0, display.height() - 26, display.width(), 26, GxEPD_WHITE);
             display.drawRect(0, display.height() - 20, display.width(), 20, GxEPD_BLACK);
-            u8g2f.setCursor(4, display.height() - 6);
             
             EINK().statusBar(PM_SDAUTO().getEditingFile(), true);
 
@@ -540,49 +538,47 @@ int boolPrompt(String promptText) {
   
   int y_offset = 0;
   int x_offset = 0;
-  const uint8_t* activeFont;
+  FontStyle activeStyle;
 
-  // --- 1. Find the largest font that fits and calculate offsets ---
-  u8g2.setFont(u8g2_font_ncenB14_tf);
-  if (u8g2.getUTF8Width(msg.c_str()) < dw-8) {
+  int w = FontEngine::oledTextWidth(FontStyle::OledWord, msg);
+  if (w < dw-8) {
     y_offset = 16 + 3 + 5;
-    x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
-    activeFont = u8g2_font_ncenB14_tf;
+    x_offset = (dw - w) / 2;
+    activeStyle = FontStyle::OledWord;
   } 
   else {
-    u8g2.setFont(u8g2_font_ncenB12_tf);
-    if (u8g2.getUTF8Width(msg.c_str()) < dw-8) {
+    w = FontEngine::oledTextWidth(FontStyle::Heading3, msg);
+    if (w < dw-8) {
       y_offset = 16 + 2 + 5;
-      x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
-      activeFont = u8g2_font_ncenB12_tf;
+      x_offset = (dw - w) / 2;
+      activeStyle = FontStyle::Heading3;
     } 
     else {
-      u8g2.setFont(u8g2_font_ncenB10_tf);
-      if (u8g2.getUTF8Width(msg.c_str()) < dw-8) {
+      w = FontEngine::oledTextWidth(FontStyle::BodyBold, msg);
+      if (w < dw-8) {
         y_offset = 16 + 1 + 5;
-        x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
-        activeFont = u8g2_font_ncenB10_tf;
+        x_offset = (dw - w) / 2;
+        activeStyle = FontStyle::BodyBold;
       } 
       else {
-        u8g2.setFont(u8g2_font_ncenB08_tf);
-        if (u8g2.getUTF8Width(msg.c_str()) < dw-8) {
+        w = FontEngine::oledTextWidth(FontStyle::Status, msg);
+        if (w < dw-8) {
           y_offset = 16 + 5;
-          x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
+          x_offset = (dw - w) / 2;
         } 
         else {
           y_offset = 16 + 5;
-          x_offset = dw - u8g2.getUTF8Width(msg.c_str());
+          x_offset = dw - w;
         }
-        activeFont = u8g2_font_ncenB08_tf;
+        activeStyle = FontStyle::Status;
       }
     }
   }
 
-  // --- 2. Slide Up Animation ---
   for (int y = dh; y > 0; y-=2) {
     u8g2.clearBuffer();
-    u8g2.setFont(activeFont);
-    u8g2.drawUTF8(x_offset, y + y_offset, msg.c_str());
+    FontEngine::setOledStyle(activeStyle);
+    FontEngine::oledDraw(x_offset, y + y_offset, msg);
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
     delay(5);
@@ -593,24 +589,21 @@ int boolPrompt(String promptText) {
   unsigned long lastSystemTime = CLOCK().getPrevTimeMillis();
   int retVal = -1;
 
-  // --- 3. Input Loop ---
   for (;;) {
     #if !OTA_APP 
       if (!noTimeout)  checkTimeout();
       if (DEBUG_VERBOSE) printDebug();
     #endif
 
-    // Set timeout
     CLOCK().setPrevTimeMillis(millis());
     updateBattState();
 
-    // Redraw if background tasks overwrite the screen
     unsigned long currentSystemTime = CLOCK().getPrevTimeMillis();
     if (currentSystemTime > lastSystemTime) {
         lastSystemTime = currentSystemTime;
         u8g2.clearBuffer();
-        u8g2.setFont(activeFont);
-        u8g2.drawUTF8(x_offset, y_offset, msg.c_str());
+        FontEngine::setOledStyle(activeStyle);
+        FontEngine::oledDraw(x_offset, y_offset, msg);
         u8g2.drawRFrame(0, 0, dw, dh + 16, 10);
         u8g2.sendBuffer();
     }
@@ -630,8 +623,8 @@ int boolPrompt(String promptText) {
           retVal = 0;
           break;
         }
-        else if (inchar == 23) { // App Switcher Kill Signal
-          retVal = 0; // Default to 'no' on cancel
+        else if (inchar == 23) {
+          retVal = 0;
           break;
         }
       }
@@ -641,13 +634,12 @@ int boolPrompt(String promptText) {
     yield();
   }
 
-  pocketmage::setCpuSpeed(240); // Boost clock for exit animation
+  pocketmage::setCpuSpeed(240);
 
-  // --- 4. Slide Down Animation ---
   for (int y = 0; y <= dh; y+=2) {
     u8g2.clearBuffer();
-    u8g2.setFont(activeFont);
-    u8g2.drawUTF8(x_offset, y + y_offset, msg.c_str());
+    FontEngine::setOledStyle(activeStyle);
+    FontEngine::oledDraw(x_offset, y + y_offset, msg);
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
     delay(5);
@@ -1073,55 +1065,51 @@ void waitForKeypress(String message) {
   
   int y_offset = 0;
   int x_offset = 0;
-  const uint8_t* activeFont;
+  FontStyle activeStyle;
 
-  // --- 1. Find the largest font that fits and calculate offsets ---
-  u8g2.setFont(u8g2_font_ncenB14_tf);
-  if (u8g2.getUTF8Width(msg.c_str()) < dw) {
+  int w = FontEngine::oledTextWidth(FontStyle::OledWord, msg);
+  if (w < dw) {
     y_offset = 16 + 3;
-    x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
-    activeFont = u8g2_font_ncenB14_tf;
+    x_offset = (dw - w) / 2;
+    activeStyle = FontStyle::OledWord;
   } 
   else {
-    u8g2.setFont(u8g2_font_ncenB12_tf);
-    if (u8g2.getUTF8Width(msg.c_str()) < dw) {
+    w = FontEngine::oledTextWidth(FontStyle::Heading3, msg);
+    if (w < dw) {
       y_offset = 16 + 2;
-      x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
-      activeFont = u8g2_font_ncenB12_tf;
+      x_offset = (dw - w) / 2;
+      activeStyle = FontStyle::Heading3;
     } 
     else {
-      u8g2.setFont(u8g2_font_ncenB10_tf);
-      if (u8g2.getUTF8Width(msg.c_str()) < dw) {
+      w = FontEngine::oledTextWidth(FontStyle::BodyBold, msg);
+      if (w < dw) {
         y_offset = 16 + 1;
-        x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
-        activeFont = u8g2_font_ncenB10_tf;
+        x_offset = (dw - w) / 2;
+        activeStyle = FontStyle::BodyBold;
       } 
       else {
-        u8g2.setFont(u8g2_font_ncenB08_tf);
-        if (u8g2.getUTF8Width(msg.c_str()) < dw) {
+        w = FontEngine::oledTextWidth(FontStyle::Status, msg);
+        if (w < dw) {
           y_offset = 16;
-          x_offset = (dw - u8g2.getUTF8Width(msg.c_str())) / 2;
+          x_offset = (dw - w) / 2;
         } 
         else {
           y_offset = 16;
-          x_offset = dw - u8g2.getUTF8Width(msg.c_str());
+          x_offset = dw - w;
         }
-        activeFont = u8g2_font_ncenB08_tf;
+        activeStyle = FontStyle::Status;
       }
     }
   }
 
-  // --- 2. Slide Up Animation ---
   for (int y = dh; y > 0; y-=2) {
     u8g2.clearBuffer();
     
-    // Draw Main Message
-    u8g2.setFont(activeFont);
-    u8g2.drawUTF8(x_offset, y + y_offset, msg.c_str());
+    FontEngine::setOledStyle(activeStyle);
+    FontEngine::oledDraw(x_offset, y + y_offset, msg);
     
-    // Draw Bottom Sub-Message
-    u8g2.setFont(u8g2_font_5x7_tf);
-    u8g2.drawUTF8((dw - u8g2.getUTF8Width(bottomMsg.c_str())) / 2, y + dh - 2, bottomMsg.c_str());
+    FontEngine::setOledStyle(FontStyle::Tiny);
+    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomMsg)) / 2, y + dh - 2, bottomMsg);
     
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
@@ -1132,7 +1120,6 @@ void waitForKeypress(String message) {
 
   unsigned long lastSystemTime = CLOCK().getPrevTimeMillis();
 
-  // --- 3. Input Loop ---
   for (;;) {
     #if !OTA_APP 
       if (!noTimeout)  checkTimeout();
@@ -1141,17 +1128,16 @@ void waitForKeypress(String message) {
     
     updateBattState();
 
-    // Redraw if background tasks overwrite the screen
     unsigned long currentSystemTime = CLOCK().getPrevTimeMillis();
     if (currentSystemTime > lastSystemTime) {
         lastSystemTime = currentSystemTime;
         
         u8g2.clearBuffer();
-        u8g2.setFont(activeFont);
-        u8g2.drawUTF8(x_offset, y_offset, msg.c_str());
+        FontEngine::setOledStyle(activeStyle);
+        FontEngine::oledDraw(x_offset, y_offset, msg);
         
-        u8g2.setFont(u8g2_font_5x7_tf);
-        u8g2.drawUTF8((dw - u8g2.getUTF8Width(bottomMsg.c_str())) / 2, dh - 2, bottomMsg.c_str());
+        FontEngine::setOledStyle(FontStyle::Tiny);
+        FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomMsg)) / 2, dh - 2, bottomMsg);
         
         u8g2.drawRFrame(0, 0, dw, dh + 16, 10);
         u8g2.sendBuffer();
@@ -1163,7 +1149,7 @@ void waitForKeypress(String message) {
     if (currentMillis - KBBounceMillis >= KB_COOLDOWN) {
       if (inchar != 0) {
         KBBounceMillis = currentMillis; 
-        break; // Break on any key, including Kill Signal
+        break;
       }
     }
 
@@ -1171,17 +1157,16 @@ void waitForKeypress(String message) {
     yield();
   }
 
-  pocketmage::setCpuSpeed(240); // Boost clock for exit animation
+  pocketmage::setCpuSpeed(240);
 
-  // --- 4. Slide Down Animation ---
   for (int y = 0; y <= dh; y+=2) {
     u8g2.clearBuffer();
     
-    u8g2.setFont(activeFont);
-    u8g2.drawUTF8(x_offset, y + y_offset, msg.c_str());
+    FontEngine::setOledStyle(activeStyle);
+    FontEngine::oledDraw(x_offset, y + y_offset, msg);
     
-    u8g2.setFont(u8g2_font_5x7_tf);
-    u8g2.drawUTF8((dw - u8g2.getUTF8Width(bottomMsg.c_str())) / 2, y + dh - 2, bottomMsg.c_str());
+    FontEngine::setOledStyle(FontStyle::Tiny);
+    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomMsg)) / 2, y + dh - 2, bottomMsg);
     
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();

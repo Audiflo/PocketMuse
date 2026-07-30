@@ -215,8 +215,7 @@ void drawHome() {
   uint8_t startX = 20;    // Initial X position
   uint8_t startY = 20;    // Initial Y position
 
-  u8g2f.setFont(u8g2_font_ncenR10_tf);
-  u8g2f.setFontMode(1);
+  FontEngine::setEinkStyle(FontStyle::Body);
   for (int i = 0; i < sizeof(appIcons) / sizeof(appIcons[0]); i++) {
     int row = i / appsPerRow;
     int col = i % appsPerRow;
@@ -226,12 +225,10 @@ void drawHome() {
     if (row == 2) yPos += 10;
 
     display.drawBitmap(xPos, yPos, appIcons[i], iconSize, iconSize, GxEPD_BLACK);
-    int w = u8g2f.getUTF8Width(appStateNames[i].c_str());
-    u8g2f.setCursor(xPos + (iconSize / 2) - (w / 2), yPos + iconSize + 13);
-    u8g2f.print(appStateNames[i]);
+    int w = FontEngine::einkTextWidth(appStateNames[i]);
+    FontEngine::einkDraw(xPos + (iconSize / 2) - (w / 2), yPos + iconSize + 13, appStateNames[i]);
   }
-  u8g2f.setFont(u8g2_font_courB10_tf);
-  u8g2f.setFontMode(1);
+  FontEngine::setEinkStyle(FontStyle::MonoBold);
 
   // Draw sideload app rounded rect
   //display.drawRoundRect(startX-15, (3*spacingY) - iconSize, (5*spacingX)+10, spacingY + 10, 15, GxEPD_BLACK);
@@ -453,11 +450,8 @@ void einkHandler_HOME() {
 
           int loopCount = std::min((int)tasks.size(), 7);
           for (int i = 0; i < loopCount; i++) {
-            u8g2f.setFont(u8g2_font_ncenR10_tf);
-            u8g2f.setFontMode(1);
-            // PRINT TASK NAME
-            u8g2f.setCursor(151, 68 + (25 * i));
-            u8g2f.print(tasks[i][0].c_str());
+            FontEngine::setEinkStyle(FontStyle::Body);
+            FontEngine::einkDraw(151, 68 + (25 * i), tasks[i][0].c_str());
           }
         }
 

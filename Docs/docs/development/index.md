@@ -17,7 +17,7 @@ How to set up PlatformIO and compile the firmware on Linux, macOS, and Windows.
 
 The PocketMage supports sideloading apps into OTA partitions. An app template and video guide are available:
 
-- [APP_TEMPLATE.cpp](https://github.com/ashtf8/PocketMage_PDA/blob/main/Code/PocketMageOS/src/APP_TEMPLATE.cpp) - reference template for creating OTA apps
+- [APP_TEMPLATE.cpp](https://github.com/TailsmanDesign/PocketMage_PDA/blob/main/Code/PocketMageOS/src/APP_TEMPLATE.cpp) - reference template for creating OTA apps
 - [Developing For the PocketMage](https://www.youtube.com/watch?v=3Ytc-3-BbMM) - video walkthrough
 
 ## Source Code Overview

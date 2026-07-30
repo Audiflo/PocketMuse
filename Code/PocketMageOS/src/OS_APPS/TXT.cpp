@@ -966,19 +966,19 @@ void setFontOLED(char style, bool bold, bool italic) {
 }
 
 void toolBar(Line& line, bool bold, bool italic) {
-  u8g2.setFont(u8g2_font_5x7_tf);
+  FontEngine::setOledStyle(FontStyle::Tiny);
 
   switch (KB().getKeyboardState()) {
     case 1:
-      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth("SHIFT")) / 2,
+      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("SHIFT")) / 2,
                    u8g2.getDisplayHeight(), "SHIFT");
       break;
     case 2:
-      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth("FN")) / 2, u8g2.getDisplayHeight(),
+      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN")) / 2, u8g2.getDisplayHeight(),
                    "FN");
       break;
     case 3:
-      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth("FN+SHIFT")) / 2,
+      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN+SHIFT")) / 2,
                    u8g2.getDisplayHeight(), "FN+SHIFT");
     default:
       break;
@@ -1132,14 +1132,14 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
     default:  typeLabel = "BODY"; break;
   }
 
-  u8g2.setFont(u8g2_font_5x7_tf);
+  FontEngine::setOledStyle(FontStyle::Tiny);
   
   String lineStr = "L: " + String(activeCursorLine);
-  u8g2.drawStr(80, 7, lineStr.c_str());
-  u8g2.drawStr(u8g2.getDisplayWidth() - u8g2.getStrWidth(typeLabel.c_str()), 7, typeLabel.c_str());
+  FontEngine::oledDraw(80, 7, lineStr);
+  FontEngine::oledDraw(u8g2.getDisplayWidth() - FontEngine::oledTextWidth(typeLabel), 7, typeLabel);
   u8g2.drawHLine(78, 10, u8g2.getDisplayWidth()-78);
 
-  u8g2.setFont(u8g2_font_lubR18_tf);
+  FontEngine::setOledStyle(FontStyle::Large);
 
   if (activeLine.len > 0) {
     int prevCursorX = 80;
@@ -1153,10 +1153,9 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
       if (unicode == '*') continue; 
       if (unicode == '`') continue;
       
-      // FIX: Use our pre-cached fast lookup table instead!
-      int charWidth = getFastOledCharWidth(unicode, false, false, false);
+      int charWidth = FontEngine::oledCharWidth(unicode, FontStyle::Large);
       
-      u8g2.drawGlyph(prevCursorX, u8g2.getDisplayHeight(), unicode);
+      FontEngine::oledDrawGlyph(prevCursorX, u8g2.getDisplayHeight(), unicode);
       prevCursorX += charWidth;
     }
   }
@@ -1562,14 +1561,14 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
         }
       }
       
-      u8g2.setFont(u8g2_font_5x7_tf);
-      int w = getFastOledCharWidth('*', false, false, true);
+      FontEngine::setOledStyle(FontStyle::Tiny);
+      int w = FontEngine::oledCharWidth('*', FontStyle::Tiny);
       if (xpos + w >= 0 && xpos <= display_w) u8g2.drawGlyph(xpos, 8, '*'); 
       xpos += w;
     } else if (unicode == '`') {
       inlineCode = !inlineCode;
-      u8g2.setFont(u8g2_font_5x7_tf);
-      int w = getFastOledCharWidth('`', false, false, true);
+      FontEngine::setOledStyle(FontStyle::Tiny);
+      int w = FontEngine::oledCharWidth('`', FontStyle::Tiny);
       if (xpos + w >= 0 && xpos <= display_w) u8g2.drawGlyph(xpos, 8, '`'); 
       xpos += w;
     } else {

@@ -124,7 +124,7 @@ size_t sliceThatFits(const char* s, size_t n, int maxTextWidth) {
     buf[len++] = c;
     buf[len] = '\0';
 
-    int w = u8g2f.getUTF8Width(buf);
+    int w = FontEngine::einkTextWidth(buf);
     if (w > maxTextWidth) break;
 
     best = i + 1;
@@ -271,7 +271,7 @@ void einkFramesDynamic(std::vector<Frame*> &frames, bool doFull_) {
 
         continue;
       }
-      const int lineStride = EINK().getFontHeight() + EINK().getLineSpacing();
+      const int lineStride = FontEngine::einkFontHeight() + EINK().getLineSpacing();
 
       frame->maxLines = (lineStride > 1) ? (frameH / lineStride) - 1 : 0;
       if (frame->maxLines <= 0) continue;
@@ -371,20 +371,21 @@ void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, 
     bool rightAlign  = line.startsWith("~R~");
     bool centerAlign = line.startsWith("~C~");
     if (rightAlign || centerAlign) line.remove(0, 3);
-    uint16_t lineWidth = u8g2f.getUTF8Width(line.c_str());
+    uint16_t lineWidth = FontEngine::einkTextWidth(line);
     int cursorX = computeCursorX(frame, rightAlign, centerAlign, 0, lineWidth);
-    int yRaw = frame.top + lineIndex * (EINK().getFontHeight() + EINK().getLineSpacing());
-    int yDraw = yRaw + u8g2f.getFontAscent();
+    int yRaw = frame.top + lineIndex * (FontEngine::einkFontHeight() + EINK().getLineSpacing());
+    int yDraw = yRaw + FontEngine::einkFontAscent();
     if (clearLine) {
         int yClear = alignDown8(yRaw);
-        int clearHeight = alignUp8(EINK().getFontHeight() + EINK().getLineSpacing());
+        int clearHeight = alignUp8(FontEngine::einkFontHeight() + EINK().getLineSpacing());
         display.fillRect(frame.left, yClear,
                          display.width() - frame.left - frame.right,
                          clearHeight,
-                         frame.invert ? GxEPD_BLACK :GxEPD_WHITE);
+                         frame.invert ? GxEPD_BLACK : GxEPD_WHITE);
     }
     u8g2f.setForegroundColor(frame.invert ? GxEPD_WHITE : GxEPD_BLACK);
-    u8g2f.drawUTF8(cursorX, yDraw, line.c_str());
+    u8g2f.setFontMode(1);
+    FontEngine::einkDraw(cursorX, yDraw, line);
 }
 
 ///////////////////////////// FRAME SCROLL FUNCTIONS
@@ -482,7 +483,7 @@ void oledScrollFrame() {
     String line = String(lv.ptr).substring(0, lv.len);
 
     if (line.startsWith("    ")) {
-      int lineWidth = map(u8g2f.getUTF8Width(line.substring(4).c_str()), 0, 320, 0, 49);
+      int lineWidth = map(FontEngine::einkTextWidth(line.substring(4)), 0, 320, 0, 49);
       lineWidth = constrain(lineWidth, 0, 49);
 
       long posFromBottom = previewBottom - i;
@@ -491,7 +492,7 @@ void oledScrollFrame() {
         // u8g2.drawBox(68, boxY, lineWidth, 2);
       }
     } else {
-      int lineWidth = map(u8g2f.getUTF8Width(line.c_str()), 0, 320, 0, 56);
+      int lineWidth = map(FontEngine::einkTextWidth(line), 0, 320, 0, 56);
       lineWidth = constrain(lineWidth, 0, 56);
 
       long posFromBottom = previewBottom - i;
@@ -518,16 +519,15 @@ void oledScrollFrame() {
       String pLine = String(plv.ptr).substring(0, plv.len);
 
       if (pLine.length() > 0) {
-        u8g2.setFont(u8g2_font_ncenB10_tr);
-        u8g2.drawStr((u8g2.getWidth() - u8g2.getUTF8Width(pLine.substring(3).c_str())) / 2, 24, pLine.substring(3).c_str());
+        FontEngine::setOledStyle(FontStyle::BodyBold);
+        FontEngine::oledDraw((u8g2.getWidth() - FontEngine::oledTextWidth(pLine.substring(3))) / 2, 24, pLine.substring(3));
       }
     }
   } else {
-    // print current line
-    u8g2.setFont(u8g2_font_ncenB08_tr);
+    FontEngine::setOledStyle(FontStyle::Status);
     String lineNumStr = String(count - CurrentFrameState->scroll) + "/" + String(count);
-    u8g2.drawStr(0, 12, "Lines:");
-    u8g2.drawStr(0, 24, lineNumStr.c_str());
+    FontEngine::oledDraw(0, 12, "Lines:");
+    FontEngine::oledDraw(0, 24, lineNumStr);
   }
   // send buffer
   u8g2.sendBuffer();

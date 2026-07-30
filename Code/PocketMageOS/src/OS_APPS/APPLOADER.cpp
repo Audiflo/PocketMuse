@@ -227,17 +227,15 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameCh
         appNameStr = appNameStr.substring(0, maxNameChars);
     }
 
-    u8g2f.setFont(u8g2_font_ncenR10_tf);
-    u8g2f.setFontMode(1);
+    FontEngine::setEinkStyle(FontStyle::Body);
     u8g2f.setForegroundColor(GxEPD_BLACK);
 
-    int w = u8g2f.getUTF8Width(appNameStr.c_str());
+    int w = FontEngine::einkTextWidth(appNameStr);
 
     int tx = x + (40 - w) / 2;
     int ty = y + 40 + 13;
 
-    u8g2f.setCursor(tx, ty);
-    u8g2f.print(appNameStr);
+    FontEngine::einkDraw(tx, ty, appNameStr);
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -327,7 +325,7 @@ static void installTask(void *param) {
   TarUnpacker unpacker;
   unpacker.haltOnError(true);
   unpacker.setTarProgressCallback([](uint8_t progress) {
-    uint8_t mappedProgress = progress / 2; // 0–50% for extraction
+    uint8_t mappedProgress = progress / 2; // 0-50% for extraction
     
     // Never let the bar go backwards.
     if (mappedProgress > g_installProgress) {
@@ -547,7 +545,7 @@ if (global_fs->exists(assetsSrc.c_str())) {
       vTaskDelete(NULL);
     }
     written += rd;
-    g_installProgress = 50 + (written * 50 / sz); // 50–100% flashing
+    g_installProgress = 50 + (written * 50 / sz); // 50-100% flashing
   }
 
   f.close();
@@ -659,8 +657,8 @@ void drawProgressBar(uint8_t progress) {
   String progressText = "";
   if (progress < 52) progressText = "Extracting";
   else               progressText = "Installing";
-  u8g2.setFont(u8g2_font_7x13B_tf);
-  u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(progressText.c_str()))/2,
+  FontEngine::setOledStyle(FontStyle::MonoBold);
+  FontEngine::oledDraw((u8g2.getDisplayWidth() - u8g2.getStrWidth(progressText.c_str()))/2,
                u8g2.getDisplayHeight()-3,progressText.c_str());
 
   u8g2.sendBuffer();

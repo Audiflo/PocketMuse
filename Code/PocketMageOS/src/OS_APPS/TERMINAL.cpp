@@ -136,12 +136,10 @@ void terminalScrollPreview() {
       u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
     }
 
-    u8g2.setFont(u8g2_font_5x7_tf);
-    
-    // Truncate preview for OLED
+    FontEngine::setOledStyle(FontStyle::Tiny);
     String dispStr = terminalOutputs[i];
     if (dispStr.length() > 21) dispStr = dispStr.substring(0, 21);
-    u8g2.drawUTF8(6, y, dispStr.c_str());
+    FontEngine::oledDraw(6, y, dispStr);
 
     y += 8;
   }
@@ -177,9 +175,9 @@ void potionScrollPreview() {
       u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
     }
 
-    u8g2.setFont(u8g2_font_5x7_tf);
-    u8g2.drawUTF8(6, y, lineNum.c_str());
-    u8g2.drawUTF8(30, y, potionLines[i].c_str());
+    FontEngine::setOledStyle(FontStyle::Tiny);
+    FontEngine::oledDraw(6, y, lineNum);
+    FontEngine::oledDraw(30, y, potionLines[i]);
 
     y += 8;
   }
@@ -284,15 +282,8 @@ void updateTerminalDisp() {
   for (int i = startIdx; i < endIdx; i++) {
     const String& s = terminalOutputs[i];
     u8g2f.setForegroundColor(fgColor);
-    if (termLargeFont) {
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
-    } else {
-      u8g2f.setFont(u8g2_font_5x7_tf);
-      u8g2f.setFontMode(1);
-    }
-    u8g2f.setCursor(5, y);
-    u8g2f.print(s.c_str());
+    FontEngine::setEinkStyle(termLargeFont ? FontStyle::MonoBold : FontStyle::Tiny);
+    FontEngine::einkDraw(5, y, s);
     y += yStep;
   }
 
@@ -1234,25 +1225,23 @@ void wr_inkText(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void*
 
   switch (size) {
     case 1:
-      u8g2f.setFont(u8g2_font_5x7_tf);
-      u8g2f.setFontMode(1);
+      FontEngine::setEinkStyle(FontStyle::Tiny);
       break;
     case 2:
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
+      FontEngine::setEinkStyle(FontStyle::MonoBold);
       break;
     case 3:
       u8g2f.setFont(u8g2_font_courB14_tf);
       u8g2f.setFontMode(1);
-      break;
+      u8g2f.setCursor(x_origin, y_origin);
+      u8g2f.print(text);
+      return;
     default:
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
+      FontEngine::setEinkStyle(FontStyle::MonoBold);
       break;
   }
   
-  u8g2f.setCursor(x_origin, y_origin);
-  u8g2f.print(text);
+  FontEngine::einkDraw(x_origin, y_origin, text);
 }
 
 // ----- OLED Display ----- //
@@ -1320,20 +1309,20 @@ void wr_oledText(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void
 
   switch (size) {
     case 1:
-      u8g2.setFont(u8g2_font_5x7_tf);
+      FontEngine::setOledStyle(FontStyle::Tiny);
       break;
     case 2:
-      u8g2.setFont(u8g2_font_7x13B_tf);
+      FontEngine::setOledStyle(FontStyle::MonoBold);
       break;
     case 3:
-      u8g2.setFont(u8g2_font_helvB14_tf);
+      FontEngine::setOledStyle(FontStyle::SansBold);
       break;
     default:
-      u8g2.setFont(u8g2_font_lubR18_tf);
+      FontEngine::setOledStyle(FontStyle::Large);
       break;
   }
   
-  u8g2.drawUTF8(x_origin, y_origin, text);
+  FontEngine::oledDraw(x_origin, y_origin, text);
 
   u8g2.setDrawColor(1);
 }
@@ -1906,12 +1895,9 @@ void einkHandler_TERMINAL() {
               u8g2f.setForegroundColor(bgColor);
             } else
               u8g2f.setForegroundColor(fgColor);
-            u8g2f.setFont(u8g2_font_5x7_tf);
-            u8g2f.setFontMode(1);
-            u8g2f.setCursor(5, y);
-            u8g2f.print("[" + lineNum + "]");
-            u8g2f.setCursor(35, y);
-            u8g2f.print(s.c_str());
+            FontEngine::setEinkStyle(FontStyle::Tiny);
+            FontEngine::einkDraw(5, y, "[" + lineNum + "]");
+            FontEngine::einkDraw(35, y, s);
             y += 10;
           }
         } 
@@ -1933,12 +1919,9 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              u8g2f.setFont(u8g2_font_5x7_tf);
-              u8g2f.setFontMode(1);
-              u8g2f.setCursor(5, y);
-              u8g2f.print("[" + lineNum + "]");
-              u8g2f.setCursor(35, y);
-              u8g2f.print(s.c_str());
+              FontEngine::setEinkStyle(FontStyle::Tiny);
+              FontEngine::einkDraw(5, y, "[" + lineNum + "]");
+              FontEngine::einkDraw(35, y, s);
               y += 10;
             }
           }
@@ -1959,12 +1942,9 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              u8g2f.setFont(u8g2_font_5x7_tf);
-              u8g2f.setFontMode(1);
-              u8g2f.setCursor(5, y);
-              u8g2f.print("[" + lineNum + "]");
-              u8g2f.setCursor(35, y);
-              u8g2f.print(s.c_str());
+              FontEngine::setEinkStyle(FontStyle::Tiny);
+              FontEngine::einkDraw(5, y, "[" + lineNum + "]");
+              FontEngine::einkDraw(35, y, s);
               y += 10;
             }
           }

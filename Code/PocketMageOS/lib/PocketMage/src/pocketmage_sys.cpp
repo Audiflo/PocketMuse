@@ -129,11 +129,9 @@ void deepSleep(bool alternateScreenSaver) {
 
           // Show file
           display.drawBitmap(0, 0, buf, 320, 240, GxEPD_BLACK);
-          u8g2f.setFont(u8g2_font_courB10_tf);
-          u8g2f.setFontMode(1);
+          FontEngine::setEinkStyle(FontStyle::MonoBold);
           u8g2f.setForegroundColor(GxEPD_BLACK);
-          u8g2f.setCursor(5, display.height() - 5);
-          u8g2f.print(binFiles[fileIndex].c_str());
+          FontEngine::einkDraw(5, display.height() - 5, binFiles[fileIndex]);
 
           // Free the memory safely
           free(buf);
@@ -310,6 +308,9 @@ void PocketMage_INIT() {
   }
   prefs.end();
 
+  // Init font engine (must be before any display code)
+  FontEngine::init();
+
   // Serial, I2C, SPI
   Serial.begin(115200);
   Wire.begin(I2C_SDA, I2C_SCL);
@@ -438,9 +439,8 @@ String vectorToString() {
   for (size_t i = 0; i < allLines.size(); i++) {
     result += allLines[i];
 
-    uint16_t charWidth = u8g2f.getUTF8Width(allLines[i].c_str());
+    uint16_t charWidth = FontEngine::einkTextWidth(allLines[i]);
 
-    // Add newline only if the line doesn't fully use the available space
     if (charWidth < display.width() && i < allLines.size() - 1) {
       result += '\n';
     }
@@ -456,9 +456,8 @@ void stringToVector(String inputText) {
   for (size_t i = 0; i < inputText.length(); i++) {
     char c = inputText[i];
 
-    uint16_t charWidth = u8g2f.getUTF8Width(currentLine_.c_str());
+    uint16_t charWidth = FontEngine::einkTextWidth(currentLine_);
 
-    // Check if new line needed
     if ((c == '\n' || charWidth >= display.width() - 5) && !currentLine_.isEmpty()) {
       if (currentLine_.endsWith(" ")) {
         allLines.push_back(currentLine_);

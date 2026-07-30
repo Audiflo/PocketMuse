@@ -189,7 +189,7 @@ void tasksScrollPreview() {
       u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
     }
 
-    u8g2.setFont(u8g2_font_5x7_tf);
+    FontEngine::setOledStyle(FontStyle::Tiny);
     
     String tName = tasks[i][0];
     String tDate = convertDateFormat(tasks[i][1]);
@@ -204,7 +204,7 @@ void tasksScrollPreview() {
        dispStr = tName + " " + tDate;
     }
     
-    u8g2.drawUTF8(6, y, dispStr.c_str());
+    FontEngine::oledDraw(6, y, dispStr.c_str());
 
     y += 8;
   }
@@ -441,29 +441,26 @@ void einkHandler_TASKS() {
           int endIdx = std::min((int)tasks.size(), startIdx + MAX_FILES);
           int displayRow = 0;
 
-          u8g2f.setFont(u8g2_font_ncenR10_tf);
-          u8g2f.setFontMode(1);
+          FontEngine::setEinkStyle(FontStyle::Body);
           for (int i = startIdx; i < endIdx; i++) {
             
             // Dynamic Truncation Calculation (Max 198px width)
             String tName = tasks[i][0];
-            int w = u8g2f.getUTF8Width(tName.c_str());
+            int w = FontEngine::einkTextWidth(tName);
             
             if (w > 192) { // 227-29 = 198px, using 192px to allow room for ".."
               while (w > 180 && tName.length() > 0) {
                 tName.remove(tName.length() - 1);
-                w = u8g2f.getUTF8Width(tName.c_str());
+                w = FontEngine::einkTextWidth(tName);
               }
               tName += "..";
             }
 
             // PRINT TASK NAME
-            u8g2f.setCursor(29, 54 + (17 * displayRow));
-            u8g2f.print(tName.c_str());
+            FontEngine::einkDraw(29, 54 + (17 * displayRow), tName.c_str());
             
             // PRINT TASK DUE DATE
-            u8g2f.setCursor(231, 54 + (17 * displayRow));
-            u8g2f.print(convertDateFormat(tasks[i][1]).c_str());
+            FontEngine::einkDraw(231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]).c_str());
 
             displayRow++;
           }
@@ -502,29 +499,26 @@ void einkHandler_TASKS() {
           int endIdx = std::min((int)tasks.size(), startIdx + MAX_FILES);
           int displayRow = 0;
 
-          u8g2f.setFont(u8g2_font_ncenR10_tf);
-          u8g2f.setFontMode(1);
+          FontEngine::setEinkStyle(FontStyle::Body);
           for (int i = startIdx; i < endIdx; i++) {
             
             // Dynamic Truncation Calculation (Max 198px width)
             String tName = tasks[i][0];
-            int w = u8g2f.getUTF8Width(tName.c_str());
+            int w = FontEngine::einkTextWidth(tName);
             
             if (w > 192) { // 227-29 = 198px, using 192px to allow room for ".."
               while (w > 180 && tName.length() > 0) {
                 tName.remove(tName.length() - 1);
-                w = u8g2f.getUTF8Width(tName.c_str());
+                w = FontEngine::einkTextWidth(tName);
               }
               tName += "..";
             }
 
             // PRINT TASK NAME
-            u8g2f.setCursor(29, 54 + (17 * displayRow));
-            u8g2f.print(tName.c_str());
+            FontEngine::einkDraw(29, 54 + (17 * displayRow), tName.c_str());
             
             // PRINT TASK DUE DATE
-            u8g2f.setCursor(231, 54 + (17 * displayRow));
-            u8g2f.print(convertDateFormat(tasks[i][1]).c_str());
+            FontEngine::einkDraw(231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]).c_str());
 
             displayRow++;
           }

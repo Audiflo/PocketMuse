@@ -19,7 +19,7 @@ PocketMage firmware is built with [PlatformIO](https://platformio.org/). There a
 
 - [VS Code](https://code.visualstudio.com/) installed
 - Python 3 installed
-- The PocketMage source code (clone from [GitHub](https://github.com/ashtf8/PocketMage_PDA))
+- The PocketMage source code (clone from [GitHub](https://github.com/TailsmanDesign/PocketMage_PDA))
 
 ## Linux
 
@@ -46,7 +46,7 @@ The same steps as Linux work on macOS. No additional setup required.
 
 ## OTA Apps
 
-OTA apps are compiled with the `OTA_APP` environment. The entry point API is defined in [APP_TEMPLATE.cpp](https://github.com/ashtf8/PocketMage_PDA/blob/main/Code/PocketMageOS/src/APP_TEMPLATE.cpp).
+OTA apps are compiled with the `OTA_APP` environment. The entry point API is defined in [APP_TEMPLATE.cpp](https://github.com/TailsmanDesign/PocketMage_PDA/blob/main/Code/PocketMageOS/src/APP_TEMPLATE.cpp).
 
 For a full walkthrough, watch the [OTA app development video](https://www.youtube.com/watch?v=3Ytc-3-BbMM).
 

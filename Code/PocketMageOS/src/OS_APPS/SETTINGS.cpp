@@ -263,16 +263,13 @@ void einkHandler_settings() {
     EINK().resetDisplay();
     display.drawBitmap(0, 0, _settings, 320, 218, GxEPD_BLACK);
 
-    u8g2f.setFont(u8g2_font_ncenR10_tf);
-    u8g2f.setFontMode(1);
+    FontEngine::setEinkStyle(FontStyle::Body);
     
     // First column of settings
     // OLED_BRIGHTNESS
-    u8g2f.setCursor(8, 42);
-    u8g2f.print(String(OLED_BRIGHTNESS).c_str());
+    FontEngine::einkDraw(8, 42, String(OLED_BRIGHTNESS).c_str());
     // TIMEOUT
-    u8g2f.setCursor(8, 65);
-    u8g2f.print(String(TIMEOUT).c_str());
+    FontEngine::einkDraw(8, 65, String(TIMEOUT).c_str());
     // SYSTEM_CLOCK
     if (SYSTEM_CLOCK) display.drawBitmap(8, 75, _toggleON, 26, 11, GxEPD_BLACK);
     else display.drawBitmap(8, 75, _toggleOFF, 26, 11, GxEPD_BLACK);
@@ -292,8 +289,7 @@ void einkHandler_settings() {
     if (ALLOW_NO_MICROSD) display.drawBitmap(8, 190, _toggleON, 26, 11, GxEPD_BLACK);
     else display.drawBitmap(8, 190, _toggleOFF, 26, 11, GxEPD_BLACK);
     // OLED_MAX_FPS
-    u8g2f.setCursor(163, 42);
-    u8g2f.print(String(OLED_MAX_FPS).c_str());
+    FontEngine::einkDraw(163, 42, String(OLED_MAX_FPS).c_str());
 
     EINK().drawStatusBar("Type a Command:");
 

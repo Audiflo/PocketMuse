@@ -14,8 +14,14 @@ static constexpr const char* TAG = "COMM";
 
 // CONFIG
 #define MAX_CHAT_MSGS 50
-#define BUBBLE_MAX_CHARS 40
 #define MAX_VISIBLE_LINES 10
+
+// Pick a message-bubble font based on content length.
+static FontStyle msgFont(int textLen) {
+  if (textLen <= 30) return FontStyle::MonoBold;
+  if (textLen <= 70) return FontStyle::Mono;
+  return FontStyle::SmallHeading;
+}
 
 // TYPES
 enum CommState { PEER_LIST, CHAT_VIEW };
@@ -68,29 +74,30 @@ static String displayName(const char* mac) {
   return String(mac);
 }
 
-// TEXT WRAPPER
-static std::vector<String> wrapText(String text, int maxLineChars) {
+// Wrap text to fit inside a chat bubble using pixel widths for the given font.
+static std::vector<String> wrapTextPx(const String& text, FontStyle style) {
   std::vector<String> lines;
-  while (text.length() > maxLineChars) {
-    int split = -1;
-    // Look backwards for a space or hyphen to split cleanly
-    for (int i = maxLineChars; i >= 0; i--) {
-      if (text[i] == ' ' || text[i] == '-') {
-        split = i + 1; 
-        break;
-      }
+  int maxW = display.width() - 45;
+  FontEngine::setEinkStyle(style);
+  int lineStart = 0;
+  while (lineStart < (int)text.length()) {
+    int lastBreak = -1;
+    int lineEnd = lineStart;
+    int lineW = 0;
+    for (int i = lineStart; i < (int)text.length(); i++) {
+      char tmp[2] = {text[i], 0};
+      int cw = FontEngine::einkTextWidth(tmp);
+      if (lineW + cw > maxW && i > lineStart) break;
+      lineW += cw;
+      lineEnd = i + 1;
+      if (text[i] == ' ' || text[i] == '-') lastBreak = i;
     }
-    if (split == -1) split = maxLineChars; // Force split if one giant word
-    
-    String line = text.substring(0, split);
+    int end = (lastBreak >= lineStart) ? lastBreak + 1 : lineEnd;
+    String line = text.substring(lineStart, end);
     line.trim();
-    lines.push_back(line);
-    text = text.substring(split);
-    text.trim();
-  }
-  if (text.length() > 0) {
-    text.trim();
-    if(text.length() > 0) lines.push_back(text);
+    if (line.length() > 0) lines.push_back(line);
+    lineStart = end;
+    while (lineStart < (int)text.length() && text[lineStart] == ' ') lineStart++;
   }
   return lines;
 }
@@ -222,10 +229,10 @@ void chatScrollPreview() {
   for (int i = startLine; i < startLine + 4; i++) {
     if (i >= msgCount) break;
     if (i == (int)chatScrollIndex) u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
-    u8g2.setFont(u8g2_font_5x7_tf);
+    FontEngine::setOledStyle(FontStyle::Tiny);
     String dispStr = String(msgs[i].sender) + ": " + String(msgs[i].content);
     if (dispStr.length() > 38) dispStr = dispStr.substring(0, 38) + "..";
-    u8g2.drawUTF8(6, y, dispStr.c_str());
+    FontEngine::oledDraw(6, y, dispStr.c_str());
     y += 8;
   }
   u8g2.sendBuffer();
@@ -249,15 +256,15 @@ void processKB_COMM() {
   if (currentState == CHAT_VIEW) {
       int maxScrollIndex = 0;
       if (msgCount > 0) {
-          u8g2f.setFont(u8g2_font_courB10_tf);
-          u8g2f.setFontMode(1);
-          int ascent = u8g2f.getFontAscent();
-          int lineH = ascent - u8g2f.getFontDescent();
-          int lineSpacing = lineH + 2;
           int totalH = 0;
           int top = msgCount - 1;
           while (top >= 0) {
-              std::vector<String> lines = wrapText(msgs[top].content, BUBBLE_MAX_CHARS);
+              FontStyle mf = msgFont(strlen(msgs[top].content));
+              FontEngine::setEinkStyle(mf);
+              int ascent = FontEngine::einkFontAscent();
+              int lineH = ascent - FontEngine::einkFontDescent();
+              int lineSpacing = lineH + 2;
+              std::vector<String> lines = wrapTextPx(msgs[top].content, mf);
               int bH = (lines.size() * lineSpacing) + lineH + 21;
               if (totalH + bH > 214) { top++; break; }
               totalH += bH;
@@ -426,16 +433,14 @@ void einkHandler_COMM() {
     } else {
       // Safely perform native partial window update without blanking the rest of the screen
       display.fillRect(0, 28, 16, 218, GxEPD_WHITE);
-      u8g2f.setFont(u8g2_font_ncenR10_tf);
-      u8g2f.setFontMode(1);
-      u8g2f.setForegroundColor(GxEPD_BLACK);
+      FontEngine::setEinkStyle(FontStyle::Body);
+      FontEngine::setEinkColor(GxEPD_BLACK);
       
       for (int i = 0; i < vis; i++) {
         int idx = scrollTop + i;
         if (idx == selPeer) {
           int yPos = 36 + i * 20;
-          u8g2f.setCursor(4, yPos);
-          u8g2f.print(">");
+          FontEngine::einkDraw(4, yPos, ">");
         }
       }
       
@@ -453,19 +458,14 @@ void einkHandler_COMM() {
 
   // Top bar
   display.fillRect(0, 0, display.width(), 20, GxEPD_BLACK);
-  u8g2f.setForegroundColor(GxEPD_WHITE);
+  FontEngine::setEinkColor(GxEPD_WHITE);
 
   if (currentState == PEER_LIST) {
-    u8g2f.setFont(u8g2_font_ncenR10_tf);
-    u8g2f.setFontMode(1);
-    u8g2f.setCursor(4, 16);
-    u8g2f.print("Select Room");
-    u8g2f.setFont(u8g2_font_6x10_tf);
-    u8g2f.setFontMode(1);
-    u8g2f.setCursor(164, 16);
-    u8g2f.print("Me " + String(myMacStr));
-    u8g2f.setCursor(290, 16);
-    u8g2f.print("P: " + String(mesh_now_get_peer_count()));
+    FontEngine::setEinkStyle(FontStyle::Body);
+    FontEngine::einkDraw(4, 16, "Select Room");
+    FontEngine::setEinkStyle(FontStyle::SmallHeading);
+    FontEngine::einkDraw(164, 16, "Me " + String(myMacStr));
+    FontEngine::einkDraw(290, 16, "P: " + String(mesh_now_get_peer_count()));
 
     int totalRooms = 1 + mesh_now_get_peer_count();
     mesh_peer_t* allPeers = mesh_now_get_peers();
@@ -475,8 +475,7 @@ void einkHandler_COMM() {
     int scrollTop = max(selPeer - vis / 2, 0);
     if (scrollTop + vis > totalRooms) scrollTop = max(totalRooms - vis, 0);
     
-    u8g2f.setFont(u8g2_font_ncenR10_tf);
-    u8g2f.setFontMode(1);
+    FontEngine::setEinkStyle(FontStyle::Body);
     for (int i = 0; i < vis; i++) {
       int idx = scrollTop + i;
       if (idx >= totalRooms) break;
@@ -499,14 +498,12 @@ void einkHandler_COMM() {
         }
       }
       
-      u8g2f.setForegroundColor(GxEPD_BLACK);
+      FontEngine::setEinkColor(GxEPD_BLACK);
       
       if (selected) {
-        u8g2f.setCursor(4, yPos);
-        u8g2f.print(">");
+        FontEngine::einkDraw(4, yPos, ">");
       }
-      u8g2f.setCursor(20, yPos);
-      u8g2f.print(label);
+      FontEngine::einkDraw(20, yPos, label);
     }
     
     // Scrollbar (Extended to bottom)
@@ -520,19 +517,14 @@ void einkHandler_COMM() {
     }
   } else {
     if (chatMode == LOCAL_CHAT) {
-      u8g2f.setCursor(4, 16);
-      u8g2f.print("Local Chat");
+      FontEngine::einkDraw(4, 16, "Local Chat");
     } else {
       String name = displayName(peerMacStr);
-      u8g2f.setCursor(4, 16);
-      u8g2f.print("> " + name);
+      FontEngine::einkDraw(4, 16, "> " + name);
     }
-    u8g2f.setFont(u8g2_font_6x10_tf);
-    u8g2f.setFontMode(1);
-    u8g2f.setCursor(164, 16);
-    u8g2f.print(chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct");
-    u8g2f.setCursor(290, 16);
-    u8g2f.print("P: " + String(mesh_now_get_peer_count()));
+    FontEngine::setEinkStyle(FontStyle::SmallHeading);
+    FontEngine::einkDraw(164, 16, chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct");
+    FontEngine::einkDraw(290, 16, "P: " + String(mesh_now_get_peer_count()));
   }
 
   // Separator line
@@ -540,19 +532,20 @@ void einkHandler_COMM() {
 
   // Message area (CHAT_VIEW only)
   if (currentState == CHAT_VIEW) {
-    u8g2f.setFont(u8g2_font_courB10_tf);
-    u8g2f.setFontMode(1);
-
-    int ascent = u8g2f.getFontAscent();
-    int lineH = ascent - u8g2f.getFontDescent();
-    int lineSpacing = lineH + 2;
+    int y = 26;
+    int barWidth = 3;
 
     int maxScrollIndex = 0;
     if (msgCount > 0) {
         int totalH = 0;
         int top = msgCount - 1;
         while (top >= 0) {
-            std::vector<String> lines = wrapText(msgs[top].content, BUBBLE_MAX_CHARS);
+            FontStyle mf = msgFont(strlen(msgs[top].content));
+            FontEngine::setEinkStyle(mf);
+            int ascent = FontEngine::einkFontAscent();
+            int lineH = ascent - FontEngine::einkFontDescent();
+            int lineSpacing = lineH + 2;
+            std::vector<String> lines = wrapTextPx(msgs[top].content, mf);
             int bH = (lines.size() * lineSpacing) + lineH + 21;
             if (totalH + bH > 214) { top++; break; }
             totalH += bH;
@@ -565,27 +558,28 @@ void einkHandler_COMM() {
     if (autoScroll) chatScrollIndex = maxScrollIndex;
     if (chatScrollIndex > (ulong)maxScrollIndex) chatScrollIndex = maxScrollIndex;
 
-    int y = 26;
-    int barWidth = 3;
-
     for (int i = chatScrollIndex; i < msgCount && y < 240; i++) {
       ChatMsg* m = &msgs[i];
-      std::vector<String> lines = wrapText(m->content, BUBBLE_MAX_CHARS);
+      FontStyle mf = msgFont(strlen(m->content));
+      FontEngine::setEinkStyle(mf);
+      int ascent = FontEngine::einkFontAscent();
+      int lineH = ascent - FontEngine::einkFontDescent();
+      int lineSpacing = lineH + 2;
+
+      std::vector<String> lines = wrapTextPx(m->content, mf);
 
       String nameText = displayName(m->sender);
       String timeText = String(m->hr) + ":" + (m->mn < 10 ? "0" : "") + String(m->mn);
 
-      int nameW = u8g2f.getUTF8Width(nameText.c_str());
-      u8g2f.setFont(u8g2_font_6x10_tf);
-      u8g2f.setFontMode(1);
-      int timeW = u8g2f.getUTF8Width(timeText.c_str());
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
+      int nameW = FontEngine::einkTextWidth(nameText.c_str());
+      FontEngine::setEinkStyle(FontStyle::SmallHeading);
+      int timeW = FontEngine::einkTextWidth(timeText.c_str());
+      FontEngine::setEinkStyle(mf);
       int metaW = nameW + timeW + 10;
 
       int textW = 0;
       for (const String& l : lines) {
-        int lw = u8g2f.getUTF8Width(l.c_str());
+        int lw = FontEngine::einkTextWidth(l.c_str());
         if (lw > textW) textW = lw;
       }
 
@@ -596,36 +590,31 @@ void einkHandler_COMM() {
 
       if (m->sentByLocal) {
           display.fillRoundRect(x, y, bubbleW, bubbleH, 10, GxEPD_BLACK);
-          u8g2f.setForegroundColor(GxEPD_WHITE);
+          FontEngine::setEinkColor(GxEPD_WHITE);
       } else {
           display.drawRoundRect(x, y, bubbleW, bubbleH, 10, GxEPD_BLACK);
-          u8g2f.setForegroundColor(GxEPD_BLACK);
+          FontEngine::setEinkColor(GxEPD_BLACK);
       }
 
       int nameY = y + 8 + ascent;
-      u8g2f.setCursor(x + 8, nameY);
-      u8g2f.print(nameText);
+      FontEngine::einkDraw(x + 8, nameY, nameText);
 
-      u8g2f.setFont(u8g2_font_6x10_tf);
-      u8g2f.setFontMode(1);
-      u8g2f.setCursor(x + bubbleW - 8 - timeW, nameY);
-      u8g2f.print(timeText);
-      u8g2f.setFont(u8g2_font_courB10_tf);
-      u8g2f.setFontMode(1);
+      FontEngine::setEinkStyle(FontStyle::SmallHeading);
+      FontEngine::einkDraw(x + bubbleW - 8 - timeW, nameY, timeText);
+      FontEngine::setEinkStyle(mf);
 
       display.drawFastHLine(x + 8, nameY + 2, bubbleW - 16, m->sentByLocal ? GxEPD_WHITE : GxEPD_BLACK);
 
       int msgY = nameY + 2 + 1 + 4 + ascent;
       for (size_t l = 0; l < lines.size(); l++) {
-          u8g2f.setCursor(x + 8, msgY + l * lineSpacing);
-          u8g2f.print(lines[l]);
+          FontEngine::einkDraw(x + 8, msgY + l * lineSpacing, lines[l]);
       }
 
       y += bubbleH + 4;
     }
 
     if (maxScrollIndex > 0) {
-      float avgBubbleH = (lineSpacing * 3 + lineH + 21);
+      float avgBubbleH = 64;
       float visibleRatio = 214.0 / ((maxScrollIndex + 1) * avgBubbleH);
       if (visibleRatio > 1.0) visibleRatio = 1.0;
       int handleHeight = max((int)(214 * visibleRatio), 15);

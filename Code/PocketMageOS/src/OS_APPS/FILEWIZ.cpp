@@ -175,8 +175,8 @@ String renderWizMini(String folder, int8_t scrollDelta) {
         default:  u8g2.drawXBMP(1, 1, 30, 30, _LFileIcons[3]); break;
       }
       String dispName = f.name + f.extension;
-      u8g2.setFont(u8g2_font_7x13B_tf);
-      u8g2.drawStr(34,29,dispName.c_str());
+      FontEngine::setOledStyle(FontStyle::MonoBold);
+      FontEngine::oledDraw(34,29,dispName.c_str());
     }
     else {
       int x = 34 + 18 * (i - scroll - 1);
@@ -190,25 +190,25 @@ String renderWizMini(String folder, int8_t scrollDelta) {
   }
 
   // Display KB state
-  u8g2.setFont(u8g2_font_5x7_tf);
+  FontEngine::setOledStyle(FontStyle::Tiny);
   switch (KB().getKeyboardState()) {
     case 1:
       u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - u8g2.getStrWidth("SHIFT"), u8g2.getDisplayHeight(), u8g2.getStrWidth("SHIFT"), -8);
+      u8g2.drawBox(u8g2.getDisplayWidth() - FontEngine::oledTextWidth("SHIFT"), u8g2.getDisplayHeight(), FontEngine::oledTextWidth("SHIFT"), -8);
       u8g2.setDrawColor(1);
-      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth("SHIFT")), u8g2.getDisplayHeight(), "SHIFT");
+      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("SHIFT")), u8g2.getDisplayHeight(), "SHIFT");
       break;
     case 2:
       u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - u8g2.getStrWidth("FN"), u8g2.getDisplayHeight(), u8g2.getStrWidth("FN"), -8);
+      u8g2.drawBox(u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN"), u8g2.getDisplayHeight(), FontEngine::oledTextWidth("FN"), -8);
       u8g2.setDrawColor(1);
-      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth("FN")), u8g2.getDisplayHeight(), "FN");
+      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN")), u8g2.getDisplayHeight(), "FN");
       break;
     case 3:
       u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - u8g2.getStrWidth("FN+SHIFT"), u8g2.getDisplayHeight(), u8g2.getStrWidth("FN+SHIFT"), -8);
+      u8g2.drawBox(u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN+SHIFT"), u8g2.getDisplayHeight(), FontEngine::oledTextWidth("FN+SHIFT"), -8);
       u8g2.setDrawColor(1);
-      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth("FN+SHIFT")), u8g2.getDisplayHeight(), "FN+SHIFT");
+      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN+SHIFT")), u8g2.getDisplayHeight(), "FN+SHIFT");
       break;
   }
 
@@ -547,8 +547,7 @@ void einkHandler_FILEWIZ() {
         updateRecentFilesList();
 
         // Draw the file list
-        u8g2f.setFont(u8g2_font_ncenR10_tf);
-        u8g2f.setFontMode(1);
+        FontEngine::setEinkStyle(FontStyle::Body);
         for (int i = 0; i < 10; i++) {
           String dispPath = PM_SDAUTO().getFilesListIndex(i);
           
@@ -558,8 +557,7 @@ void einkHandler_FILEWIZ() {
                dispPath = "..." + dispPath.substring(dispPath.length() - 27);
             }
             
-            u8g2f.setCursor(30, 54 + (17 * i));
-            u8g2f.print(dispPath);
+            FontEngine::einkDraw(30, 54 + (17 * i), dispPath);
           }
         }
 

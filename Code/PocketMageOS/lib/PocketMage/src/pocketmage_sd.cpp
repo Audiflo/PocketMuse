@@ -201,7 +201,7 @@ void setupSD() {
     "- ( S ) | Swap app in selected slot (choose a .tar file)\n" 
     "- ( D ) | Delete app in selected slot\n" 
     "- (FN) + ( < ) | Exit app / return to menu\n" 
-    "- Progress Bar | Shows extraction (0–50%) and installation (50–100%) status\n" 
+    "- Progress Bar | Shows extraction (0-50%) and installation (50-100%) status\n" 
     "\n" 
     "---\n" 
     "## Sleep Modes\n" 

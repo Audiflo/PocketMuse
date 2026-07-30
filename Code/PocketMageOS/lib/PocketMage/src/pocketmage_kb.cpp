@@ -855,10 +855,11 @@ char PocketmageKB::updateKeypress() {
               // Draw the "Holding" hint after 100ms
               if (!uiDrawn && (millis() - pressTime > 100)) {
                 u8g2.setDrawColor(0);
-                u8g2.setFont(u8g2_font_5x7_tf);
-                u8g2.drawBox(u8g2.getDisplayWidth()-u8g2.getStrWidth("XXXX/XX/XXXX"), u8g2.getDisplayHeight()- 8, u8g2.getStrWidth("XXXX/XX/XXXX"), 8);
+                FontEngine::setOledStyle(FontStyle::Tiny);
+                u8g2.drawBox(u8g2.getDisplayWidth()-FontEngine::oledTextWidth("XXXX/XX/XXXX"), u8g2.getDisplayHeight()- 8, FontEngine::oledTextWidth("XXXX/XX/XXXX"), 8);
                 u8g2.setDrawColor(1);
-                u8g2.drawStr(u8g2.getDisplayWidth()-u8g2.getStrWidth("SPECIAL"), u8g2.getDisplayHeight(), "SPECIAL");
+                FontEngine::setOledStyle(FontStyle::Tiny);
+                FontEngine::oledDraw(u8g2.getDisplayWidth()-FontEngine::oledTextWidth("SPECIAL"), u8g2.getDisplayHeight(), "SPECIAL");
                 u8g2.sendBuffer();
                 uiDrawn = true;
               }
@@ -979,12 +980,12 @@ char PocketmageKB::updateKeypress() {
 
                     int cx = (u8g2.getDisplayWidth()-22*activeCycleLen)/2.0;
 
+                    FontEngine::setOledStyle(FontStyle::BodyBold);
                     if (activeCycle != cyc_appSwitch) {
                       u8g2.setDrawColor(0);
                       u8g2.drawRBox(cx, 2, activeCycleLen*22, 28, 4);
                       u8g2.setDrawColor(1);
                       u8g2.drawRFrame(cx, 2, activeCycleLen*22, 28, 4);
-                      u8g2.setFont(u8g2_font_luBS18_tf);
 
                       for (int i=0; i<activeCycleLen; i++) {
                           if (i == cycleIndex) {
@@ -994,19 +995,18 @@ char PocketmageKB::updateKeypress() {
                           } else {
                             u8g2.setDrawColor(1);
                           }
-                          u8g2.drawUTF8(cx + ((22-u8g2.getUTF8Width(activeCycle[i]))/2.0), 25, activeCycle[i]);
+                          FontEngine::oledDraw(cx + ((22-FontEngine::oledTextWidth(activeCycle[i]))/2.0), 25, activeCycle[i]);
                           u8g2.setDrawColor(0);
                           cx += 22;
                       }
                     }
                     else {
+                      FontEngine::setOledStyle(FontStyle::Tiny);
                       u8g2.setDrawColor(0);
-                      u8g2.setFont(u8g2_font_5x7_tf);
-                      u8g2.drawRBox((u8g2.getDisplayWidth() - u8g2.getStrWidth("XXXXXXXXXXXX"))/2, u8g2.getDisplayHeight()-7,u8g2.getStrWidth("XXXXXXXXXXXX"),7,4);
+                      u8g2.drawRBox((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("XXXXXXXXXXXX"))/2, u8g2.getDisplayHeight()-7,FontEngine::oledTextWidth("XXXXXXXXXXXX"),7,4);
                       u8g2.drawRBox(cx, 0, activeCycleLen*22, 28, 4);
                       u8g2.setDrawColor(1);
                       u8g2.drawRFrame(cx, 0, activeCycleLen*22, 28, 4);
-                      u8g2.setFont(u8g2_font_luBS18_tf);
 
                       for (int i=0; i<activeCycleLen; i++) {
                           if (i == cycleIndex) {
@@ -1016,26 +1016,24 @@ char PocketmageKB::updateKeypress() {
                           } else {
                             u8g2.setDrawColor(1);
                           }
-                          u8g2.setFont(u8g2_font_luBS18_tf);
-                          u8g2.drawUTF8(cx + ((22-u8g2.getUTF8Width(activeCycle[i]))/2.0), 23, activeCycle[i]);
-
+                          FontEngine::setOledStyle(FontStyle::BodyBold);
+                          FontEngine::oledDraw(cx + ((22-FontEngine::oledTextWidth(activeCycle[i]))/2.0), 23, activeCycle[i]);
                           u8g2.setDrawColor(0);
                           cx += 22;
                       }
                     }
                     
+                    FontEngine::setOledStyle(FontStyle::Tiny);
                     if (activeCycle == cyc_appSwitch) {
-                      // Clear space for label
-                      u8g2.setFont(u8g2_font_5x7_tf);
                       u8g2.setDrawColor(0);
-                      u8g2.drawRBox((u8g2.getDisplayWidth() - (u8g2.getStrWidth(appSwitchNames[cycleIndex])+6))/2, u8g2.getDisplayHeight()-12,u8g2.getStrWidth(appSwitchNames[cycleIndex])+6,11,4);
+                      u8g2.drawRBox((u8g2.getDisplayWidth() - (FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6))/2, u8g2.getDisplayHeight()-12,FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6,11,4);
                       
                       // Draw border
                       u8g2.setDrawColor(1);
-                      u8g2.drawRFrame((u8g2.getDisplayWidth() - (u8g2.getStrWidth(appSwitchNames[cycleIndex])+6))/2, u8g2.getDisplayHeight()-12,u8g2.getStrWidth(appSwitchNames[cycleIndex])+6,11,4);
+                      u8g2.drawRFrame((u8g2.getDisplayWidth() - (FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6))/2, u8g2.getDisplayHeight()-12,FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6,11,4);
                     
                       // Draw app name
-                      u8g2.drawStr((u8g2.getDisplayWidth() - u8g2.getStrWidth(appSwitchNames[cycleIndex]))/2,u8g2.getDisplayHeight()-3,appSwitchNames[cycleIndex]);
+                      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth(appSwitchNames[cycleIndex]))/2,u8g2.getDisplayHeight()-3,appSwitchNames[cycleIndex]);
                     }
 
                     u8g2.sendBuffer();
