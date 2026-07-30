@@ -77,18 +77,15 @@ static String displayName(const char* mac) {
 // Wrap text to fit inside a chat bubble using pixel widths for the given font.
 static std::vector<String> wrapTextPx(const String& text, FontStyle style) {
   std::vector<String> lines;
-  int maxW = display.width() - 45;
+  int maxW = display.width() - 55;
   FontEngine::setEinkStyle(style);
   int lineStart = 0;
   while (lineStart < (int)text.length()) {
     int lastBreak = -1;
     int lineEnd = lineStart;
-    int lineW = 0;
     for (int i = lineStart; i < (int)text.length(); i++) {
-      char tmp[2] = {text[i], 0};
-      int cw = FontEngine::einkTextWidth(tmp);
-      if (lineW + cw > maxW && i > lineStart) break;
-      lineW += cw;
+      String sub = text.substring(lineStart, i + 1);
+      if (FontEngine::einkTextWidth(sub.c_str()) > maxW && i > lineStart) break;
       lineEnd = i + 1;
       if (text[i] == ' ' || text[i] == '-') lastBreak = i;
     }
