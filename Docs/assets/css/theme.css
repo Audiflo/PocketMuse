@@ -1,4 +1,17 @@
-@import url('https://fonts.googleapis.com/css2?family=Sorts+Mill+Goudy:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@font-face {
+  font-family: 'Sorts Mill Goudy';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/sorts-mill-goudy-regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Sorts Mill Goudy';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/sorts-mill-goudy-italic.woff2') format('woff2');
+}
 
 :root[data-theme="light"] {
   --ruby-primary: #453f87;

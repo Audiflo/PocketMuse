@@ -19,7 +19,7 @@ extern U8G2_SSD1326_ER_256X32_F_4W_HW_SPI u8g2;
 // ===================== OLED CLASS =====================
 class PocketmageOled {
 public:
-  explicit PocketmageOled(U8G2 &u8) : u8g2_(u8) {}
+  explicit PocketmageOled(U8G2 &u8) : u8g2_(u8), OLEDPowerSave_(false) {}
 
   
   // Main methods

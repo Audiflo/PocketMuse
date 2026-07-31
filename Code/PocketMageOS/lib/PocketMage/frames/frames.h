@@ -143,7 +143,9 @@ public:
   Frame(int left, int right, int top, int bottom, 
         bool cursor=false, bool box=false)
   : left(left), right(right), top(top), bottom(bottom),
-    extendBottom(bottom), origBottom(bottom), cursor(cursor), box(box) {}
+    origLeft(left), origRight(right), origTop(top), origBottom(bottom),
+    extendLeft(left), extendRight(right), extendTop(top), extendBottom(bottom),
+    cursor(cursor), box(box) {}
 
   // constructor for text frames
   Frame(int left, int right, int top, int bottom,
@@ -184,7 +186,7 @@ extern std::vector<Frame*> frames;
 void einkFramesDynamic(std::vector<Frame*> &frames, bool doFull_);
   // text boxes
 std::vector<String> formatText(Frame &frame,int maxTextWidth);
-void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, bool clearLine, bool isPartial);
+void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, bool clearLine);
 void drawFrameBox(int usableX, int usableY, int usableWidth, int usableHeight,bool invert);
 int computeCursorX(Frame &frame, bool rightAlign, bool centerAlign, int16_t x1, uint16_t lineWidth);
   // String formatting

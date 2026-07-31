@@ -16,6 +16,10 @@ public:
   // Main methods
   void updateScrollFromTouch();
   bool updateScroll(int maxScroll, ulong& lineScroll, int stepSize = 1);
+  int getScrollVector();
+private:
+  int readTouchPad();
+public:
   // getters 
   long int getDynamicScroll() const { return dynamicScroll_; }
   void setDynamicScroll(long int val) { dynamicScroll_ = val; }
@@ -25,15 +29,17 @@ public:
   void resetLastTouch()  { lastTouch_ = -1; }
   long int getPrevDynamicScroll() const { return prev_dynamicScroll_; }
   int getLastTouch() const { return lastTouch_; }
-  int getLastTouchTime() const { return lastTouchTime_; }
+  unsigned long getLastTouchTime() const { return lastTouchTime_; }
   int getDiff() const { return dynamicScroll_ - prev_dynamicScroll_; }
-  int getScrollVector();
 private:
   Adafruit_MPR121      &cap_;                          // class reference to hardware touch object
   volatile long int dynamicScroll_ = 0;         // Dynamic scroll offset
   volatile long int prev_dynamicScroll_ = 0;    // Previous scroll offset
   int lastTouch_ = -1;                          // Last touch event
   unsigned long lastTouchTime_ = 0;             // Last touch time
+  int lastTouchPos_ = -1;                       // Scroll gesture last position
+  unsigned long lastTouchPosTime_ = 0;          // Scroll gesture last time
+  int prev_lineScroll_ = 0;                     // Previous lineScroll for change detection
 };
 
 void setupTouch();

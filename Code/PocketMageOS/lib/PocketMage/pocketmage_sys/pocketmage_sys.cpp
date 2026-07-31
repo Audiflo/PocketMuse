@@ -121,23 +121,23 @@ void deepSleep(bool alternateScreenSaver) {
       File f = global_fs->open(path);
       if (f) {
         size_t fSize = f.size();
-        uint8_t* buf = (uint8_t*)malloc(fSize);
-        
-        if (buf) {
-          f.read(buf, fSize);
-          f.close();
-
-          // Show file
-          display.drawBitmap(0, 0, buf, 320, 240, GxEPD_BLACK);
-          FontEngine::setEinkStyle(FontStyle::MonoBold);
-          u8g2f.setForegroundColor(GxEPD_BLACK);
-          FontEngine::einkDraw(5, display.height() - 5, binFiles[fileIndex]);
-
-          // Free the memory safely
-          free(buf);
-        } else {
-          f.close();
+        if (fSize == 9600) {
+          uint8_t* buf = (uint8_t*)malloc(9600);
+          if (buf) {
+            if (f.read(buf, 9600) == 9600) {
+              f.close();
+              display.drawBitmap(0, 0, buf, 320, 240, GxEPD_BLACK);
+              FontEngine::setEinkStyle(FontStyle::MonoBold);
+              u8g2f.setForegroundColor(GxEPD_BLACK);
+              FontEngine::einkDraw(5, display.height() - 5, binFiles[fileIndex]);
+            } else {
+              f.close();
+            }
+            free(buf);
+            buf = nullptr;
+          }
         }
+        f.close();
       }
     }
     // Use standard screensavers
@@ -192,8 +192,8 @@ bool setRebootFlagOTA() {
     ESP_LOGE(TAG, "Entering OTA reboot mode");
     OLED().oledWord("WARNING: Rebooting to PocketMage OS!");
     PWR_BTN_event = false;
-    int i = millis();
-    int j = millis();
+    unsigned long i = millis();
+    unsigned long j = millis();
     while ((j - i) <= 3000) {  // 3 sec
       // exit immediately if power button pressed again
       if (PWR_BTN_event) {
@@ -233,8 +233,10 @@ void checkRebootOTA() {
       prefs.putBool("OTA_Reboot", false);
       prefs.end();
       rebootToPocketMage();
+      return;
     }
     prefs.end();
+    return;
   }
   ESP_LOGE(TAG, "In pocketmageOS, skipping Checking OTA reboot flag");
 }
@@ -246,7 +248,7 @@ void IRAM_ATTR PWR_BTN_irq() {
 // Hard reset to home
 void hardReset(void* parameter) {
   vTaskDelay(pdMS_TO_TICKS(250));
-  static long heldSince = millis();
+  unsigned long heldSince = millis();
   for (;;) {
     if (digitalRead(PWR_BTN) == HIGH) {
       heldSince = millis();
@@ -255,20 +257,22 @@ void hardReset(void* parameter) {
     // Hold power button for 3s to return home
     if ((millis() - heldSince) > 3000) {
       OLED().sysMessage("Process Interrupted",1000);
-      
+
 #if !OTA_APP_FLAG
-      HOME_INIT();
+      resetRequested = true;
 #else
       pocketmage::deepSleep(); // OTA App has no home screen, so we just sleep
 #endif
-      
+
       heldSince = millis(); // Reset so it doesn't constantly trigger
     }
-    
+
     vTaskDelay(pdMS_TO_TICKS(50));
   }
 }
 }
+
+volatile bool resetRequested = false;
 
 void PocketMage_INIT() {
   // Release any held GPIOs
@@ -327,7 +331,7 @@ void PocketMage_INIT() {
 
   // WAKE INTERRUPT SETUP
   pinMode(KB_IRQ, INPUT);
-  esp_sleep_enable_ext0_wakeup(GPIO_NUM_8, 0);
+  esp_sleep_enable_ext0_wakeup((gpio_num_t)KB_IRQ, 0);
   ESP_LOGE(TAG, "set wakeup pin");
 
   // OLED SETUP
@@ -498,6 +502,6 @@ pocketmage::ScopedCpuBoost::ScopedCpuBoost() {
 }
 
 pocketmage::ScopedCpuBoost::~ScopedCpuBoost() {
-  if (SAVE_POWER) setCpuSpeed(POWER_SAVE_FREQ);
+  setCpuSpeed(prevFreq_);
 }
 

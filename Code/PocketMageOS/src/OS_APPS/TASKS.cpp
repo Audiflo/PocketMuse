@@ -510,6 +510,12 @@ void einkHandler_TASKS() {
     case TASKS1:
       if (newState) {
         newState = false;
+        if (tasks.empty() || selectedTask >= tasks.size()) {
+          selectedTask = 0;
+          CurrentTasksState = TASKS0;
+          newState = true;
+          break;
+        }
         EINK().resetDisplay();
 
         // DRAW APP

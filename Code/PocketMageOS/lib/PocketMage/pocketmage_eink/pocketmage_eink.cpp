@@ -67,9 +67,7 @@ void PocketmageEink::statusBar(const String& input, bool fullWindow) {
     display_.setPartialWindow(0, display_.height() - 20, display_.width(), 20);
     drawStatusBar(input);
   } else {
-    FontEngine::setEinkStyle(FontStyle::MonoBold);
-    u8g2f.setForegroundColor(GxEPD_BLACK);
-    u8g2f.setBackgroundColor(GxEPD_WHITE);
+    drawStatusBar(input);
   }
   display_.drawRect(display_.width() - 30, display_.height() - 20, 30, 20, GxEPD_BLACK);
 }
@@ -90,8 +88,9 @@ void PocketmageEink::resetDisplay(bool clearScreen, uint16_t color) {
 }
 
 int PocketmageEink::countLines(const String& input, size_t maxLineLength) {
+  if (maxLineLength == 0) return 1;
   size_t inputLength = input.length();
-  uint8_t charCounter = 0;
+  size_t charCounter = 0;
   uint16_t lineCounter = 1;
   for (size_t c = 0; c < inputLength; c++) {
     if (input[c] == '\n') {
@@ -99,7 +98,7 @@ int PocketmageEink::countLines(const String& input, size_t maxLineLength) {
         lineCounter++;
         continue;
     }
-    if (charCounter > (maxLineLength - 1)) {
+    if (charCounter >= maxLineLength) {
         charCounter = 0;
         lineCounter++;
     }

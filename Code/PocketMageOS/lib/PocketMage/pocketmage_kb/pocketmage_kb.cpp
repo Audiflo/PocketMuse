@@ -24,8 +24,7 @@ static constexpr const char* TAG = "KB";
 #define APP_QUIT_PIN                GPIO_NUM_0
 #define MAX_USB_KB_CHARS 64
 
-// VOLATILE added here to prevent cross-core optimization corruption without using heavy Queues
-volatile static char usb_kb_chars[MAX_USB_KB_CHARS] = {0};  // unused slots initialized to '\0'
+static QueueHandle_t usb_kb_queue = nullptr;
 
 QueueHandle_t hid_host_event_queue;
 bool user_shutdown = false;
@@ -33,31 +32,18 @@ static bool HIDInitialized = false;
 static TaskHandle_t usb_lib_task_handle = NULL;  // MOD: store handle to usb_lib_task
 static TaskHandle_t hid_host_task_handle = NULL; // MOD: store handle to hid_host_task
 
-// Adds a character to the first available slot (if not full)
+// Adds a character to the queue (thread-safe via FreeRTOS queue)
 void push_USB_char(char c) {
-    for (int i = 0; i < MAX_USB_KB_CHARS; i++) {
-        if (usb_kb_chars[i] == '\0') {  // '\0' means unused
-            usb_kb_chars[i] = c;
-            return;  // stop after adding one char
-        }
-    }
-    // Array full — do nothing
+    if (!usb_kb_queue) usb_kb_queue = xQueueCreate(MAX_USB_KB_CHARS, 1);
+    xQueueSend(usb_kb_queue, &c, 0);
 }
 
-// Removes and returns the first character (FIFO)
+// Removes and returns the first character (FIFO, thread-safe)
 char pop_USB_char() {
-    char c = '\0';  // default return value (nothing to pop)
-    if (usb_kb_chars[0] == '\0') return c;  // empty buffer
-
-    c = usb_kb_chars[0];
-
-    // Shift all remaining characters left by one
-    for (int i = 1; i < MAX_USB_KB_CHARS; i++) {
-        usb_kb_chars[i - 1] = usb_kb_chars[i];
-    }
-
-    usb_kb_chars[MAX_USB_KB_CHARS - 1] = '\0';  // mark last slot unused
-    return c;
+    if (!usb_kb_queue) return '\0';
+    char c;
+    if (xQueueReceive(usb_kb_queue, &c, 0) == pdTRUE) return c;
+    return '\0';
 }
 
 
@@ -864,6 +850,7 @@ char PocketmageKB::updateKeypress() {
           // --- 3. HOLD-TAB SPECIAL CHARACTER UI ---
           if (k == 20) { // TAB KEY (Index 20)
             unsigned long pressTime = millis();
+            unsigned long tabTimeout = pressTime + 1000;
             bool charSelected = false;
             int cycleIndex = 0;
             char activeBaseChar = 0;
@@ -872,6 +859,12 @@ char PocketmageKB::updateKeypress() {
             bool uiDrawn = false;
 
             for (;;) {
+              if (millis() > tabTimeout) {
+                if (uiDrawn) { u8g2.clearBuffer(); u8g2.sendBuffer(); }
+                char retChar = (kbState_ == 1 || kbState_ == 3) ? 14 : 9;
+                if (shift_oneshot) { shift_oneshot = false; sync_and_update_state(); }
+                return retChar;
+              }
               // Draw the "Holding" hint after 100ms
               if (!uiDrawn && (millis() - pressTime > 100)) {
                 u8g2.setDrawColor(0);
@@ -938,6 +931,7 @@ char PocketmageKB::updateKeypress() {
                     // Normal Special Character
                     String sel = activeCycle[cycleIndex];
                     strncpy(utf8Buffer, sel.c_str(), 7);
+                    utf8Buffer[7] = 0;
                     char c = utf8Buffer[0];
                     memmove(utf8Buffer, utf8Buffer + 1, 7);
                     if (shift_oneshot) { shift_oneshot = false; sync_and_update_state(); }

@@ -1,6 +1,6 @@
-#if !OTA_APP_FLAG
-
 #include <globals.h>
+
+#if !OTA_APP // POCKETMAGE_OS
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <vector>
@@ -137,6 +137,8 @@ static void meshRecvCb(const mesh_message_t* msg) {
   strncpy(q.message, msg->message, sizeof(q.message));
   q.message[sizeof(q.message) - 1] = '\0';
   memcpy(q.sender_mac, msg->sender_mac, 6);
+  memcpy(q.target_mac, msg->target_mac, 6);
+  q.type = msg->type;
   q.timestamp = msg->timestamp;
   message_queue_send(&q);
 }
@@ -173,9 +175,9 @@ void COMM_INIT() {
   macToStr(myMAC, myMacStr);
 
   message_queue_init();
-  mesh_now_set_receive_callback(meshRecvCb);
   mesh_now_deinit();
   if (mesh_now_init() == ESP_OK) {
+    mesh_now_set_receive_callback(meshRecvCb);
     meshReady = true;
   }
 }
@@ -188,10 +190,12 @@ static void drainQueue() {
     char s[18];
     macToStr(q.sender_mac, s);
     bool fromMe = (memcmp(q.sender_mac, myMAC, 6) == 0);
-    if (chatMode == LOCAL_CHAT) {
-      if (!fromMe) addMsg(s, q.message, false);
+    if (q.type == MSG_TYPE_DIRECT) {
+      if (!fromMe && memcmp(q.sender_mac, peerMAC, 6) == 0 && memcmp(q.target_mac, myMAC, 6) == 0) {
+        addMsg(s, q.message, false);
+      }
     } else {
-      if (memcmp(q.sender_mac, peerMAC, 6) == 0) addMsg(s, q.message, false);
+      if (!fromMe) addMsg(s, q.message, false);
     }
   }
 }
@@ -216,8 +220,9 @@ void chatScrollPreview() {
 
 // KEYBOARD / LOOP
 void processKB_COMM() {
-  drainQueue(); 
+  drainQueue();
 
+  if (!meshReady) return;
   int current_pc = mesh_now_get_peer_count();
   if (current_pc != last_peer_count) {
     last_peer_count = current_pc;
@@ -354,14 +359,15 @@ void processKB_COMM() {
         else if (ch == 9 || ch == 14) { KB().setKeyboardState(NORMAL); } 
         else if (ch == 20 || ch == 23) {} 
         else { 
+            String chStr = String(ch);
             if (chatCursorPos == 0) {
-                chatInputBuffer = ch + chatInputBuffer;
+                chatInputBuffer = chStr + chatInputBuffer;
             } else if (chatCursorPos == chatInputBuffer.length()) {
-                chatInputBuffer += ch;
+                chatInputBuffer += chStr;
             } else {
                 String left = chatInputBuffer.substring(0, chatCursorPos);
                 String right = chatInputBuffer.substring(chatCursorPos);
-                chatInputBuffer = left + ch + right;
+                chatInputBuffer = left + chStr + right;
             }
             chatCursorPos++;
             if (ch >= 48 && ch <= 57) {} 

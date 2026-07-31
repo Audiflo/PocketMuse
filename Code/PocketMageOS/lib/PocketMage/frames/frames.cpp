@@ -13,34 +13,32 @@ int currentFrameChoice = -1;
 int frameSelection = 0;
 
 #pragma region frameSetup
+static const char* const TEST_LINES[] PROGMEM = {
+  "This is the first line.",
+  "This is a test frame.",
+  "It supports multiple lines of text.",
+  "You can add as many lines as you want.",
+  "Frames can also have boxes and cursors.",
+  "This is a test frame.",
+  "It supports multiple lines of text.",
+  "You can add as many lines as you want.",
+  "Frames can also have boxes and cursors.",
+  "This is a test frame.",
+  "It supports multiple lines of text.",
+  "You can add as many lines as you want.",
+  "Frames can also have boxes and cursors.",
+  "This is a test frame.",
+  "It supports multiple lines of text.",
+  "You can add as many lines as you want.",
+  "Frames can also have boxes and cursors.",
+  "This is the last line."
+};
 Frame testTextScreen(
   FRAME_LEFT, 
   FRAME_RIGHT, 
   FRAME_TOP, 
   FRAME_BOTTOM,
-  new ProgmemTableSource(
-    (const char* const[]){
-      "This is the first line.",
-      "This is a test frame.",
-      "It supports multiple lines of text.",
-      "You can add as many lines as you want.",
-      "Frames can also have boxes and cursors.",
-      "This is a test frame.",
-      "It supports multiple lines of text.",
-      "You can add as many lines as you want.",
-      "Frames can also have boxes and cursors.",
-      "This is a test frame.",
-      "It supports multiple lines of text.",
-      "You can add as many lines as you want.",
-      "Frames can also have boxes and cursors.",
-      "This is a test frame.",
-      "It supports multiple lines of text.",
-      "You can add as many lines as you want.",
-      "Frames can also have boxes and cursors.",
-      "This is the last line."
-    },
-    5
-  ),
+  new ProgmemTableSource(TEST_LINES, 18),
   true,   // cursor
   true    // box
 );
@@ -164,7 +162,7 @@ std::vector<String> sourceToVector(const TextSource* src) {
   for (size_t i = 0; i < src->size(); ++i) {
     LineView lv = src->line(i);
     // copy the chars into an Arduino String
-    result.push_back(String(lv.ptr).substring(0, lv.len));
+    result.push_back(String(lv.ptr, lv.len));
   }
   return result;
 }
@@ -301,7 +299,7 @@ void einkFramesDynamic(std::vector<Frame*> &frames, bool doFull_) {
             toPrint = toPrint + "<";
           }
           // draw with the current visual row index
-          drawLineInFrame(toPrint, outLine++, *frame, 0, false,!doFull_);
+          drawLineInFrame(toPrint, outLine++, *frame, 0, false);
 
           pos += take;
           firstSlice = false;
@@ -330,7 +328,7 @@ void drawFrameBox(int usableX, int usableY, int usableWidth, int usableHeight,bo
   }
 }
 // DRAW SINGLE LINE IN FRAME -- NOTE: remove ~C~ and ~R~ with switch to lineview flags
-void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, bool clearLine, bool isPartial) {
+void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, bool clearLine) {
     if (srcLine.length() == 0) return;
     String line = srcLine;
     bool rightAlign  = line.startsWith("~R~");
@@ -425,6 +423,8 @@ void updateScroll(Frame *currentFrameState,int prevScroll,int currentScroll, boo
 
 ///////////////////////////// FRAME OLED FUNCTIONS
 void oledScrollFrame() {
+  if (!CurrentFrameState->source) return;
+
   // CLEAR DISPLAY
   u8g2.clearBuffer();
   // draw background
@@ -468,24 +468,17 @@ void oledScrollFrame() {
     }
   }
 
-  long displayedLinesStart = startIndex + 1;
-  long displayedLinesEnd   = endIndex;
-  if (count == 0) {
-    displayedLinesStart = 0;
-    displayedLinesEnd   = 0;
-  }
-
   if (CurrentFrameState->choice != -1) {
 
-    //  fetch line by scroll
     long idx = CurrentFrameState->scroll;
     if (idx >= 0 && idx < count) { 
       LineView plv = CurrentFrameState->source->line(idx); 
       String pLine = String(plv.ptr).substring(0, plv.len);
 
       if (pLine.length() > 0) {
+        if (pLine.startsWith("~C~") || pLine.startsWith("~R~")) pLine.remove(0, 3);
         FontEngine::setOledStyle(FontStyle::BodyBold);
-        FontEngine::oledDraw((u8g2.getWidth() - FontEngine::oledTextWidth(pLine.substring(3))) / 2, 24, pLine.substring(3));
+        FontEngine::oledDraw((u8g2.getWidth() - FontEngine::oledTextWidth(pLine)) / 2, 24, pLine);
       }
     }
   } else {

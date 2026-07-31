@@ -84,7 +84,9 @@ void LEXICON_INIT() {
     OLED().sysMessage("Please install dict from GitHub!",5000);
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     HOME_INIT();
+    return;
   }
+  if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
 }
 
 void loadDefinitions(String input) {
@@ -93,6 +95,7 @@ void loadDefinitions(String input) {
   pocketmage::setCpuSpeed(240);
   delay(50);
 
+  CurrentLexState = MENU;
   defList.clear();  // Clear previous results
 
   // Parse query (word + optional index)

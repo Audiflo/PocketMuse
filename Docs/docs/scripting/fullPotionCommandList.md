@@ -120,7 +120,7 @@ Pushes the current E-Ink drawing buffer to the physical e-paper display. This is
 
 Fills the entire E-Ink screen with a solid color.
 
-* **Parameters:** `color` (Int) - `0` for black, `1` (or non-zero) for white.
+* **Parameters:** `color` (Int) - `0` for white, `1` (or non-zero) for black.
 * **Returns:** None.
 * **Example:**
 

@@ -68,102 +68,74 @@ void PocketmageTOUCH::updateScrollFromTouch() {
   }
 }
 
+int PocketmageTOUCH::readTouchPad() {
+  uint16_t touched = cap_.touched();
+  for (int i = 0; i < 9; i++) {
+    if (touched & (1 << i)) return i;
+  }
+  return -1;
+}
+
 bool PocketmageTOUCH::updateScroll(int maxScroll, ulong& lineScroll, int stepSize) {
 
-  static int lastTouchPos = -1;
-  static unsigned long lastTouchTime = 0;
-  static int prev_lineScroll = 0;
   bool updateScreen = false;
-
-  uint16_t touched = cap_.touched();  // Read touch state
-  int touchPos = -1;
-
-  // Find the first active touch point (lowest index first)
-  for (int i = 0; i < 9; i++) {
-    if (touched & (1 << i)) {
-      touchPos = i;
-      break;
-    }
-  }
-
   unsigned long currentTime = millis();
+  int touchPos = readTouchPad();
+  ulong scrollCap = maxScroll > 0 ? (ulong)maxScroll : 0;
 
-  if (touchPos != -1) {  // If a touch is detected
-    // reset timeout
+  if (touchPos != -1) {
     CLOCK().setPrevTimeMillis(millis());
 
-    if (lastTouchPos != -1) {  // Compare with previous touch
-      int touchDelta = abs(touchPos - lastTouchPos);
-      if (touchDelta <= 2) {  // Ignore large jumps
-
-        // REVERSED SCROLL DIRECTION:
-        if (touchPos < lastTouchPos && lineScroll < maxScroll) {
-          prev_lineScroll = lineScroll;
-          lineScroll = min(lineScroll + stepSize, (ulong)maxScroll);
-        } else if (touchPos > lastTouchPos && lineScroll > 0) {
-          prev_lineScroll = lineScroll;
+    if (lastTouchPos_ != -1) {
+      int touchDelta = abs(touchPos - lastTouchPos_);
+      if (touchDelta <= 2) {
+        if (touchPos < lastTouchPos_ && lineScroll < scrollCap) {
+          prev_lineScroll_ = lineScroll;
+          lineScroll = min(lineScroll + stepSize, scrollCap);
+        } else if (touchPos > lastTouchPos_ && lineScroll > 0) {
+          prev_lineScroll_ = lineScroll;
           lineScroll = (lineScroll >= (ulong)stepSize) ? lineScroll - stepSize : 0;
         }
       }
     }
 
-    lastTouchPos = touchPos;      // update tracked touch
-    lastTouch_ = touchPos;        // <--- update UI flag
-    lastTouchTime = currentTime;  // reset timeout
-  } else if (lastTouchPos != -1 && (currentTime - lastTouchTime > TOUCH_TIMEOUT_MS)) {
-    // Timeout: reset both
-    lastTouchPos = -1;
-    lastTouch_ = -1;  // <--- reset UI flag
+    lastTouchPos_ = touchPos;
+    lastTouch_ = touchPos;
+    lastTouchPosTime_ = currentTime;
+  } else if (lastTouchPos_ != -1 && (currentTime - lastTouchPosTime_ > TOUCH_TIMEOUT_MS)) {
+    lastTouchPos_ = -1;
+    lastTouch_ = -1;
 
-    if (prev_lineScroll != lineScroll) {
+    if (prev_lineScroll_ != lineScroll) {
       updateScreen = true;
     }
 
-    prev_lineScroll = lineScroll;
+    prev_lineScroll_ = lineScroll;
   }
   return updateScreen;
 }
 
 int PocketmageTOUCH::getScrollVector() {
-  static int lastTouchPos = -1;
-  static unsigned long lastTouchTime = 0;
   int scrollVector = 0;
-
-  uint16_t touched = cap_.touched();
-  int touchPos = -1;
-
-  // Find the first active touch point (lowest index first)
-  for (int i = 0; i < 9; i++) {
-    if (touched & (1 << i)) {
-      touchPos = i;
-      break;
-    }
-  }
-
   unsigned long currentTime = millis();
+  int touchPos = readTouchPad();
 
-  if (touchPos != -1) {  
-    // Reset system timeout so the device doesn't sleep while scrolling
+  if (touchPos != -1) {
     CLOCK().setPrevTimeMillis(currentTime);
 
-    if (lastTouchPos != -1) {  
-      int touchDelta = abs(touchPos - lastTouchPos);
-      if (touchDelta > 0 && touchDelta <= 2) {  // Ignore large jumps / palm rejection
-        
-        // Calculate the directional vector. 
-        // Example: Moving from pad 4 to pad 3 returns +1. Pad 3 to 4 returns -1.
-        scrollVector = lastTouchPos - touchPos;
+    if (lastTouchPos_ != -1) {
+      int touchDelta = abs(touchPos - lastTouchPos_);
+      if (touchDelta > 0 && touchDelta <= 2) {
+        scrollVector = lastTouchPos_ - touchPos;
       }
     }
 
-    lastTouchPos = touchPos;      // update tracked touch
-    lastTouch_ = touchPos;        // update UI flag
-    lastTouchTime = currentTime;  // reset timeout
-    
-  } else if (lastTouchPos != -1 && (currentTime - lastTouchTime > TOUCH_TIMEOUT_MS)) {
-    // Timeout: reset both tracking variables
-    lastTouchPos = -1;
-    lastTouch_ = -1; 
+    lastTouchPos_ = touchPos;
+    lastTouch_ = touchPos;
+    lastTouchPosTime_ = currentTime;
+  } else if (lastTouchPos_ != -1 && (currentTime - lastTouchPosTime_ > TOUCH_TIMEOUT_MS)) {
+    lastTouchPos_ = -1;
+    lastTouch_ = -1;
   }
 
   return scrollVector;

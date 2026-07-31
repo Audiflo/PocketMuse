@@ -21,6 +21,7 @@ PocketMageWifi::PocketMageWifi()
       _scanResultCount(0),
       _taskHandle(nullptr),
       _commandQueue(nullptr),
+      _shutdownSem(xSemaphoreCreateBinary()),
       _staNetif(nullptr),
       _wifiEventHandler(nullptr),
       _ipEventHandler(nullptr),
@@ -28,7 +29,8 @@ PocketMageWifi::PocketMageWifi()
       _autoConnectEnabled(true),
       _retryCount(0),
       _retryAt(0),
-      _eventCallback(nullptr) {
+      _eventCallback(nullptr),
+      _eventPending(false) {
   _statusMessage[0] = 0;
   _connectedSSID[0] = 0;
   _ipAddress[0] = 0;
@@ -44,6 +46,8 @@ PocketMageWifi::~PocketMageWifi() {
   stop();
   if (_mutex)
     vSemaphoreDelete(_mutex);
+  if (_shutdownSem)
+    vSemaphoreDelete(_shutdownSem);
 }
 
 void PocketMageWifi::begin() {
@@ -56,25 +60,9 @@ void PocketMageWifi::begin() {
 
 void PocketMageWifi::stop() {
   if (_taskHandle) {
-    if (_state != WifiRadioState::Off && _state != WifiRadioState::TurningOff) {
-      esp_wifi_disconnect();
-      if (_wifiEventHandler) {
-        esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, _wifiEventHandler);
-        _wifiEventHandler = nullptr;
-      }
-      if (_ipEventHandler) {
-        esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, _ipEventHandler);
-        _ipEventHandler = nullptr;
-      }
-      esp_wifi_stop();
-      esp_wifi_deinit();
-      if (_staNetif) {
-        esp_netif_destroy(_staNetif);
-        _staNetif = nullptr;
-      }
-      _state = WifiRadioState::Off;
-    }
-    vTaskDelete(_taskHandle);
+    Command cmd = Command::Shutdown;
+    xQueueSend(_commandQueue, &cmd, portMAX_DELAY);
+    xSemaphoreTake(_shutdownSem, pdMS_TO_TICKS(5000));
     _taskHandle = nullptr;
   }
   if (_commandQueue) {
@@ -174,40 +162,52 @@ String PocketMageWifi::getLastError() const {
 }
 
 uint16_t PocketMageWifi::getScanResultCount() const {
-  return _scanResultCount;
+  xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+  uint16_t count = _scanResultCount;
+  xSemaphoreGiveRecursive(_mutex);
+  return count;
 }
 
 bool PocketMageWifi::getScanResult(uint16_t index, WifiApInfo& out) const {
-  if (index >= _scanResultCount || !_scanResults)
-    return false;
-  strncpy(out.ssid, (const char*)_scanResults[index].ssid, sizeof(out.ssid));
-  out.ssid[sizeof(out.ssid) - 1] = 0;
-  out.rssi = _scanResults[index].rssi;
-  out.channel = _scanResults[index].primary;
-  out.authmode = _scanResults[index].authmode;
-  return true;
+  xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+  bool ok = false;
+  if (index < _scanResultCount && _scanResults) {
+    strncpy(out.ssid, (const char*)_scanResults[index].ssid, sizeof(out.ssid));
+    out.ssid[sizeof(out.ssid) - 1] = 0;
+    out.rssi = _scanResults[index].rssi;
+    out.channel = _scanResults[index].primary;
+    out.authmode = _scanResults[index].authmode;
+    ok = true;
+  }
+  xSemaphoreGiveRecursive(_mutex);
+  return ok;
 }
 
 bool PocketMageWifi::hasSavedCredentials(const char* ssid) const {
+  xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+  bool found = false;
   if (_prefs.begin(PREFS_NAMESPACE, true)) {
-    bool found = _prefs.isKey(ssid);
+    found = _prefs.isKey(ssid);
     _prefs.end();
-    return found;
   }
-  return false;
+  xSemaphoreGiveRecursive(_mutex);
+  return found;
 }
 
 bool PocketMageWifi::loadSavedCredentials(const char* ssid, char* password, size_t maxLen) const {
+  xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+  bool ok = false;
   if (_prefs.begin(PREFS_NAMESPACE, true)) {
     String pass = _prefs.getString(ssid, "");
     _prefs.end();
     if (pass.length() > 0) {
       strncpy(password, pass.c_str(), maxLen);
       password[maxLen - 1] = 0;
-      return true;
+      ok = true;
     }
   }
-  return false;
+  xSemaphoreGiveRecursive(_mutex);
+  return ok;
 }
 
 void PocketMageWifi::clearSavedCredentials(const char* ssid) {
@@ -255,6 +255,28 @@ void PocketMageWifi::taskLoop() {
         case Command::CheckAutoConnect:
           doAutoConnect();
           break;
+        case Command::Shutdown:
+          if (_state != WifiRadioState::Off && _state != WifiRadioState::TurningOff) {
+            esp_wifi_disconnect();
+            esp_wifi_stop();
+            esp_wifi_deinit();
+            if (_staNetif) {
+              esp_netif_destroy(_staNetif);
+              _staNetif = nullptr;
+            }
+            if (_wifiEventHandler) {
+              esp_event_handler_instance_unregister(WIFI_EVENT, ESP_EVENT_ANY_ID, _wifiEventHandler);
+              _wifiEventHandler = nullptr;
+            }
+            if (_ipEventHandler) {
+              esp_event_handler_instance_unregister(IP_EVENT, IP_EVENT_STA_GOT_IP, _ipEventHandler);
+              _ipEventHandler = nullptr;
+            }
+            _state = WifiRadioState::Off;
+          }
+          xSemaphoreGive(_shutdownSem);
+          vTaskDelete(NULL);
+          return;
         default:
           break;
       }
@@ -358,8 +380,11 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
       {
         uint16_t num = 0;
         esp_wifi_scan_get_ap_num(&num);
-        if (_scanResults)
+        xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+        if (_scanResults) {
           free(_scanResults);
+          _scanResults = nullptr;
+        }
         if (num > MAX_SCAN_RESULTS)
           num = MAX_SCAN_RESULTS;
         _scanResults = (wifi_ap_record_t*)malloc(sizeof(wifi_ap_record_t) * MAX_SCAN_RESULTS);
@@ -369,6 +394,7 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
         } else {
           _scanResultCount = 0;
         }
+        xSemaphoreGiveRecursive(_mutex);
       }
       _state = WifiRadioState::On;
       publishEvent();
@@ -395,14 +421,31 @@ void PocketMageWifi::doEnable() {
     if (_staNetif)
       esp_netif_destroy(_staNetif);
     _staNetif = esp_netif_create_default_wifi_sta();
+    if (!_staNetif) {
+      setStatus("Failed to create netif");
+      _state = WifiRadioState::Off;
+      return;
+    }
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    esp_wifi_init(&cfg);
+    if (esp_wifi_init(&cfg) != ESP_OK) {
+      setStatus("Failed to init WiFi");
+      _state = WifiRadioState::Off;
+      return;
+    }
     esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
                                         &PocketMageWifi::espEventHandler, this, &_wifiEventHandler);
     esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
                                         &PocketMageWifi::espEventHandler, this, &_ipEventHandler);
-    esp_wifi_set_mode(WIFI_MODE_STA);
-    esp_wifi_start();
+    if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK) {
+      setStatus("Failed to set mode");
+      _state = WifiRadioState::Off;
+      return;
+    }
+    if (esp_wifi_start() != ESP_OK) {
+      setStatus("Failed to start WiFi");
+      _state = WifiRadioState::Off;
+      return;
+    }
     _state = WifiRadioState::On;
     setStatus("WiFi enabled");
     publishEvent();
@@ -461,7 +504,7 @@ void PocketMageWifi::doConnect() {
   config.sta.ssid[sizeof(config.sta.ssid) - 1] = 0;
   strncpy((char*)config.sta.password, password, sizeof(config.sta.password));
   config.sta.password[sizeof(config.sta.password) - 1] = 0;
-  config.sta.threshold.authmode = WIFI_AUTH_OPEN;
+  config.sta.threshold.authmode = (password[0] != 0) ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN;
   config.sta.pmf_cfg.capable = true;
   esp_wifi_set_config(WIFI_IF_STA, &config);
   esp_wifi_connect();
@@ -510,8 +553,15 @@ void PocketMageWifi::setStatus(const char* msg) {
 }
 
 void PocketMageWifi::publishEvent() {
-  if (_eventCallback)
-    _eventCallback();
+  _eventPending = true;
+}
+
+void PocketMageWifi::dispatchEvents() {
+  if (_eventPending) {
+    _eventPending = false;
+    if (_eventCallback)
+      _eventCallback();
+  }
 }
 
 void PocketMageWifi::saveCredentials(const char* ssid, const char* password) {
@@ -522,15 +572,19 @@ void PocketMageWifi::saveCredentials(const char* ssid, const char* password) {
 }
 
 bool PocketMageWifi::findSavedNetwork(char* ssid, char* password) {
-  if (!_scanResults || _scanResultCount == 0)
-    return false;
-  for (uint16_t i = 0; i < _scanResultCount; ++i) {
-    if (hasSavedCredentials((const char*)_scanResults[i].ssid)) {
-      strncpy(ssid, (const char*)_scanResults[i].ssid, 33);
-      ssid[32] = 0;
-      loadSavedCredentials(ssid, password, 65);
-      return true;
+  xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
+  bool found = false;
+  if (_scanResults && _scanResultCount > 0) {
+    for (uint16_t i = 0; i < _scanResultCount; ++i) {
+      if (hasSavedCredentials((const char*)_scanResults[i].ssid)) {
+        strncpy(ssid, (const char*)_scanResults[i].ssid, 33);
+        ssid[32] = 0;
+        loadSavedCredentials(ssid, password, 65);
+        found = true;
+        break;
+      }
     }
   }
-  return false;
+  xSemaphoreGiveRecursive(_mutex);
+  return found;
 }

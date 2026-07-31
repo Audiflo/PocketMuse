@@ -174,7 +174,24 @@ int FontEngine::oledTextWidth(FontStyle style, const String& text) {
 }
 
 int FontEngine::oledCharWidth(uint16_t unicode, FontStyle style) {
-  if (unicode < 32 || unicode >= 256) return 0;
+  if (unicode < 32 || unicode >= 256) {
+    FontStyle saved = oledActiveStyle_;
+    setOledStyle(style);
+    char utf8[5] = {};
+    if (unicode < 0x80) {
+      utf8[0] = unicode;
+    } else if (unicode < 0x800) {
+      utf8[0] = 0xC0 | (unicode >> 6);
+      utf8[1] = 0x80 | (unicode & 0x3F);
+    } else {
+      utf8[0] = 0xE0 | (unicode >> 12);
+      utf8[1] = 0x80 | ((unicode >> 6) & 0x3F);
+      utf8[2] = 0x80 | (unicode & 0x3F);
+    }
+    int w = u8g2.getUTF8Width(utf8);
+    setOledStyle(saved);
+    return w;
+  }
   WidthCache& cache = widthCache_[static_cast<int>(style)];
   if (!cache.valid) buildWidthCache(style);
   return cache.widths[unicode];

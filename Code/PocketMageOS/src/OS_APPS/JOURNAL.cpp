@@ -5,8 +5,7 @@
 enum JournalState {J_MENU, J_TXT};
 JournalState CurrentJournalState = J_MENU;
 
-String currentJournal = "";
-String bufferEditingFile = PM_SDAUTO().getEditingFile();
+static String currentJournal = "";
 
 void JOURNAL_INIT() {
   CurrentAppState = JOURNAL;
@@ -16,7 +15,6 @@ void JOURNAL_INIT() {
   #endif
   newState = true;
   KB().setKeyboardState(NORMAL);
-  bufferEditingFile = PM_SDAUTO().getEditingFile();
 }
 
 // File Operations
@@ -181,6 +179,7 @@ void einkHandler_JOURNAL() {
       break;
     default:
       CurrentJournalState = J_MENU;
+      newState = true;
       break;
   } 
 }

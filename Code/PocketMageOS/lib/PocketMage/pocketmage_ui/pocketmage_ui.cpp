@@ -11,11 +11,11 @@ void drawScrollbar(int total, int visible, int index,
   if (barX < 0) barX = display.width() - barW;
   if (barH < 0) barH = display.height();
 
-  float visibleRatio = (float)visible / total;
+  float visibleRatio = min((float)visible / total, 1.0f);
   int handleHeight = max((int)(barH * visibleRatio), 15);
 
-  float scrollFraction = (float)index / maxScroll;
-  if (scrollFraction > 1.0f) scrollFraction = 1.0f;
+  int clamped = index < 0 ? 0 : (index > maxScroll ? maxScroll : index);
+  float scrollFraction = (float)clamped / maxScroll;
   int handleY = barY + (int)(scrollFraction * (barH - handleHeight));
 
   if (clearBg) {
@@ -33,6 +33,7 @@ void beginEinkScreen(bool preserveBg) {
 }
 
 void endEinkScreen(const char* statusText, EinkRefresh mode) {
+  if (!statusText) statusText = "";
   EINK().drawStatusBar(statusText);
   switch (mode) {
     case EinkRefresh::Normal:

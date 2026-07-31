@@ -9,6 +9,7 @@
 #pragma once
 #include <Arduino.h>
 #include <FS.h>
+#include <config.h>
 
 // forward-declaration to avoid including U8g2lib.h, GxEPD2_BW.h, pocketmage_oled.h, and pocketmage_eink.h
 class PocketmageOled;

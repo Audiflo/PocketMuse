@@ -166,6 +166,10 @@ void setup() {
 void loop() {
   // Run background tasks
   #if !OTA_APP // POCKETMAGE_OS
+    if (resetRequested) {
+      resetRequested = false;
+      HOME_INIT();
+    }
     if (!noTimeout)  checkTimeout();
     if (DEBUG_VERBOSE) printDebug();
   #endif

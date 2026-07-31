@@ -45,167 +45,191 @@ static int countVisibleCharsFile(fs::FS &fs, const char* path) {
   return count;
 }
 
+static const char* GUIDE_BACKGROUND =
+  "How to add custom backgrounds:\n"
+  "1. Make a background that is 1 bit (black OR white) and 320x240 pixels.\n"
+  "2. Export your background as a .bmp file.\n"
+  "3. Use image2cpp to convert your image to a .bin file.\n"
+  "   Settings: Invert Image Colors = TRUE, Swap Bits in Byte = FALSE.\n"
+  "4. Place the .bin file in this folder.\n"
+  "5. Enjoy your new custom wallpapers!";
+
+static const char* GUIDE_COMMANDS =
+  "# PocketMage Keystrokes Guide\n"
+  "This is a guide on common key combinations and commands on the PocketMage PDA device. "
+  "The guide is split up into sections based on application.\n" "\n" "---\n"
+  "## General Keystrokes (work in almost any app)\n"
+  "- (FN) + ( < ) | Exit or back button\n"
+  "- (FN) + ( > ) | Save document\n"
+  "- (FN) + ( o ) | Clear Line\n"
+  "- (FN) + (Key) | FN layer keymapping (legends on the PCB)\n"
+  "- (SHFT) + (key) | Capital letter\n"
+  "- ( o ) OR (ENTER) | Select button\n"
+  "\n"
+  "---\n"
+  "## While Sleeping\n"
+  "### Bypass home and directly enter an app\n"
+  "You can bypass the home menu and enter directly into an app and wake up with one keystroke. "
+  "Pressing the buttons below while PocketMage is sleeping will wake the device and boot into the corresponding app.\n"
+  "\n"
+  "- ( SPACE ) - Return to previous app (saved state from last sleep)\n"
+  "- ( H ) - Home\n"
+  "- ( U ) - USB\n"
+  "- ( F ) - Filewiz\n"
+  "- ( T ) - Tasks\n"
+  "- ( N ) - TXT\n"
+  "- ( S ) - Settings\n"
+  "- ( C ) - Calendar\n"
+  "- ( J ) - Journal\n"
+  "- ( D ) - Dictionary (lexicon)\n"
+  "- ( L ) - Loader\n"
+  "\n"
+  "---\n"
+  "## Home App\n"
+  "### Entering an OS app\n"
+  "Type an app's name to enter that app. For example, to enter calendar, type \"calendar\". "
+  "You can type the name as it appears on the screen or use a shortcut. " "For example, typing \"cal\" also enters the calendar.\n"
+  "\n"
+  "### Entering a 3rd party app\n"
+  "For 3rd party apps, type the letter of the slot that app is installed in. "
+  "For example if you have the Calc app installed in the first app slot, type \"a\" to enter the app.\n"
+  "\n"
+  "### Other commands\n"
+  "Many other commands can be done from the homescreen, including all of the settings commands "
+  "and some other fun ones for you to discover!\n"
+  "\n"
+  "---\n"
+  "## TXT App\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "- (FN) + ( > ) | Save document\n"
+  "- (FN) + ( o ) | Enter filesystem (loading files)\n"
+  "- (SHFT) + ( o ) | New blank text document\n"
+  "- (FN) + (Key) | FN layer keymapping (legends on the PCB)\n"
+  "- (SHFT) + (key) | Capital letter\n"
+  "- (ENTER) | Create a new line\n"
+  "- (SHFT) + ( < ) | Change text style (body, heading, etc.)\n"
+  "- (SHFT) + ( > ) | Change formatting (bold, italics, etc.)\n"
+  "- Scroll Bar | Swipe up or down to scroll through the document\n"
+  "\n"
+  "---\n"
+  "## FILEWIZ\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "- ( < ) AND ( > ) | Scroll left and right\n"
+  "- ( o ) OR (ENTER) | Select file or folder\n"
+  "- ( 0 ) TO ( 9 ) | Select recent file\n"
+  "- ( BKSP ) | Go back a filesystem level\n"
+  "\n"
+  "---\n"
+  "## USB\n"
+  "Plug in the PocketMage to your PC to view the files. Eject and exit the app when you're finished.\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "---\n"
+  "## Settings\n"
+  "Type the setting as it appears on the screen to change it. Some examples are given below. "
+  "Note: all settings are case-insensitive, meaning that you can type in all lowercase. "
+  "All of these settings are also available from the home menu command bar if you memorize them.\n"
+  "- TimeSet [HH]:[MM] -> TimeSet 15:46\n"
+  "- DateSet YYYYMMDD -> DateSet 20251230\n"
+  "- ShowYear [bool] -> ShowYear t\n"
+  "- Timeout [int] -> Timeout 300\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "---\n"
+  "## Tasks\n"
+  "- ( N ) | Create a new task, follow on-screen prompts\n"
+  "- (ENTER) | Enter information into prompt\n"
+  "- ( 0 ) TO ( 9 ) | Select task for editing\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "---\n"
+  "## Calendar\n"
+  "Type commands to navigate dates or create events. All commands are case-insensitive.\n"
+  "\n"
+  "### Month View\n"
+  "- jan 2025 / feb 2030 / etc. | Jump to month and year\n"
+  "- 20251225 | Jump to exact date (YYYYMMDD)\n"
+  "- 14 | Jump to a day in the current month\n"
+  "- ( N ) | New event\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "### Week View\n"
+  "- sun, mon, tue, wed, thu, fri, sat | Jump to weekday in the viewed week\n"
+  "- ( N ) | New event\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "### Day View\n"
+  "- ( N ) | New event for selected day\n"
+  "- 1, 2, 3, ... | Open event by index\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "### Repeating Events\n"
+  "- no | No repeat\n"
+  "- daily | Repeat every day\n"
+  "- weekly xx | Repeat every week, xx is one or more of mo, tu, we, th, fr, sa, su\n"
+  "- monthly xx | Repeat monthly, xx is the day of the month (1-31) or ordinal weekday (ex. 2tu)\n"
+  "- yearly xx | Repeat every year, xx is month and day of the month (ex. apr22)\n"
+  "\n"
+  "---\n"
+  "## Journal\n"
+  "Type a date to open or create a journal entry. Commands are case-insensitive.\n"
+  "- ( T ) | Open today's journal entry\n"
+  "- YYYYMMDD - Example: 20250314 | Open/create entry for exact date\n"
+  "- jan 1 / feb 12 / etc. | Open/create entry for given month and day (uses current year)\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "---\n"
+  "## Lexicon\n"
+  "Type a word to search the dictionary. Matches are loaded from the SD card. Commands are case-insensitive.\n"
+  "- Type any word | Search for definitions (example: abandon)\n"
+  "- (ENTER) | Execute search\n"
+  "- ( < ) OR ( > ) | Previous / next definition\n"
+  "- (FN) + ( < ) | Exit app\n"
+  "\n"
+  "---\n"
+  "## App loader\n"
+  "Manage and install .tar apps to OTA slots. Commands are case-insensitive.\n"
+  "- ( S ) | Swap app in selected slot (choose a .tar file)\n"
+  "- ( D ) | Delete app in selected slot\n"
+  "- (FN) + ( < ) | Exit app / return to menu\n"
+  "- Progress Bar | Shows extraction (0-50%) and installation (50-100%) status\n"
+  "\n"
+  "---\n"
+  "## Sleep Modes\n"
+  "When on battery, save power and look at a random screensaver. "
+  "When charging, view a clock, upcoming tasks, and weather (work in progress)\n"
+  "### Sleep (when not plugged into usb)\n"
+  "- sleep button to enter sleep\n"
+  "- any key on keyboard to wake\n"
+  "### Now-Later (when usb is plugged in)\n"
+  "- sleep button to enter now-later\n"
+  "- sleep button to wake\n";
+
+static void provisionFilesystem() {
+  const char* dirs[] = {"/sys", "/notes", "/journal", "/dict", "/apps",
+                        "/apps/temp", "/assets", "/assets/backgrounds", "/chats"};
+  for (auto dir : dirs) if (!global_fs->exists(dir)) global_fs->mkdir(dir);
+
+  if (!global_fs->exists("/assets/backgrounds/HOWTOADDBACKGROUNDS.txt")) {
+    File f = global_fs->open("/assets/backgrounds/HOWTOADDBACKGROUNDS.txt", FILE_WRITE);
+    if (f) { f.print(GUIDE_BACKGROUND); f.close(); }
+  }
+
+  if (!global_fs->exists("/sys/COMMAND_MANUAL.txt")) {
+    File f = global_fs->open("/sys/COMMAND_MANUAL.txt", FILE_WRITE);
+    if (f) { f.print(GUIDE_COMMANDS); f.close(); }
+  }
+
+  const char* sysFiles[] = {"/sys/events.txt", "/sys/tasks.txt", "/sys/SDMMC_META.txt"};
+  for (auto file : sysFiles) {
+    if (!global_fs->exists(file)) {
+      File f = global_fs->open(file, FILE_WRITE);
+      if (f) f.close();
+    }
+  }
+}
+
 void setupSD() {
-  static const char* GUIDE_BACKGROUND =
-    "How to add custom backgrounds:\n"
-    "1. Make a background that is 1 bit (black OR white) and 320x240 pixels.\n"
-    "2. Export your background as a .bmp file.\n"
-    "3. Use image2cpp to convert your image to a .bin file.\n"
-    "   Settings: Invert Image Colors = TRUE, Swap Bits in Byte = FALSE.\n"
-    "4. Place the .bin file in this folder.\n"
-    "5. Enjoy your new custom wallpapers!";
-
-  static const char* GUIDE_COMMANDS =
-    "# PocketMage Keystrokes Guide\n"
-    "This is a guide on common key combinations and commands on the PocketMage PDA device. "
-    "The guide is split up into sections based on application.\n" "\n" "---\n"
-    "## General Keystrokes (work in almost any app)\n"
-    "- (FN) + ( < ) | Exit or back button\n"
-    "- (FN) + ( > ) | Save document\n"
-    "- (FN) + ( o ) | Clear Line\n"
-    "- (FN) + (Key) | FN layer keymapping (legends on the PCB)\n"
-    "- (SHFT) + (key) | Capital letter\n"
-    "- ( o ) OR (ENTER) | Select button\n"
-    "\n"
-    "---\n"
-    "## While Sleeping\n"
-    "### Bypass home and directly enter an app\n"
-    "You can bypass the home menu and enter directly into an app and wake up with one keystroke. "
-    "Pressing the buttons below while PocketMage is sleeping will wake the device and boot into the corresponding app.\n"
-    "\n"
-    "- ( SPACE ) - Return to previous app (saved state from last sleep)\n"
-    "- ( H ) - Home\n"
-    "- ( U ) - USB\n"
-    "- ( F ) - Filewiz\n"
-    "- ( T ) - Tasks\n"
-    "- ( N ) - TXT\n"
-    "- ( S ) - Settings\n"
-    "- ( C ) - Calendar\n"
-    "- ( J ) - Journal\n"
-    "- ( D ) - Dictionary (lexicon)\n"
-    "- ( L ) - Loader\n"
-    "\n"
-    "---\n"
-    "## Home App\n"
-    "### Entering an OS app\n"
-    "Type an app's name to enter that app. For example, to enter calendar, type \"calendar\". "
-    "You can type the name as it appears on the screen or use a shortcut. " "For example, typing \"cal\" also enters the calendar.\n"
-    "\n"
-    "### Entering a 3rd party app\n"
-    "For 3rd party apps, type the letter of the slot that app is installed in. "
-    "For example if you have the Calc app installed in the first app slot, type \"a\" to enter the app.\n"
-    "\n"
-    "### Other commands\n"
-    "Many other commands can be done from the homescreen, including all of the settings commands "
-    "and some other fun ones for you to discover!\n"
-    "\n"
-    "---\n"
-    "## TXT App\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "- (FN) + ( > ) | Save document\n"
-    "- (FN) + ( o ) | Enter filesystem (loading files)\n"
-    "- (SHFT) + ( o ) | New blank text document\n"
-    "- (FN) + (Key) | FN layer keymapping (legends on the PCB)\n"
-    "- (SHFT) + (key) | Capital letter\n"
-    "- (ENTER) | Create a new line\n"
-    "- (SHFT) + ( < ) | Change text style (body, heading, etc.)\n"
-    "- (SHFT) + ( > ) | Change formatting (bold, italics, etc.)\n"
-    "- Scroll Bar | Swipe up or down to scroll through the document\n"
-    "\n"
-    "---\n"
-    "## FILEWIZ\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "- ( < ) AND ( > ) | Scroll left and right\n"
-    "- ( o ) OR (ENTER) | Select file or folder\n"
-    "- ( 0 ) TO ( 9 ) | Select recent file\n"
-    "- ( BKSP ) | Go back a filesystem level\n"
-    "\n"
-    "---\n"
-    "## USB\n"
-    "Plug in the PocketMage to your PC to view the files. Eject and exit the app when you're finished.\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "---\n"
-    "## Settings\n"
-    "Type the setting as it appears on the screen to change it. Some examples are given below. "
-    "Note: all settings are case-insensitive, meaning that you can type in all lowercase. "
-    "All of these settings are also available from the home menu command bar if you memorize them.\n"
-    "- TimeSet [HH]:[MM] -> TimeSet 15:46\n"
-    "- DateSet YYYYMMDD -> DateSet 20251230\n"
-    "- ShowYear [bool] -> ShowYear t\n"
-    "- Timeout [int] -> Timeout 300\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "---\n"
-    "## Tasks\n"
-    "- ( N ) | Create a new task, follow on-screen prompts\n"
-    "- (ENTER) | Enter information into prompt\n"
-    "- ( 0 ) TO ( 9 ) | Select task for editing\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "---\n"
-    "## Calendar\n"
-    "Type commands to navigate dates or create events. All commands are case-insensitive.\n"
-    "\n"
-    "### Month View\n"
-    "- jan 2025 / feb 2030 / etc. | Jump to month and year\n"
-    "- 20251225 | Jump to exact date (YYYYMMDD)\n"
-    "- 14 | Jump to a day in the current month\n"
-    "- ( N ) | New event\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "### Week View\n"
-    "- sun, mon, tue, wed, thu, fri, sat | Jump to weekday in the viewed week\n"
-    "- ( N ) | New event\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "### Day View\n"
-    "- ( N ) | New event for selected day\n"
-    "- 1, 2, 3, ... | Open event by index\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "### Repeating Events\n"
-    "- no | No repeat\n"
-    "- daily | Repeat every day\n"
-    "- weekly xx | Repeat every week, xx is one or more of mo, tu, we, th, fr, sa, su\n"
-    "- monthly xx | Repeat monthly, xx is the day of the month (1-31) or ordinal weekday (ex. 2tu)\n"
-    "- yearly xx | Repeat every year, xx is month and day of the month (ex. apr22)\n"
-    "\n"
-    "---\n"
-    "## Journal\n"
-    "Type a date to open or create a journal entry. Commands are case-insensitive.\n"
-    "- ( T ) | Open today's journal entry\n"
-    "- YYYYMMDD - Example: 20250314 | Open/create entry for exact date\n"
-    "- jan 1 / feb 12 / etc. | Open/create entry for given month and day (uses current year)\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "---\n"
-    "## Lexicon\n"
-    "Type a word to search the dictionary. Matches are loaded from the SD card. Commands are case-insensitive.\n"
-    "- Type any word | Search for definitions (example: abandon)\n"
-    "- (ENTER) | Execute search\n"
-    "- ( < ) OR ( > ) | Previous / next definition\n"
-    "- (FN) + ( < ) | Exit app\n"
-    "\n"
-    "---\n"
-    "## App loader\n"
-    "Manage and install .tar apps to OTA slots. Commands are case-insensitive.\n"
-    "- ( S ) | Swap app in selected slot (choose a .tar file)\n"
-    "- ( D ) | Delete app in selected slot\n"
-    "- (FN) + ( < ) | Exit app / return to menu\n"
-    "- Progress Bar | Shows extraction (0-50%) and installation (50-100%) status\n"
-    "\n"
-    "---\n"
-    "## Sleep Modes\n"
-    "When on battery, save power and look at a random screensaver. "
-    "When charging, view a clock, upcoming tasks, and weather (work in progress)\n"
-    "### Sleep (when not plugged into usb)\n"
-    "- sleep button to enter sleep\n"
-    "- any key on keyboard to wake\n"
-    "### Now-Later (when usb is plugged in)\n"
-    "- sleep button to enter now-later\n"
-    "- sleep button to wake\n";
-
   prefs.begin("PocketMage", true);
   SD_SPI_COMPATIBILITY = prefs.getBool("SD_SPI_CMPT", false);
   ALLOW_NO_MICROSD = prefs.getBool("ALLOW_NO_SD", true);
@@ -284,27 +308,7 @@ void setupSD() {
     prefs.putBool("SD_SPI_CMPT", false);
     prefs.end();
 
-    const char* dirs[] = {"/sys", "/notes", "/journal", "/dict", "/apps",
-                          "/apps/temp", "/assets", "/assets/backgrounds", "/chats"};
-    for (auto dir : dirs) if (!global_fs->exists(dir)) global_fs->mkdir(dir);
-
-    if (!global_fs->exists("/assets/backgrounds/HOWTOADDBACKGROUNDS.txt")) {
-      File f = global_fs->open("/assets/backgrounds/HOWTOADDBACKGROUNDS.txt", FILE_WRITE);
-      if (f) { f.print(GUIDE_BACKGROUND); f.close(); }
-    }
-
-    if (!global_fs->exists("/sys/COMMAND_MANUAL.txt")) {
-      File f = global_fs->open("/sys/COMMAND_MANUAL.txt", FILE_WRITE);
-      if (f) { f.print(GUIDE_COMMANDS); f.close(); }
-    }
-
-    const char* sysFiles[] = {"/sys/events.txt", "/sys/tasks.txt", "/sys/SDMMC_META.txt"};
-    for (auto file : sysFiles) {
-      if (!global_fs->exists(file)) {
-        File f = global_fs->open(file, FILE_WRITE);
-        if (f) f.close();
-      }
-    }
+    provisionFilesystem();
   } else {
       global_fs = &SD;
       PM_SD().setMode(PocketmageSD::SDSPI);
@@ -338,27 +342,7 @@ void setupSD() {
       }
       OLED().oledWord("SD Started In Compatibility Mode", false, false);
 
-      const char* dirs[] = {"/sys", "/notes", "/journal", "/dict", "/apps",
-                            "/apps/temp", "/assets", "/assets/backgrounds"};
-      for (auto dir : dirs) if (!global_fs->exists(dir)) global_fs->mkdir(dir);
-
-      if (!global_fs->exists("/assets/backgrounds/HOWTOADDBACKGROUNDS.txt")) {
-          File f = global_fs->open("/assets/backgrounds/HOWTOADDBACKGROUNDS.txt", FILE_WRITE);
-          if (f) { f.print(GUIDE_BACKGROUND); f.close(); }
-      }
-
-      if (!global_fs->exists("/sys/COMMAND_MANUAL.txt")) {
-          File f = global_fs->open("/sys/COMMAND_MANUAL.txt", FILE_WRITE);
-          if (f) { f.print(GUIDE_COMMANDS); f.close(); }
-      }
-
-      const char* sysFiles[] = {"/sys/events.txt", "/sys/tasks.txt", "/sys/SDMMC_META.txt"};
-      for (auto file : sysFiles) {
-          if (!global_fs->exists(file)) {
-              File f = global_fs->open(file, FILE_WRITE);
-              if (f) f.close();
-          }
-      }
+      provisionFilesystem();
   }
 }
 
@@ -449,6 +433,8 @@ void PocketmageSD::writeMetadata(const String& path) {
   metaFile = global_fs->open(metaPath, FILE_WRITE);
   if (!metaFile) {
     ESP_LOGE(TAG, "Failed to open metadata file for writing: %s", metaPath);
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    endIO();
     return;
   }
   metaFile.print(updatedMeta);
@@ -525,6 +511,8 @@ void PocketmageSD::deleteMetadata(String path) {
   File metaFile = global_fs->open(metaPath, FILE_READ);
   if (!metaFile) {
     ESP_LOGE(TAG, "Metadata file not found: %s", metaPath);
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    endIO();
     return;
   }
 
@@ -541,7 +529,9 @@ void PocketmageSD::deleteMetadata(String path) {
 
   File writeFile = global_fs->open(metaPath, FILE_WRITE);
   if (!writeFile) {
-    ESP_LOGE(TAG, "Failed to recreate metadata file. %s", writeFile.path());
+    ESP_LOGE(TAG, "Failed to recreate metadata file. %s", metaPath);
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    endIO();
     return;
   }
 
@@ -551,6 +541,10 @@ void PocketmageSD::deleteMetadata(String path) {
 
   writeFile.close();
   ESP_LOGI(TAG, "Metadata entry deleted (if it existed).");
+
+  if (SAVE_POWER)
+    pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+  endIO();
 }
 
 void PocketmageSD::renFile(String oldFile, String newFile) {
@@ -578,7 +572,6 @@ void PocketmageSD::renFile(String oldFile, String newFile) {
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
   endIO();
 }
-
 void PocketmageSD::renMetadata(String oldPath, String newPath) {
   beginIO();
   pocketmage::setCpuSpeed(240);
@@ -588,6 +581,8 @@ void PocketmageSD::renMetadata(String oldPath, String newPath) {
   File metaFile = global_fs->open(metaPath, FILE_READ);
   if (!metaFile) {
     ESP_LOGE(TAG, "Metadata file not found: %s", metaPath);
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    endIO();
     return;
   }
 
@@ -595,6 +590,7 @@ void PocketmageSD::renMetadata(String oldPath, String newPath) {
 
   while (metaFile.available()) {
     String line = metaFile.readStringUntil('\n');
+
     if (line.startsWith(oldPath + "|")) {
       int separatorIndex = line.indexOf('|');
       if (separatorIndex != -1) {
@@ -613,7 +609,9 @@ void PocketmageSD::renMetadata(String oldPath, String newPath) {
 
   File writeFile = global_fs->open(metaPath, FILE_WRITE);
   if (!writeFile) {
-    ESP_LOGE(TAG, "Failed to recreate metadata file. %s", writeFile.path());
+    ESP_LOGE(TAG, "Failed to recreate metadata file. %s", metaPath);
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    endIO();
     return;
   }
 
@@ -626,6 +624,7 @@ void PocketmageSD::renMetadata(String oldPath, String newPath) {
 
   if (SAVE_POWER)
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+  endIO();
 }
 
 void PocketmageSD::copyFile(String oldFile, String newFile) {
@@ -696,12 +695,12 @@ void PocketmageSD::listDir(fs::FS &fs, const char *dirname) {
   File root = fs.open(dirname);
   if (!root) {
     noTimeout = prevTimeout;
-    ESP_LOGE(tag, "Failed to open directory: %s", root.path());
+    ESP_LOGE(tag, "Failed to open directory: %s", dirname);
     return;
   }
   if (!root.isDirectory()) {
     noTimeout = prevTimeout;
-    ESP_LOGE(tag, "Not a directory: %s", root.path());
+    ESP_LOGE(tag, "Not a directory: %s", dirname);
     return;
   }
 
@@ -748,7 +747,7 @@ void PocketmageSD::readFile(fs::FS &fs, const char *path) {
   File file = fs.open(path);
   if (!file || file.isDirectory()) {
     noTimeout = prevTimeout;
-    ESP_LOGE(tag, "Failed to open file for reading: %s", file.path());
+    ESP_LOGE(tag, "Failed to open file for reading: %s", path);
     return;
   }
 

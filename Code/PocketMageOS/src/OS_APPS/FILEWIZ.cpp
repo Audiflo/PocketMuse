@@ -191,25 +191,20 @@ String renderWizMini(String folder, int8_t scrollDelta) {
 
   // Display KB state
   FontEngine::setOledStyle(FontStyle::Tiny);
-  switch (KB().getKeyboardState()) {
-    case 1:
+  {
+    const char* label = nullptr;
+    switch (KB().getKeyboardState()) {
+      case SHIFT:   label = "SHIFT";    break;
+      case FUNC:    label = "FN";       break;
+      case FN_SHIFT: label = "FN+SHIFT"; break;
+    }
+    if (label) {
+      int tw = FontEngine::oledTextWidth(label);
       u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - FontEngine::oledTextWidth("SHIFT"), u8g2.getDisplayHeight(), FontEngine::oledTextWidth("SHIFT"), -8);
+      u8g2.drawBox(u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), tw, -8);
       u8g2.setDrawColor(1);
-      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("SHIFT")), u8g2.getDisplayHeight(), "SHIFT");
-      break;
-    case 2:
-      u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN"), u8g2.getDisplayHeight(), FontEngine::oledTextWidth("FN"), -8);
-      u8g2.setDrawColor(1);
-      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN")), u8g2.getDisplayHeight(), "FN");
-      break;
-    case 3:
-      u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN+SHIFT"), u8g2.getDisplayHeight(), FontEngine::oledTextWidth("FN+SHIFT"), -8);
-      u8g2.setDrawColor(1);
-      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN+SHIFT")), u8g2.getDisplayHeight(), "FN+SHIFT");
-      break;
+      FontEngine::oledDraw(u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), label);
+    }
   }
 
   u8g2.sendBuffer();
@@ -228,6 +223,7 @@ String fileWizardMini(bool allowRecentSelect, String rootDir, char inchar_) {
   if (selectedDirectory == "" || selectedDirectory.length() < rootDir.length() || 
       !selectedDirectory.startsWith(rootDir)) {
     selectedDirectory = rootDir;
+    selectedPath = "";
   }
 
   // 1. Always drain the buffer continuously

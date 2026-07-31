@@ -38,7 +38,8 @@ int stringToInt(const String& str, int defaultVal) {
   String s = str;
   s.trim();
   if (s.length() == 0) return defaultVal;
-  for (int i = 0; i < s.length(); i++) {
+  unsigned int start = (s.charAt(0) == '+' || s.charAt(0) == '-') ? 1 : 0;
+  for (unsigned int i = start; i < s.length(); i++) {
     if (!isDigit(s.charAt(i))) return defaultVal;
   }
   return s.toInt();

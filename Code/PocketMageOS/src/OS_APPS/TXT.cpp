@@ -1267,14 +1267,17 @@ void saveMarkdownFile(const String& path) {
 }
 
 bool loadMarkdownFile(const String& path) {
+  PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
 
   if (path == "" || path == " " || path == "-") {
+    PM_SDAUTO().endIO();
     return false;
   }
 
   if (PM_SDAUTO().getNoSD()) {
     OLED().sysMessage("LOAD FAILED - No SD!",5000);
+    PM_SDAUTO().endIO();
     return false;
   }
 
@@ -1282,6 +1285,7 @@ bool loadMarkdownFile(const String& path) {
 
   File file = global_fs->open(path.c_str(), FILE_READ);
   if (!file) {
+    PM_SDAUTO().endIO();
     return false;
   }
 

@@ -41,7 +41,11 @@ public:
   int  countLines(const String& input, size_t maxLineLength = 29);
 
   uint8_t getFontHeight();
-  int maxLines() { return display_.height() / (getFontHeight() + lineSpacing_); }
+  int maxLines() {
+    int divisor = getFontHeight() + lineSpacing_;
+    if (divisor <= 0) return 0;
+    return display_.height() / divisor;
+  }
   uint16_t getEinkTextWidth(const String& s);
   uint8_t getLineSpacing() { return lineSpacing_; };
   DisplayT& getDisplay() { return display_; };

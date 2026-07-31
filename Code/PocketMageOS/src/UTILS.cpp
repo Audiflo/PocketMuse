@@ -311,7 +311,7 @@ void updateBattState() {
   } else {
     // Check for low battery
     bool low;
-    if (!PowerSystem.isBatteryLow(low)) {
+    if (PowerSystem.isBatteryLow(low)) {
       if (low) {
         OLED().sysMessage("Battery Critical!",1000);
 
@@ -471,14 +471,15 @@ String textPrompt(String promptText, String prefix) {
         else if (inchar == 9 || inchar == 14) {
           KB().setKeyboardState(NORMAL);
         } else {
+          String chStr = String(inchar);
           if (cursor_pos == 0) {
-            currentLine = inchar + currentLine;
+            currentLine = chStr + currentLine;
           } else if (cursor_pos == currentLine.length()) {
-            currentLine += inchar;
+            currentLine += chStr;
           } else {
             left = currentLine.substring(0, cursor_pos);
             right = currentLine.substring(cursor_pos);
-            currentLine = left + inchar + right;
+            currentLine = left + chStr + right;
           }
           cursor_pos++;
           if (inchar >= 48 && inchar <= 57) {
@@ -1217,7 +1218,7 @@ void checkRTCPowerLoss() {
   }
 
   if (in) {
-#if !OTA_APP_FLAG
+#if !OTA_APP
     // Temporarily disable the sleep timeout so the setup prompts don't force a sleep loop
     bool previousTimeoutState = noTimeout;
     noTimeout = true;
@@ -1268,16 +1269,14 @@ void checkRTCPowerLoss() {
 
 #if !OTA_APP
 void saveEditingFile() {
-  if (!OTA_APP) {
     OLED().oledWord("Saving Work");
     String savePath = PM_SDAUTO().getEditingFile();
     if (savePath != "" && savePath != "-" && savePath != "/temp.txt" && fileLoaded) {
       if (!savePath.startsWith("/"))
         savePath = "/" + savePath;
-      ESP_LOGE(TAG, "Saving MarkdownFile");
-      saveMarkdownFile(PM_SDAUTO().getEditingFile());
-      ESP_LOGE(TAG, "Done saving MarkdownFile");
+      ESP_LOGI(TAG, "Saving MarkdownFile");
+      saveMarkdownFile(savePath);
+      ESP_LOGI(TAG, "Done saving MarkdownFile");
     }
-  }
 }
 #endif

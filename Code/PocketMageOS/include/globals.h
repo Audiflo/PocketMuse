@@ -138,8 +138,6 @@ void processKB_APPLOADER();
 void einkHandler_APPLOADER();
 void rebootToAppSlot(int otaIndex);
 void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName = true, int maxNameChars = 10);
-#endif // POCKETMAGE_OS
-#endif // GLOBALS_H
 
 // <TERMINAL.cpp>
 void TERMINAL_INIT();
@@ -154,7 +152,11 @@ void COMM_INIT();
 void processKB_COMM();
 void einkHandler_COMM();
 
+#endif // POCKETMAGE_OS
+
 // Battery Voltage Helper
 inline float getBatteryVoltage() {
   return (analogRead(BAT_SENS) * (3.3 / 4095.0) * 2) + 0.2;
 }
+
+#endif // GLOBALS_H

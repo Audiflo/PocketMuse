@@ -146,9 +146,9 @@ void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, St
     FontEngine::setOledStyle(FontStyle::Body);
     const uint16_t charWidth = FontEngine::oledTextWidth(line);
 
-    const uint8_t progress = map(charWidth, 0, display.width() - 5, 0, dw);
+    const uint16_t progress = map(charWidth, 0, display.width() - 5, 0, dw);
 
-    u8g2_.drawVLine(dw, 0, 2);
+    u8g2_.drawVLine(dw - 1, 0, 2);
     u8g2_.drawVLine(0, 0, 2);
 
     u8g2_.drawHLine(0, 0, progress);

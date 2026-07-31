@@ -304,9 +304,12 @@ bool deleteRecursive(String path) {
   
   File file = dir.openNextFile();
   while (file) {
+    String name = file.name();
+    int slash = name.lastIndexOf('/');
+    if (slash >= 0) name = name.substring(slash + 1);
     String childPath = path;
     if (!childPath.endsWith("/")) childPath += "/";
-    childPath += file.name();
+    childPath += name;
     
     bool isDir = file.isDirectory();
     file.close();
@@ -328,10 +331,14 @@ void funcSelect(String command) {
   String totalMsg = currentDir + ">" + command;
   terminalOutputs.push_back(totalMsg);
 
-  command.toLowerCase();
+  // Only lowercase the verb for dispatch; preserve original case for arguments
+  String verb = command;
+  int verbEnd = verb.indexOf(' ');
+  if (verbEnd > 0) verb = verb.substring(0, verbEnd);
+  verb.toLowerCase();
 
   // Clear command window
-  if (command == "clear") {
+  if (verb == "clear") {
     terminalOutputs.clear();
     termScrollIndex = 0;
     newState = true;
@@ -339,13 +346,13 @@ void funcSelect(String command) {
   }
 
   // Exit terminal
-  else if (command == "exit" || command == "quit" || command == "q") {
+  else if (verb == "exit" || verb == "quit" || verb == "q") {
     HOME_INIT();
     return;
   }
 
   // Help
-  else if (command == "help") {
+  else if (verb == "help") {
     terminalOutputs.push_back("Available commands:");
     terminalOutputs.push_back("ls                  List dir");
     terminalOutputs.push_back("cd <dir>          Change dir");
@@ -371,7 +378,7 @@ void funcSelect(String command) {
   }
 
   // Enter directory
-  else if (command.startsWith("cd")) {
+  else if (verb == "cd") {
     pocketmage::setCpuSpeed(240);
     String arg = command.substring(2);
     arg.trim();
@@ -412,7 +419,7 @@ void funcSelect(String command) {
   }
 
   // List directory
-  else if (command.startsWith("ls")) {
+  else if (verb == "ls") {
     pocketmage::setCpuSpeed(240);
     String arg = command.substring(2);
     arg.trim();
@@ -466,105 +473,107 @@ void funcSelect(String command) {
   }
 
   // Make directory
-  else if (command.startsWith("mkdir")) {
+  else if (verb == "mkdir") {
     pocketmage::setCpuSpeed(240);
-
     String arg = command.substring(5);
     arg.trim();
-    String newDirPath = currentDir;
-    if (arg.length() > 0) {
-      if (arg.startsWith("/"))
-        newDirPath = arg;
-      else {
-        if (!currentDir.endsWith("/"))
-          newDirPath = currentDir + "/";
-        newDirPath += arg;
-      }
-    } else {
+    if (arg.length() == 0) {
       returnText = "Path not defined";
+      terminalOutputs.push_back(returnText);
+      OLED().sysMessage(returnText,1000);
+      termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+      newState = true;
+      if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+      return;
+    }
+
+    String newDirPath = currentDir;
+    if (arg.startsWith("/"))
+      newDirPath = arg;
+    else {
+      if (!currentDir.endsWith("/"))
+        newDirPath = currentDir + "/";
+      newDirPath += arg;
     }
 
     if (!global_fs->exists(newDirPath))
       global_fs->mkdir(newDirPath);
-    currentDir = newDirPath;
 
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-    if (returnText != "") {
-      terminalOutputs.push_back(returnText);
-      OLED().sysMessage(returnText,1000);
-    }
     termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
     newState = true;
     return;
   }
 
   // Remove directory
-  else if (command.startsWith("rm -r")) {
-    pocketmage::setCpuSpeed(240);
-    String arg = command.substring(5);
-    arg.trim();
+  else if (verb == "rm") {
+    String rmArg = command.substring(2);
+    rmArg.trim();
+    if (rmArg.startsWith("-r")) {
+      pocketmage::setCpuSpeed(240);
+      String arg = command.substring(5);
+      arg.trim();
 
-    String dirPath = currentDir;
-    if (arg.length() > 0) {
-      if (arg.startsWith("/"))
-        dirPath = arg;
+      String dirPath = currentDir;
+      if (arg.length() > 0) {
+        if (arg.startsWith("/"))
+          dirPath = arg;
+        else {
+          if (!currentDir.endsWith("/"))
+            dirPath += "/";
+          dirPath += arg;
+        }
+      } else {
+        returnText = "Path not defined";
+      }
+
+      if (returnText == "" && global_fs->exists(dirPath)) {
+        if (!deleteRecursive(dirPath)) {
+          returnText = "Failed to remove directory";
+        }
+      } else if (returnText == "") {
+        returnText = "Path not found";
+      }
+
+      if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+
+      if (returnText != "") {
+        terminalOutputs.push_back(returnText);
+        OLED().sysMessage(returnText,1000);
+      }
+
+      termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+      newState = true;
+      return;
+    }
+
+    // Remove file
+    pocketmage::setCpuSpeed(240);
+    String curArg = command.substring(2);
+    curArg.trim();
+
+    String curDir = currentDir;
+    if (curArg.length() > 0) {
+      if (curArg.startsWith("/"))
+        curDir = curArg;
       else {
         if (!currentDir.endsWith("/"))
-          dirPath += "/";
-        dirPath += arg;
+          curDir += "/";
+        curDir += curArg;
       }
     } else {
       returnText = "Path not defined";
     }
 
-    if (returnText == "" && global_fs->exists(dirPath)) {
-      if (!deleteRecursive(dirPath)) {
-        returnText = "Failed to remove directory";
-      }
-    } else if (returnText == "") {
-      returnText = "Path not found";
-    }
-
-    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-
-    if (returnText != "") {
-      terminalOutputs.push_back(returnText);
-      OLED().sysMessage(returnText,1000);
-    }
-
-    termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
-    newState = true;
-    return;
-  }
-
-  // Remove file
-  else if (command.startsWith("rm ") && !command.startsWith("rm -r")) {
-    pocketmage::setCpuSpeed(240);
-    String arg = command.substring(2);
-    arg.trim();
-
-    String dirPath = currentDir;
-    if (arg.length() > 0) {
-      if (arg.startsWith("/"))
-        dirPath = arg;
-      else {
-        if (!currentDir.endsWith("/"))
-          dirPath += "/";
-        dirPath += arg;
-      }
-    } else {
-      returnText = "Path not defined";
-    }
-
-    if (returnText == "" && global_fs->exists(dirPath)) {
-      File f = global_fs->open(dirPath);
+    if (returnText == "" && global_fs->exists(curDir)) {
+      File f = global_fs->open(curDir);
       if (!f) {
         returnText = "Failed to open file";
       } else if (f.isDirectory()) {
         returnText = "Not a file - use <rm -r>";
       } else {
         f.close();
-        if (!global_fs->remove(dirPath))
+        if (!global_fs->remove(curDir))
           returnText = "Delete failed";
       }
       if (f) f.close();
@@ -583,7 +592,7 @@ void funcSelect(String command) {
   }
 
   // Copy file
-  else if (command.startsWith("cp ")) {
+  else if (verb == "cp") {
     pocketmage::setCpuSpeed(240);
 
     String args = command.substring(3);
@@ -635,7 +644,7 @@ void funcSelect(String command) {
   }
 
   // Move file
-  else if (command.startsWith("mv ")) {
+  else if (verb == "mv") {
     pocketmage::setCpuSpeed(240);
 
     String args = command.substring(3);
@@ -690,7 +699,7 @@ void funcSelect(String command) {
   }
 
   // Create empty file (touch)
-  else if (command.startsWith("touch ")) {
+  else if (verb == "touch") {
     pocketmage::setCpuSpeed(240);
 
     String arg = command.substring(6);
@@ -728,7 +737,7 @@ void funcSelect(String command) {
   }
 
   // Open in text editor
-  else if (command.startsWith("txt ")) {
+  else if (verb == "txt") {
     pocketmage::setCpuSpeed(240);
 
     String arg = command.substring(4);
@@ -774,91 +783,95 @@ void funcSelect(String command) {
   }
 
   // Link Program
-  else if (command.startsWith("pot link ")) {
-    pocketmage::setCpuSpeed(240);
+  else if (verb == "pot") {
+    String potArg = command.substring(3);
+    potArg.trim();
 
-    String args = command.substring(9);
-    args.trim();
+    if (potArg.startsWith("link")) {
+      pocketmage::setCpuSpeed(240);
 
-    int spaceIdx = args.indexOf(' ');
-    if (spaceIdx == -1) {
-      returnText = "Usage: pot link <file> <alias>";
-    } else {
-      String fileArg = args.substring(0, spaceIdx);
-      String aliasArg = args.substring(spaceIdx + 1);
-      fileArg.trim();
+      String args = command.substring(9);
+      args.trim();
+
+      int spaceIdx = args.indexOf(' ');
+      if (spaceIdx == -1) {
+        returnText = "Usage: pot link <file> <alias>";
+      } else {
+        String fileArg = args.substring(0, spaceIdx);
+        String aliasArg = args.substring(spaceIdx + 1);
+        fileArg.trim();
+        aliasArg.trim();
+
+        String filePath = fileArg.startsWith("/") ? fileArg : (currentDir + (currentDir.endsWith("/") ? "" : "/") + fileArg);
+        
+        if (!filePath.endsWith(".c")) {
+          int dotIdx = fileArg.lastIndexOf('.');
+          if (dotIdx == -1) filePath += ".c";
+        }
+
+        if (!global_fs->exists(filePath)) {
+          returnText = "File not found";
+        } else {
+          // Find existing or add new
+          int existingIdx = -1;
+          for(size_t i=0; i<potLinkAliases.size(); i++){
+              if(potLinkAliases[i] == aliasArg){ existingIdx = i; break; }
+          }
+          if(existingIdx != -1){
+              potLinkPaths[existingIdx] = filePath;
+          } else {
+              potLinkAliases.push_back(aliasArg);
+              potLinkPaths.push_back(filePath);
+          }
+          
+          savePotLinks();
+          returnText = "Linked " + aliasArg + " -> " + fileArg;
+        }
+      }
+
+      if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+      if (returnText != "") {
+        terminalOutputs.push_back(returnText);
+        OLED().sysMessage(returnText, 1000);
+      }
+      termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+      newState = true;
+      return;
+    }
+
+    if (potArg.startsWith("unlink")) {
+      pocketmage::setCpuSpeed(240);
+      
+      String aliasArg = command.substring(11);
       aliasArg.trim();
 
-      String filePath = fileArg.startsWith("/") ? fileArg : (currentDir + (currentDir.endsWith("/") ? "" : "/") + fileArg);
-      
-      if (!filePath.endsWith(".c")) {
-        int dotIdx = fileArg.lastIndexOf('.');
-        if (dotIdx == -1) filePath += ".c";
+      int linkIdx = -1;
+      for(size_t i=0; i<potLinkAliases.size(); i++){
+          if(potLinkAliases[i] == aliasArg){ linkIdx = i; break; }
       }
 
-      if (!global_fs->exists(filePath)) {
-        returnText = "File not found";
-      } else {
-        // Find existing or add new
-        int existingIdx = -1;
-        for(size_t i=0; i<potLinkAliases.size(); i++){
-            if(potLinkAliases[i] == aliasArg){ existingIdx = i; break; }
-        }
-        if(existingIdx != -1){
-            potLinkPaths[existingIdx] = filePath;
-        } else {
-            potLinkAliases.push_back(aliasArg);
-            potLinkPaths.push_back(filePath);
-        }
-        
+      if (linkIdx != -1) {
+        potLinkAliases.erase(potLinkAliases.begin() + linkIdx);
+        potLinkPaths.erase(potLinkPaths.begin() + linkIdx);
         savePotLinks();
-        returnText = "Linked " + aliasArg + " -> " + fileArg;
+        returnText = "Unlinked " + aliasArg;
+      } else {
+        returnText = "Link not found";
       }
-    }
 
-    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-    if (returnText != "") {
-      terminalOutputs.push_back(returnText);
-      OLED().sysMessage(returnText, 1000);
+      if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+      if (returnText != "") {
+        terminalOutputs.push_back(returnText);
+        OLED().sysMessage(returnText, 1000);
+      }
+      termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+      newState = true;
+      return;
     }
-    termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
-    newState = true;
-    return;
-  }
-
-  // Unlink Program
-  else if (command.startsWith("pot unlink ")) {
-    pocketmage::setCpuSpeed(240);
-    
-    String aliasArg = command.substring(11);
-    aliasArg.trim();
-
-    int linkIdx = -1;
-    for(size_t i=0; i<potLinkAliases.size(); i++){
-        if(potLinkAliases[i] == aliasArg){ linkIdx = i; break; }
-    }
-
-    if (linkIdx != -1) {
-      potLinkAliases.erase(potLinkAliases.begin() + linkIdx);
-      potLinkPaths.erase(potLinkPaths.begin() + linkIdx);
-      savePotLinks();
-      returnText = "Unlinked " + aliasArg;
-    } else {
-      returnText = "Link not found";
-    }
-
-    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-    if (returnText != "") {
-      terminalOutputs.push_back(returnText);
-      OLED().sysMessage(returnText, 1000);
-    }
-    termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
-    newState = true;
-    return;
   }
 
   // Open in potion
-  else if (command.startsWith("potion") || command.startsWith("pot")) {
+  else if (verb == "potion" || verb == "pot") {
     pocketmage::setCpuSpeed(240);
 
     String arg = "";
@@ -913,7 +926,7 @@ void funcSelect(String command) {
   }
 
   // Compile program
-  else if (command.startsWith("brew")) {
+  else if (verb == "brew") {
     pocketmage::setCpuSpeed(240);
     String arg = command.substring(4);
     arg.trim();
@@ -964,7 +977,7 @@ void funcSelect(String command) {
   }
 
   // Echo
-  else if (command.startsWith("echo")) {
+  else if (verb == "echo") {
     String arg = command.substring(4);
     arg.trim();
     terminalOutputs.push_back(arg);
@@ -974,7 +987,7 @@ void funcSelect(String command) {
   }
 
   // Set font
-  else if (command.startsWith("setfont ")) {
+  else if (verb == "setfont") {
     pocketmage::setCpuSpeed(240);
     String arg = command.substring(8);
     arg.trim();
@@ -1009,7 +1022,7 @@ void funcSelect(String command) {
   }
 
   // Theme
-  else if (command.startsWith("theme ")) {
+  else if (verb == "theme") {
     pocketmage::setCpuSpeed(240);
     String arg = command.substring(6);
     arg.trim();
@@ -1078,10 +1091,9 @@ void funcSelect(String command) {
   returnText = commandSelect(command);
   if (returnText != "") {
     terminalOutputs.push_back(returnText);
-    termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
-    newState = true;
-    return;
   }
+  termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+  newState = true;
 }
 
 #pragma region BREW

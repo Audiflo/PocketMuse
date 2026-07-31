@@ -5,15 +5,15 @@ description: "How to set up PlatformIO and build PocketMage firmware on Linux, M
 
 # Build Environments & PlatformIO Setup
 
-PocketMage firmware is built with [PlatformIO](https://platformio.org/). There are three build environments (envelopes) defined in `platformio.ini`.
+PocketMage firmware is built with [PlatformIO](https://platformio.org/). There are two primary build environments (envelopes) defined in `platformio.ini`, plus an OTA app environment.
 
 ## Build Environments
 
-| Environment | Purpose                                                                                                                                                            |
-|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `PM_V3`     | Main firmware - the full PocketMage OS                                                                                                                             |
-| `OTA_APP`   | Framework for developing OTA-sideloaded apps. The compiled binary and icon are packaged as a `.tar` file and placed into `apps/` for loading into an OTA partition |
-| `native`    | Local testing environment. Run tests with `pio test -e native`                                                                                                     |
+| Environment     | Purpose                                                                                                                                                            |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `PM_PRODUCTION` | Production firmware - the full PocketMage OS (release builds)                                                                                                      |
+| `PM_BETA`       | Beta firmware - bleeding-edge features and fixes for testers                                                                                                       |
+| `OTA_APP`       | Framework for developing OTA-sideloaded apps. The compiled binary and icon are packaged as a `.tar` file and placed into `apps/` for loading into an OTA partition |
 
 ## Prerequisites
 
@@ -55,7 +55,7 @@ For a full walkthrough, watch the [OTA app development video](https://www.youtub
 Unit tests can be run locally with:
 
 ```bash
-pio test -e native
+pio test -e PM_PRODUCTION
 ```
 
 Refer to the [PlatformIO test documentation](https://docs.platformio.org/en/latest/core/userguide/cmd_test.html) for more details.

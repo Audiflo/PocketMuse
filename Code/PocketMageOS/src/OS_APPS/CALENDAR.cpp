@@ -75,7 +75,7 @@ void updateEventArray() {
 
   File file = global_fs->open(eventsFile, "r"); 
   if (!file) {
-    ESP_LOGE(TAG, "Failed to open file for reading: %s", file.path());
+    ESP_LOGE(TAG, "Failed to open file for reading: %s", eventsFile);
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     PM_SDAUTO().endIO();
     return;
@@ -93,11 +93,11 @@ void updateEventArray() {
       continue;
     }
 
-    uint8_t delimiterPos1 = line.indexOf('|');
-    uint8_t delimiterPos2 = line.indexOf('|', delimiterPos1 + 1);
-    uint8_t delimiterPos3 = line.indexOf('|', delimiterPos2 + 1);
-    uint8_t delimiterPos4 = line.indexOf('|', delimiterPos3 + 1);
-    uint8_t delimiterPos5 = line.indexOf('|', delimiterPos4 + 1);
+    int delimiterPos1 = line.indexOf('|');
+    int delimiterPos2 = line.indexOf('|', delimiterPos1 + 1);
+    int delimiterPos3 = line.indexOf('|', delimiterPos2 + 1);
+    int delimiterPos4 = line.indexOf('|', delimiterPos3 + 1);
+    int delimiterPos5 = line.indexOf('|', delimiterPos4 + 1);
 
     if (delimiterPos1 == -1 || delimiterPos5 == -1) continue; // Basic validation
 
@@ -265,7 +265,7 @@ int stringToPositiveInt(String input) {
   return input.toInt();
 }
 
-int daysInMonth(int year, int month) {
+int daysInMonth(int month, int year) {
   if (month == 2) {
     // Leap year
     return (year % 4 == 0 && (year % 100 != 0 || year % 400 == 0)) ? 29 : 28;
@@ -479,6 +479,30 @@ void commandSelectMonth(String command) {
     return;
   }
 
+  // Check if command is in YYYYMMDD format (must precede month-name branch)
+  else if (command.length() == 8 && stringToPositiveInt(command) != -1) {
+    int year = command.substring(0, 4).toInt();
+    int month = command.substring(4, 6).toInt();
+    int date = command.substring(6, 8).toInt();
+
+    if (year < 1970 || year > 2200 || month < 1 || month > 12 || date < 1 || date > daysInMonth(month, year)) {
+      OLED().sysMessage("Invalid",500);
+      return;
+    }
+
+    currentYear = year;
+    currentMonth = month;
+    currentDate = date;
+
+    DateTime now = CLOCK().nowDT();
+    int currentAbsMonth = now.year() * 12 + now.month();
+    int targetAbsMonth = currentYear * 12 + currentMonth;
+    monthOffsetCount = targetAbsMonth - currentAbsMonth;
+
+    newState = true;
+    return;
+  }
+
   // Check if command starts with a 3-letter month
   else if (command.length() >= 4) {
     String prefix = command.substring(0, 3);
@@ -506,42 +530,7 @@ void commandSelectMonth(String command) {
         return;
       }
     }
-  }
-
-  // Check if command is in YYYYMMDD format
-  else if (command.length() == 8 && stringToPositiveInt(command) != -1) {
-    int year = command.substring(0, 4).toInt();
-    int month = command.substring(4, 6).toInt();
-    int date = command.substring(6, 8).toInt();
-
-    if (year < 1970 || year > 2200 || month < 1 || month > 12 || date < 1 || date > daysInMonth(month, year)) {
-      OLED().sysMessage("Invalid",500);
-      return;
-    }
-
-    currentYear = year;
-    currentMonth = month;
-    currentDate = date;
-
-    DateTime now = CLOCK().nowDT();
-    int currentAbsMonth = now.year() * 12 + now.month();
-    int targetAbsMonth = currentYear * 12 + currentMonth;
-    monthOffsetCount = targetAbsMonth - currentAbsMonth;
-
-    int dayOfWeek = getDayOfWeek(currentYear, currentMonth, currentDate);
-
-    switch (dayOfWeek) {
-      case 0: CurrentCalendarState = SUN; break;
-      case 1: CurrentCalendarState = MON; break;
-      case 2: CurrentCalendarState = TUE; break;
-      case 3: CurrentCalendarState = WED; break;
-      case 4: CurrentCalendarState = THU; break;
-      case 5: CurrentCalendarState = FRI; break;
-      case 6: CurrentCalendarState = SAT; break;
-    }
-
-    newState        = true;
-    KB().setKeyboardState(NORMAL);
+    OLED().sysMessage("Invalid",500);
     return;
   }
 
@@ -1189,6 +1178,7 @@ void processKB_CALENDAR() {
       }
       else if (newEventState == 1) {
         String uiDate = datePrompt(newEventStartDate); // pass default
+        if (uiDate == "_EXIT_") { CurrentCalendarState = MONTH; newState = true; break; }
         newEventStartDate = uiDate.substring(6, 10) + uiDate.substring(3, 5) + uiDate.substring(0, 2);
         newEventState++; newState = true; delay(50);
       }
@@ -1198,6 +1188,7 @@ void processKB_CALENDAR() {
             defaultT = newEventStartTime.substring(0,2).toInt() * 100 + newEventStartTime.substring(3,5).toInt();
         }
         int t = timePrompt(defaultT); // pass default
+        if (t < 0) { CurrentCalendarState = MONTH; newState = true; break; }
         newEventStartTime = formatTimeInt(t);
         newEventState++; newState = true; delay(50);
       }
@@ -1207,6 +1198,7 @@ void processKB_CALENDAR() {
             defaultDur = newEventDuration.substring(0,2).toInt() * 100 + newEventDuration.substring(3,5).toInt();
         }
         int dur = timePrompt(defaultDur); // pass default
+        if (dur < 0) { CurrentCalendarState = MONTH; newState = true; break; }
         newEventDuration = formatTimeInt(dur);
         newEventState++; newState = true; delay(50);
       }

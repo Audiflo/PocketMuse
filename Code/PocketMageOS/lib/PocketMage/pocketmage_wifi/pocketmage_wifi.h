@@ -72,6 +72,7 @@ class PocketMageWifi {
 
   // Event callback (called when state changes: use to trigger display update)
   void setEventCallback(WifiEventCallback cb);
+  void dispatchEvents();
 
  private:
   PocketMageWifi();
@@ -111,7 +112,8 @@ class PocketMageWifi {
     Connect,
     Disconnect,
     Reconnect,
-    CheckAutoConnect
+    CheckAutoConnect,
+    Shutdown
   };
 
   // Thread-safe state
@@ -141,6 +143,7 @@ class PocketMageWifi {
   // FreeRTOS handles
   TaskHandle_t _taskHandle;
   QueueHandle_t _commandQueue;
+  SemaphoreHandle_t _shutdownSem;
   // ESP handles
   esp_netif_t* _staNetif;
   esp_event_handler_instance_t _wifiEventHandler;
@@ -156,6 +159,7 @@ class PocketMageWifi {
   // Flags
   bool _initialized;
   bool _autoConnectEnabled;
+  volatile bool _eventPending;
   static constexpr unsigned long AUTO_SCAN_INTERVAL = 15000;
   static constexpr uint8_t MAX_RETRIES = 5;
   static constexpr unsigned long RETRY_BASE_DELAY_MS = 1000;

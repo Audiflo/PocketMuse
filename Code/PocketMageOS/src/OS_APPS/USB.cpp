@@ -48,56 +48,131 @@ void USBAppShutdown() {
 
 static int32_t onWrite(uint32_t lba, uint32_t offset, uint8_t* buffer, uint32_t bufsize) {
   if (usb_is_shutting_down) return -1; // Safety Lock
-  
+
   PM_SDAUTO().beginIO();
   if (!card || card->csd.sector_size == 0) {
     PM_SDAUTO().endIO();
     return -1;
   }
-  
+
   uint32_t secSize = card->csd.sector_size;
-  for (uint32_t i = 0; i < bufsize / secSize; ++i) {
-    esp_err_t err = sdmmc_write_sectors(card, buffer + i * secSize, lba + i, 1);
-    if (err != ESP_OK) {
+  uint64_t capacity = card->csd.capacity;
+  if (capacity == 0 || lba >= capacity || lba + (bufsize + offset + secSize - 1) / secSize > capacity + 1) {
+    PM_SDAUTO().endIO();
+    return -1;
+  }
+
+  uint32_t written = 0;
+
+  if (offset > 0) {
+    uint32_t chunk = min(secSize - offset, bufsize);
+    uint8_t sector[secSize];
+    if (sdmmc_read_sectors(card, sector, lba, 1) != ESP_OK) {
+      PM_SDAUTO().endIO();
+      return -1;
+    }
+    memcpy(sector + offset, buffer, chunk);
+    if (sdmmc_write_sectors(card, sector, lba, 1) != ESP_OK) {
+      PM_SDAUTO().endIO();
+      return -1;
+    }
+    lba++;
+    buffer += chunk;
+    written += chunk;
+  }
+
+  uint32_t fullSectors = (bufsize - written) / secSize;
+  if (fullSectors > 0) {
+    if (sdmmc_write_sectors(card, buffer, lba, fullSectors) != ESP_OK) {
+      PM_SDAUTO().endIO();
+      return -1;
+    }
+    lba += fullSectors;
+    buffer += fullSectors * secSize;
+    written += fullSectors * secSize;
+  }
+
+  uint32_t remainder = (bufsize - written);
+  if (remainder > 0) {
+    uint8_t sector[secSize];
+    if (sdmmc_read_sectors(card, sector, lba, 1) != ESP_OK) {
+      PM_SDAUTO().endIO();
+      return -1;
+    }
+    memcpy(sector, buffer, remainder);
+    if (sdmmc_write_sectors(card, sector, lba, 1) != ESP_OK) {
       PM_SDAUTO().endIO();
       return -1;
     }
   }
+
   PM_SDAUTO().endIO();
   return bufsize;
 }
 
 static int32_t onRead(uint32_t lba, uint32_t offset, void* buffer, uint32_t bufsize) {
   if (usb_is_shutting_down) return -1; // Safety Lock
-  
+
   PM_SDAUTO().beginIO();
   if (!card || card->csd.sector_size == 0) {
     PM_SDAUTO().endIO();
     return -1;
   }
-  
+
   uint32_t secSize = card->csd.sector_size;
-  for (uint32_t i = 0; i < bufsize / secSize; ++i) {
-    esp_err_t err = sdmmc_read_sectors(card, (uint8_t*)buffer + i * secSize, lba + i, 1);
-    if (err != ESP_OK) {
+  uint64_t capacity = card->csd.capacity;
+  if (capacity == 0 || lba >= capacity || lba + (bufsize + offset + secSize - 1) / secSize > capacity + 1) {
+    PM_SDAUTO().endIO();
+    return -1;
+  }
+
+  uint8_t* buf = (uint8_t*)buffer;
+  uint32_t read = 0;
+
+  if (offset > 0) {
+    uint32_t chunk = min(secSize - offset, bufsize);
+    uint8_t sector[secSize];
+    if (sdmmc_read_sectors(card, sector, lba, 1) != ESP_OK) {
       PM_SDAUTO().endIO();
       return -1;
     }
+    memcpy(buf, sector + offset, chunk);
+    lba++;
+    buf += chunk;
+    read += chunk;
   }
+
+  uint32_t fullSectors = (bufsize - read) / secSize;
+  if (fullSectors > 0) {
+    if (sdmmc_read_sectors(card, buf, lba, fullSectors) != ESP_OK) {
+      PM_SDAUTO().endIO();
+      return -1;
+    }
+    lba += fullSectors;
+    buf += fullSectors * secSize;
+    read += fullSectors * secSize;
+  }
+
+  uint32_t remainder = (bufsize - read);
+  if (remainder > 0) {
+    uint8_t sector[secSize];
+    if (sdmmc_read_sectors(card, sector, lba, 1) != ESP_OK) {
+      PM_SDAUTO().endIO();
+      return -1;
+    }
+    memcpy(buf, sector, remainder);
+  }
+
   PM_SDAUTO().endIO();
   return bufsize;
 }
 
 static bool onStartStop(uint8_t power_condition, bool start, bool eject) {
-  PM_SDAUTO().beginIO();
   ESP_LOGI(TAG, "MSC Start/Stop: power=%u, start=%d, eject=%d\n", power_condition, start, eject);
-
-  PM_SDAUTO().endIO();
   return true;
 }
 
 static void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t event_id, void* event_data) {
-  PM_SDAUTO().beginIO();
   if (event_base == ARDUINO_USB_EVENTS) {
     switch (event_id) {
       case ARDUINO_USB_STARTED_EVENT: ESP_LOGI(TAG, "USB Connected"); break;
@@ -106,7 +181,6 @@ static void usbEventCallback(void* arg, esp_event_base_t event_base, int32_t eve
       case ARDUINO_USB_RESUME_EVENT:  ESP_LOGI(TAG, "USB Resumed"); break;
     }
   }
-  PM_SDAUTO().endIO();
 }
 
 void USB_INIT() {
@@ -145,11 +219,19 @@ void USB_INIT() {
   // CRITICAL FIX: Force internal pull-ups to prevent ESP_ERR_TIMEOUT
   slot_config.flags |= SDMMC_SLOT_FLAG_INTERNAL_PULLUP;
 
+  auto cleanup = [&]() {
+    disableTimeout = false;
+    PowerSystem.setUSBControlBMS();
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    SD_MMC.begin(); // remount filesystem
+  };
+
   // Initialize host
   esp_err_t err = sdmmc_host_init();
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "Host init failed %s\n", esp_err_to_name(err));
     OLED().sysMessage("Host init failed: " + String(esp_err_to_name(err)),2000);
+    cleanup();
     return;
   }
 
@@ -158,15 +240,17 @@ void USB_INIT() {
     ESP_LOGE(TAG, "Slot init failed: %s\n", esp_err_to_name(err));
     OLED().sysMessage("Slot init failed: " + String(esp_err_to_name(err)),2000);
     sdmmc_host_deinit();
+    cleanup();
     return;
   }
 
   // Allocate card object and mount
   card = (sdmmc_card_t*)malloc(sizeof(sdmmc_card_t));
   if (!card) {
-    ESP_LOGE(TAG, "Failed to allocate card struct\n", esp_err_to_name(err));
-    OLED().sysMessage("Failed malloc: " + String(esp_err_to_name(err)),2000);
+    ESP_LOGE(TAG, "Failed to allocate card struct\n");
+    OLED().sysMessage("Failed to allocate card struct",2000);
     sdmmc_host_deinit();
+    cleanup();
     return;
   }
 
@@ -178,6 +262,7 @@ void USB_INIT() {
     free(card);
     card = nullptr;
     sdmmc_host_deinit();
+    cleanup();
     return;
   }
 

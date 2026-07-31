@@ -45,6 +45,7 @@ void PocketMage_INIT();
 String vectorToString();
 void stringToVector(String inputText);
 
+extern volatile bool resetRequested;
 extern volatile bool newLineAdded;           // New line added in TXT
 extern std::vector<String> allLines;                // All lines in TXT
 extern bool noTimeout;               // Disable timeout

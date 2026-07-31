@@ -33,6 +33,7 @@ String settingCommandSelect(String command) {
     if (timePart.length() == 0) {
       int newTime = timePrompt(); // Returns integer like 1430 or 5
       
+      if (newTime < 0) return returnText;
       // Format the integer back into a safe, padded string (e.g., "00:05" or "14:30")
       char timeBuf[6];
       snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", newTime / 100, newTime % 100);
@@ -65,6 +66,7 @@ String settingCommandSelect(String command) {
     if (datePart.length() == 0) {
       String newDate = datePrompt(); // Returns formatted "DD/MM/YYYY"
 
+      if (newDate == "_EXIT_") return returnText;
       // Parse the returned string into integers
       int day   = newDate.substring(0, 2).toInt();
       int month = newDate.substring(3, 5).toInt();
@@ -81,9 +83,16 @@ String settingCommandSelect(String command) {
       int month = datePart.substring(4, 6).toInt();
       int day   = datePart.substring(6, 8).toInt();
 
-      DateTime now = CLOCK().nowDT();  // Preserve current time
-      CLOCK().getRTC().adjust(DateTime(year, month, day, now.hour(), now.minute(), now.second()));
-      returnText = "Date Updated";
+      static const uint8_t dim[] = {31,28,31,30,31,30,31,31,30,31,30,31};
+      int maxDay = dim[month - 1];
+      if (month == 2 && ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) maxDay = 29;
+      if (year < 1970 || year > 2200 || month < 1 || month > 12 || day < 1 || day > maxDay) {
+        returnText = "Invalid date";
+      } else {
+        DateTime now = CLOCK().nowDT();  // Preserve current time
+        CLOCK().getRTC().adjust(DateTime(year, month, day, now.hour(), now.minute(), now.second()));
+        returnText = "Date Updated";
+      }
     } else {
       returnText = "Invalid format (YYYYMMDD)";
     }

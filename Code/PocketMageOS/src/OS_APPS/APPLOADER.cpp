@@ -37,7 +37,10 @@ static bool rmRF(fs::FS &fs, const char *path) {
 
     File child;
     while ((child = entry.openNextFile())) {
-        String childPath = String(path) + "/" + child.name();
+        String name = child.name();
+        int sep = name.lastIndexOf('/');
+        if (sep >= 0) name = name.substring(sep + 1);
+        String childPath = String(path) + "/" + name;
         child.close();
         if (!rmRF(fs, childPath.c_str())) { entry.close(); return false; }
     }
@@ -174,7 +177,7 @@ struct AppInfo {
 };
 
 bool saveAppInfo(int otaIndex, const AppInfo &info) {
-  String key = "OTA" + String(otaIndex);
+  String key = "OTAINFO" + String(otaIndex);
   prefs.begin("PocketMage", false);
   bool ok = prefs.putBytes(key.c_str(), &info, sizeof(info)) == sizeof(info);
   prefs.end();
@@ -182,7 +185,7 @@ bool saveAppInfo(int otaIndex, const AppInfo &info) {
 }
 
 bool loadAppInfo(int otaIndex, AppInfo &info) {
-  String key = "OTA" + String(otaIndex);
+  String key = "OTAINFO" + String(otaIndex);
   prefs.begin("PocketMage", true);
   size_t n = prefs.getBytes(key.c_str(), &info, sizeof(info));
   prefs.end();
@@ -247,7 +250,9 @@ void cleanupAppsTemp(String binPath) {
   if (root && root.isDirectory()) {
     File entry;
     while ((entry = root.openNextFile())) {
-      String name = String(entry.name());
+      String name = entry.name();
+      int sep = name.lastIndexOf('/');
+      if (sep >= 0) name = name.substring(sep + 1);
       String fullPath = pathJoin(TEMP_DIR, name);
       entry.close();
       if (!name.endsWith("_ICON.bin")) {
@@ -264,6 +269,8 @@ bool cleanupAppsTempRecursive(fs::FS &fs, const String &dirPath) {
     File entry;
     while ((entry = dir.openNextFile())) {
         String name = entry.name();
+        int sep = name.lastIndexOf('/');
+        if (sep >= 0) name = name.substring(sep + 1);
         String fullPath = pathJoin(dirPath, name);
 
         if (entry.isDirectory()) {
@@ -349,16 +356,16 @@ static void installTask(void *param) {
 // --- Determine main .bin and base name ---
 String binPath = "";
 String base = "";
-  // --- Determine icon path ---
 String iconPath = "";
-String expectedIcon = base + "_ICON.bin";
+String expectedIcon = "";
 
 File tempRoot = global_fs->open(TEMP_DIR);
 if (tempRoot && tempRoot.isDirectory()) {
     File entry;
-    String expectedIcon; // will be set once base is known
     while ((entry = tempRoot.openNextFile())) {
-        String name = String(entry.name());
+        String name = entry.name();
+        int sep = name.lastIndexOf('/');
+        if (sep >= 0) name = name.substring(sep + 1);
 
         // Skip macOS metadata files
         if (name.startsWith("._")) {
