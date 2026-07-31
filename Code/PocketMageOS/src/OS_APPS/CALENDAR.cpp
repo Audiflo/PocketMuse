@@ -399,32 +399,31 @@ String repeatPrompt(String startDateStr) {
     while(true) {
       u8g2.clearBuffer();
       u8g2.drawXBMP(0,0,256,32,_repeatGUI2);
-      FontEngine::setOledStyle(FontStyle::BodyBold);
 
-      int dateWidth = FontEngine::oledTextWidth(dateStr);
+      int dateWidth = FontEngine::textWidth(DisplayTarget::OLED, dateStr, FontStyle::BodyBold);
       int dateX = 0 + (107 - dateWidth) / 2;
 
-      int ordWidth = FontEngine::oledTextWidth(ordStr);
+      int ordWidth = FontEngine::textWidth(DisplayTarget::OLED, ordStr, FontStyle::BodyBold);
       int ordX = 151 + (107 - ordWidth) / 2;
 
       if (sel == 0) {
         u8g2.drawRBox(0, 10, 107, 22, 8);
         u8g2.setDrawColor(0);
-        FontEngine::oledDraw(dateX, 26, dateStr);
+        FontEngine::drawText(DisplayTarget::OLED, dateX, 26, dateStr, FontStyle::BodyBold);
         u8g2.setDrawColor(1);
       } else {
         u8g2.drawRFrame(0, 10, 107, 22, 8);
-        FontEngine::oledDraw(dateX, 26, dateStr);
+        FontEngine::drawText(DisplayTarget::OLED, dateX, 26, dateStr, FontStyle::BodyBold);
       }
 
       if (sel == 1) {
         u8g2.drawRBox(151, 10, 105, 22, 8);
         u8g2.setDrawColor(0);
-        FontEngine::oledDraw(ordX, 26, ordStr);
+        FontEngine::drawText(DisplayTarget::OLED, ordX, 26, ordStr, FontStyle::BodyBold);
         u8g2.setDrawColor(1);
       } else {
         u8g2.drawRFrame(151, 10, 105, 22, 8);
-        FontEngine::oledDraw(ordX, 26, ordStr);
+        FontEngine::drawText(DisplayTarget::OLED, ordX, 26, ordStr, FontStyle::BodyBold);
       }
       u8g2.sendBuffer();
 
@@ -951,20 +950,20 @@ void drawCalendarMonth(int monthOffset) {
     int dayNum = i + 1;  // 1-based day number
 
     if (dayNum == now.day() && monthOffset == 0) {
-      FontEngine::setEinkStyle(FontStyle::BodyBold);
+      u8g2f.setForegroundColor(GxEPD_BLACK);
+      FontEngine::drawText(DisplayTarget::EINK, x + 6, y + 15, String(dayNum), FontStyle::BodyBold);
     }
-    else FontEngine::setEinkStyle(FontStyle::Body);
-    
-    u8g2f.setForegroundColor(GxEPD_BLACK);
-    FontEngine::einkDraw(x + 6, y + 15, String(dayNum));
+    else {
+      u8g2f.setForegroundColor(GxEPD_BLACK);
+      FontEngine::drawText(DisplayTarget::EINK, x + 6, y + 15, String(dayNum), FontStyle::Body);
+    }
 
     String YYYYMMDD = intToYYYYMMDD(year, month, dayNum);
 
     int numEvents = checkEvents(YYYYMMDD, true);
 
     if (numEvents > 2) {
-      FontEngine::setEinkStyle(FontStyle::Tiny);
-      FontEngine::einkDraw(x + 32, y + 16, String(numEvents));
+      FontEngine::drawText(DisplayTarget::EINK, x + 32, y + 16, String(numEvents), FontStyle::Tiny);
     }
     else if (numEvents > 1) {
       display.drawBitmap(x + 29, y + 8, _eventMarker1, 10, 10, GxEPD_BLACK);
@@ -1019,10 +1018,9 @@ void drawCalendarWeek(int weekOffset) {
     // Format YYYYMMDD
     String YYYYMMDD = intToYYYYMMDD(y, m, d);
 
-    FontEngine::setEinkStyle(FontStyle::Body);
     u8g2f.setForegroundColor(GxEPD_BLACK);
     String dateStr = String(m) + "/" + String(d);
-    FontEngine::einkDraw(9 + (i * 44), 62, dateStr);
+    FontEngine::drawText(DisplayTarget::EINK, 9 + (i * 44), 62, dateStr, FontStyle::Body);
 
     int eventCount = checkEvents(YYYYMMDD, false);
     if (eventCount > 6) eventCount = 6;
@@ -1034,14 +1032,9 @@ void drawCalendarWeek(int weekOffset) {
       if (dayEvents[j][4] != "NO") startTime = ":: " + startTime;
       String eventName = dayEvents[j][0].substring(0, 6);
 
-      u8g2f.setFont(u8g2_font_4x6_tf);
-      u8g2f.setFontMode(1);
       u8g2f.setForegroundColor(GxEPD_BLACK);
-      u8g2f.setCursor(12 + (i * 44), 80 + (j * 23));
-      u8g2f.print(startTime);
-
-      FontEngine::setEinkStyle(FontStyle::Tiny);
-      FontEngine::einkDraw(12 + (i * 44), 89 + (j * 23), eventName);
+      FontEngine::drawText(DisplayTarget::EINK, 12 + (i * 44), 80 + (j * 23), startTime, FontStyle::Micro);
+      FontEngine::drawText(DisplayTarget::EINK, 12 + (i * 44), 89 + (j * 23), eventName, FontStyle::Tiny);
     }
   }
 }
@@ -1443,14 +1436,13 @@ void einkHandler_CALENDAR() {
         EINK().resetDisplay();
 
         display.drawBitmap(0, 0, calendar_allArray[2], 320, 218, GxEPD_BLACK);
-        FontEngine::setEinkStyle(FontStyle::Body);
 
-        FontEngine::einkDraw(106, 68, newEventName);
-        FontEngine::einkDraw(106, 90, formatDateDisplay(newEventStartDate));
-        FontEngine::einkDraw(106, 112, newEventStartTime);
-        FontEngine::einkDraw(106, 134, newEventDuration);
-        FontEngine::einkDraw(106, 156, newEventRepeat);
-        FontEngine::einkDraw(106, 178, newEventNote);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 68, newEventName, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 90, formatDateDisplay(newEventStartDate), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 112, newEventStartTime, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 134, newEventDuration, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 156, newEventRepeat, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 178, newEventNote, FontStyle::Body);
 
         switch (newEventState) {
           case 0: EINK().drawStatusBar("Enter Event Name on OLED"); break;
@@ -1475,14 +1467,13 @@ void einkHandler_CALENDAR() {
 
         EINK().drawStatusBar("Type 1-6,(D)el, or (S)ave");
         display.drawBitmap(0, 0, calendar_allArray[3], 320, 218, GxEPD_BLACK);
-        FontEngine::setEinkStyle(FontStyle::Body);
 
-        FontEngine::einkDraw(106, 68, newEventName);
-        FontEngine::einkDraw(106, 90, formatDateDisplay(newEventStartDate));
-        FontEngine::einkDraw(106, 112, newEventStartTime);
-        FontEngine::einkDraw(106, 134, newEventDuration);
-        FontEngine::einkDraw(106, 156, newEventRepeat);
-        FontEngine::einkDraw(106, 178, newEventNote);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 68, newEventName, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 90, formatDateDisplay(newEventStartDate), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 112, newEventStartTime, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 134, newEventDuration, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 156, newEventRepeat, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 106, 178, newEventNote, FontStyle::Body);
 
         #if POCKETMAGE_HW_VERSION != 2
           EINK().forceSlowFullUpdate(true);
@@ -1505,9 +1496,8 @@ void einkHandler_CALENDAR() {
         EINK().drawStatusBar("Events 1-7 or (N)ew");
         display.drawBitmap(0, 0, calendar_allArray[CurrentCalendarState], 320, 218, GxEPD_BLACK);
 
-        FontEngine::setEinkStyle(FontStyle::Body);
         u8g2f.setForegroundColor(GxEPD_BLACK);
-        FontEngine::einkDraw(9 + (44*(CurrentCalendarState - 4)), 59, String(currentMonth) + "/" + String(currentDate));
+        FontEngine::drawText(DisplayTarget::EINK, 9 + (44*(CurrentCalendarState - 4)), 59, String(currentMonth) + "/" + String(currentDate), FontStyle::Body);
 
         String YYYYMMDD = intToYYYYMMDD(currentYear, currentMonth, currentDate);
         int eventCount = checkEvents(YYYYMMDD, false);
@@ -1519,9 +1509,8 @@ void einkHandler_CALENDAR() {
           String name       = dayEvents[j][0];
           String bottomInfo = "Starts: " + dayEvents[j][2] + ", Dur: " + dayEvents[j][3] + ", Rep: " + dayEvents[j][4];
 
-          FontEngine::setEinkStyle(FontStyle::Tiny);
-          FontEngine::einkDraw(48, 74 + (j * 19), name);
-          FontEngine::einkDraw(48, 82 + (j * 19), bottomInfo);
+          FontEngine::drawText(DisplayTarget::EINK, 48, 74 + (j * 19), name, FontStyle::Tiny);
+          FontEngine::drawText(DisplayTarget::EINK, 48, 82 + (j * 19), bottomInfo, FontStyle::Tiny);
         }
 
         #if POCKETMAGE_HW_VERSION != 2

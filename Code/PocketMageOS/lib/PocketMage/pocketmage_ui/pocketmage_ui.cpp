@@ -53,16 +53,15 @@ void endEinkScreen(const char* statusText, EinkRefresh mode) {
 }
 
 void drawListItem(int x, int y, const String& text, int maxWidth) {
-  FontEngine::setEinkStyle(FontStyle::Body);
   if (maxWidth > 0) {
     String s = text;
-    int w = FontEngine::einkTextWidth(s);
+    int w = FontEngine::textWidth(DisplayTarget::EINK, s, FontStyle::Body);
     if (w > maxWidth) {
-      s = truncateWithEllipsis(s, maxWidth);
+      s = truncateWithEllipsis(s, maxWidth, FontStyle::Body);
     }
-    FontEngine::einkDraw(x, y, s);
+    FontEngine::drawText(DisplayTarget::EINK, x, y, s, FontStyle::Body);
   } else {
-    FontEngine::einkDraw(x, y, text);
+    FontEngine::drawText(DisplayTarget::EINK, x, y, text, FontStyle::Body);
   }
 }
 
@@ -71,7 +70,6 @@ void drawAppIcon(int x, int y, const uint8_t* bitmap, const String& name) {
   if (bitmap) {
     display.drawBitmap(x, y, bitmap, 40, 40, GxEPD_BLACK);
   }
-  FontEngine::setEinkStyle(FontStyle::Body);
-  int w = FontEngine::einkTextWidth(name);
-  FontEngine::einkDraw(x + (40 - w) / 2, y + 53, name);
+  int w = FontEngine::textWidth(DisplayTarget::EINK, name, FontStyle::Body);
+  FontEngine::drawText(DisplayTarget::EINK, x + (40 - w) / 2, y + 53, name, FontStyle::Body);
 }

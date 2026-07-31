@@ -868,11 +868,9 @@ char PocketmageKB::updateKeypress() {
               // Draw the "Holding" hint after 100ms
               if (!uiDrawn && (millis() - pressTime > 100)) {
                 u8g2.setDrawColor(0);
-                FontEngine::setOledStyle(FontStyle::Tiny);
-                u8g2.drawBox(u8g2.getDisplayWidth()-FontEngine::oledTextWidth("XXXX/XX/XXXX"), u8g2.getDisplayHeight()- 8, FontEngine::oledTextWidth("XXXX/XX/XXXX"), 8);
+                u8g2.drawBox(u8g2.getDisplayWidth()-FontEngine::textWidth(DisplayTarget::OLED, "XXXX/XX/XXXX", FontStyle::Tiny), u8g2.getDisplayHeight()- 8, FontEngine::textWidth(DisplayTarget::OLED, "XXXX/XX/XXXX", FontStyle::Tiny), 8);
                 u8g2.setDrawColor(1);
-                FontEngine::setOledStyle(FontStyle::Tiny);
-                FontEngine::oledDraw(u8g2.getDisplayWidth()-FontEngine::oledTextWidth("SPECIAL"), u8g2.getDisplayHeight(), "SPECIAL");
+                FontEngine::drawText(DisplayTarget::OLED, u8g2.getDisplayWidth()-FontEngine::textWidth(DisplayTarget::OLED, "SPECIAL", FontStyle::Tiny), u8g2.getDisplayHeight(), "SPECIAL", FontStyle::Tiny);
                 u8g2.sendBuffer();
                 uiDrawn = true;
               }
@@ -994,7 +992,6 @@ char PocketmageKB::updateKeypress() {
 
                     int cx = (u8g2.getDisplayWidth()-22*activeCycleLen)/2.0;
 
-                    FontEngine::setOledStyle(FontStyle::BodyBold);
                     if (activeCycle != cyc_appSwitch) {
                       u8g2.setDrawColor(0);
                       u8g2.drawRBox(cx, 2, activeCycleLen*22, 28, 4);
@@ -1009,15 +1006,14 @@ char PocketmageKB::updateKeypress() {
                           } else {
                             u8g2.setDrawColor(1);
                           }
-                          FontEngine::oledDraw(cx + ((22-FontEngine::oledTextWidth(activeCycle[i]))/2.0), 25, activeCycle[i]);
+                    FontEngine::drawText(DisplayTarget::OLED, cx + ((22-FontEngine::textWidth(DisplayTarget::OLED, activeCycle[i], FontStyle::BodyBold))/2.0), 25, activeCycle[i], FontStyle::BodyBold);
                           u8g2.setDrawColor(0);
                           cx += 22;
                       }
                     }
                     else {
-                      FontEngine::setOledStyle(FontStyle::Tiny);
                       u8g2.setDrawColor(0);
-                      u8g2.drawRBox((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("XXXXXXXXXXXX"))/2, u8g2.getDisplayHeight()-7,FontEngine::oledTextWidth("XXXXXXXXXXXX"),7,4);
+                      u8g2.drawRBox((u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "XXXXXXXXXXXX", FontStyle::Tiny))/2, u8g2.getDisplayHeight()-7,FontEngine::textWidth(DisplayTarget::OLED, "XXXXXXXXXXXX", FontStyle::Tiny),7,4);
                       u8g2.drawRBox(cx, 0, activeCycleLen*22, 28, 4);
                       u8g2.setDrawColor(1);
                       u8g2.drawRFrame(cx, 0, activeCycleLen*22, 28, 4);
@@ -1030,24 +1026,22 @@ char PocketmageKB::updateKeypress() {
                           } else {
                             u8g2.setDrawColor(1);
                           }
-                          FontEngine::setOledStyle(FontStyle::BodyBold);
-                          FontEngine::oledDraw(cx + ((22-FontEngine::oledTextWidth(activeCycle[i]))/2.0), 23, activeCycle[i]);
+                          FontEngine::drawText(DisplayTarget::OLED, cx + ((22-FontEngine::textWidth(DisplayTarget::OLED, activeCycle[i], FontStyle::BodyBold))/2.0), 23, activeCycle[i], FontStyle::BodyBold);
                           u8g2.setDrawColor(0);
                           cx += 22;
                       }
                     }
                     
-                    FontEngine::setOledStyle(FontStyle::Tiny);
                     if (activeCycle == cyc_appSwitch) {
                       u8g2.setDrawColor(0);
-                      u8g2.drawRBox((u8g2.getDisplayWidth() - (FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6))/2, u8g2.getDisplayHeight()-12,FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6,11,4);
+                      u8g2.drawRBox((u8g2.getDisplayWidth() - (FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6))/2, u8g2.getDisplayHeight()-12,FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6,11,4);
                       
                       // Draw border
                       u8g2.setDrawColor(1);
-                      u8g2.drawRFrame((u8g2.getDisplayWidth() - (FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6))/2, u8g2.getDisplayHeight()-12,FontEngine::oledTextWidth(appSwitchNames[cycleIndex])+6,11,4);
+                      u8g2.drawRFrame((u8g2.getDisplayWidth() - (FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6))/2, u8g2.getDisplayHeight()-12,FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6,11,4);
                     
                       // Draw app name
-                      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth(appSwitchNames[cycleIndex]))/2,u8g2.getDisplayHeight()-3,appSwitchNames[cycleIndex]);
+                      FontEngine::drawText(DisplayTarget::OLED, (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny))/2,u8g2.getDisplayHeight()-3,appSwitchNames[cycleIndex], FontStyle::Tiny);
                     }
 
                     u8g2.sendBuffer();

@@ -230,15 +230,14 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameCh
         appNameStr = appNameStr.substring(0, maxNameChars);
     }
 
-    FontEngine::setEinkStyle(FontStyle::Body);
     u8g2f.setForegroundColor(GxEPD_BLACK);
 
-    int w = FontEngine::einkTextWidth(appNameStr);
+    int w = FontEngine::textWidth(DisplayTarget::EINK, appNameStr, FontStyle::Body);
 
     int tx = x + (40 - w) / 2;
     int ty = y + 40 + 13;
 
-    FontEngine::einkDraw(tx, ty, appNameStr);
+    FontEngine::drawText(DisplayTarget::EINK, tx, ty, appNameStr, FontStyle::Body);
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -664,9 +663,10 @@ void drawProgressBar(uint8_t progress) {
   String progressText = "";
   if (progress < 52) progressText = "Extracting";
   else               progressText = "Installing";
-  FontEngine::setOledStyle(FontStyle::MonoBold);
-  FontEngine::oledDraw((u8g2.getDisplayWidth() - u8g2.getStrWidth(progressText.c_str()))/2,
-               u8g2.getDisplayHeight()-3,progressText.c_str());
+  int pw = FontEngine::textWidth(DisplayTarget::OLED, progressText, FontStyle::MonoBold);
+  FontEngine::drawText(DisplayTarget::OLED,
+               (u8g2.getDisplayWidth() - pw)/2,
+               u8g2.getDisplayHeight()-3, progressText, FontStyle::MonoBold);
 
   u8g2.sendBuffer();
 }

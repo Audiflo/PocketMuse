@@ -271,13 +271,11 @@ void einkHandler_SETTINGS() {
     beginEinkScreen();
     display.drawBitmap(0, 0, _settings, 320, 218, GxEPD_BLACK);
 
-    FontEngine::setEinkStyle(FontStyle::Body);
-    
     // First column of settings
     // OLED_BRIGHTNESS
-    FontEngine::einkDraw(8, 42, String(OLED_BRIGHTNESS).c_str());
+    FontEngine::drawText(DisplayTarget::EINK, 8, 42, String(OLED_BRIGHTNESS), FontStyle::Body);
     // TIMEOUT
-    FontEngine::einkDraw(8, 65, String(TIMEOUT).c_str());
+    FontEngine::drawText(DisplayTarget::EINK, 8, 65, String(TIMEOUT), FontStyle::Body);
     // SYSTEM_CLOCK
     if (SYSTEM_CLOCK) display.drawBitmap(8, 75, _toggleON, 26, 11, GxEPD_BLACK);
     else display.drawBitmap(8, 75, _toggleOFF, 26, 11, GxEPD_BLACK);
@@ -297,7 +295,7 @@ void einkHandler_SETTINGS() {
     if (ALLOW_NO_MICROSD) display.drawBitmap(8, 190, _toggleON, 26, 11, GxEPD_BLACK);
     else display.drawBitmap(8, 190, _toggleOFF, 26, 11, GxEPD_BLACK);
     // OLED_MAX_FPS
-    FontEngine::einkDraw(163, 42, String(OLED_MAX_FPS).c_str());
+    FontEngine::drawText(DisplayTarget::EINK, 163, 42, String(OLED_MAX_FPS), FontStyle::Body);
 
     endEinkScreen("Type a Command:");
   }

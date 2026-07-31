@@ -8,7 +8,7 @@ using PanelT   = GxEPD2_310_GDEQ031T10;
 using DisplayT = GxEPD2_BW<PanelT, PanelT::HEIGHT>;
 extern DisplayT display;
 
-size_t sliceThatFits(const char* s, size_t n, int maxTextWidth) {
+size_t sliceThatFits(const char* s, size_t n, int maxTextWidth, FontStyle style) {
   if (!s || n == 0) return 0;
 
   static char buf[256];
@@ -28,7 +28,7 @@ size_t sliceThatFits(const char* s, size_t n, int maxTextWidth) {
     buf[len++] = c;
     buf[len] = '\0';
 
-    int w = FontEngine::einkTextWidth(buf);
+    int w = FontEngine::textWidth(DisplayTarget::EINK, buf, style);
     if (w > maxTextWidth) break;
 
     best = i + 1;
@@ -44,19 +44,19 @@ size_t sliceThatFits(const char* s, size_t n, int maxTextWidth) {
   return best;
 }
 
-String truncateWithEllipsis(const String& text, int maxWidthPx) {
-  int w = FontEngine::einkTextWidth(text);
+String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style) {
+  int w = FontEngine::textWidth(DisplayTarget::EINK, text, style);
   if (w <= maxWidthPx) return text;
 
   String dots("...");
-  int dotsW = FontEngine::einkTextWidth(dots);
+  int dotsW = FontEngine::textWidth(DisplayTarget::EINK, dots, style);
   int avail = maxWidthPx - dotsW;
   if (avail <= 0) return dots;
 
   int lo = 0, hi = text.length();
   while (lo < hi) {
     int mid = (lo + hi + 1) / 2;
-    if (FontEngine::einkTextWidth(text.substring(0, mid)) <= avail)
+    if (FontEngine::textWidth(DisplayTarget::EINK, text.substring(0, mid), style) <= avail)
       lo = mid;
     else
       hi = mid - 1;
@@ -67,12 +67,11 @@ String truncateWithEllipsis(const String& text, int maxWidthPx) {
 
 std::vector<String> wordWrap(const String& text, int maxWidthPx, FontStyle style) {
   std::vector<String> lines;
-  FontEngine::setEinkStyle(style);
   const char* s = text.c_str();
   size_t len = text.length();
   size_t pos = 0;
   while (pos < len) {
-    size_t n = sliceThatFits(s + pos, len - pos, maxWidthPx);
+    size_t n = sliceThatFits(s + pos, len - pos, maxWidthPx, style);
     if (n == 0) n = 1;
     String line(s + pos, n);
     line.trim();

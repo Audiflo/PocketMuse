@@ -1020,23 +1020,28 @@ void setFontOLED(char style, bool bold, bool italic) {
 }
 
 void toolBar(Line& line, bool bold, bool italic) {
-  FontEngine::setOledStyle(FontStyle::Tiny);
-
   switch (KB().getKeyboardState()) {
     case 1:
-      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("SHIFT")) / 2,
-                   u8g2.getDisplayHeight(), "SHIFT");
+      FontEngine::drawText(DisplayTarget::OLED,
+                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "SHIFT", FontStyle::Tiny)) / 2,
+                   u8g2.getDisplayHeight(), "SHIFT", FontStyle::Tiny);
       break;
     case 2:
-      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN")) / 2, u8g2.getDisplayHeight(),
-                   "FN");
+      FontEngine::drawText(DisplayTarget::OLED,
+                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "FN", FontStyle::Tiny)) / 2,
+                   u8g2.getDisplayHeight(), "FN", FontStyle::Tiny);
       break;
     case 3:
-      FontEngine::oledDraw((u8g2.getDisplayWidth() - FontEngine::oledTextWidth("FN+SHIFT")) / 2,
-                   u8g2.getDisplayHeight(), "FN+SHIFT");
+      FontEngine::drawText(DisplayTarget::OLED,
+                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "FN+SHIFT", FontStyle::Tiny)) / 2,
+                   u8g2.getDisplayHeight(), "FN+SHIFT", FontStyle::Tiny);
     default:
       break;
   }
+
+  // The two drawStr() calls below render in the active u8g2 font; pin it to
+  // Tiny so they match the toolbar labels even when no key modifier is held.
+  u8g2.setFont(FontEngine::fontPtr(DisplayTarget::OLED, FontStyle::Tiny));
 
   char currentDocLineType = line.type;
   String lineTypeLabel;
@@ -1075,8 +1080,6 @@ void toolBar(Line& line, bool bold, bool italic) {
   u8g2.drawStr(dw - u8g2.getStrWidth(fontAndStyle.c_str()), u8g2.getDisplayHeight(),
                fontAndStyle.c_str());
 }
-
-uint8_t getFastOledCharWidth(uint16_t unicode, bool bold, bool italic, bool isTiny);
 
 void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
   u8g2.clearBuffer();
@@ -1186,14 +1189,12 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
     default:  typeLabel = "BODY"; break;
   }
 
-  FontEngine::setOledStyle(FontStyle::Tiny);
-  
   String lineStr = "L: " + String(activeCursorLine);
-  FontEngine::oledDraw(80, 7, lineStr);
-  FontEngine::oledDraw(u8g2.getDisplayWidth() - FontEngine::oledTextWidth(typeLabel), 7, typeLabel);
+  FontEngine::drawText(DisplayTarget::OLED, 80, 7, lineStr, FontStyle::Tiny);
+  FontEngine::drawText(DisplayTarget::OLED,
+               u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, typeLabel, FontStyle::Tiny),
+               7, typeLabel, FontStyle::Tiny);
   u8g2.drawHLine(78, 10, u8g2.getDisplayWidth()-78);
-
-  FontEngine::setOledStyle(FontStyle::Large);
 
   if (activeLine.len > 0) {
     int prevCursorX = 80;
@@ -1207,9 +1208,9 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
       if (unicode == '*') continue; 
       if (unicode == '`') continue;
       
-      int charWidth = FontEngine::oledCharWidth(unicode, FontStyle::Large);
+      int charWidth = FontEngine::charWidth(DisplayTarget::OLED, unicode, FontStyle::Large);
       
-      FontEngine::oledDrawGlyph(prevCursorX, u8g2.getDisplayHeight(), unicode);
+      FontEngine::drawGlyph(DisplayTarget::OLED, prevCursorX, u8g2.getDisplayHeight(), unicode, FontStyle::Large);
       prevCursorX += charWidth;
     }
   }
@@ -1481,56 +1482,6 @@ void newMarkdownFile(const String& path) {
 }
 
 #pragma region OLED Editor
-// Extanded OLED char width cache (Handles up to 255 for extended ASCII/UTF-8 map)
-static uint8_t oled_char_widths[5][256] = {0};
-static bool oled_widths_cached = false;
-
-static uint8_t cachedFontStyle = 0xFF;
-
-inline void initOledWidthCache() {
-  if (oled_widths_cached && cachedFontStyle == fontStyle) return;
-  cachedFontStyle = fontStyle;
-  oled_widths_cached = false;
-  char temp[3] = {0, 0, 0};
-  
-  for (int i = 32; i < 256; i++) {
-    if (i < 128) {
-       temp[0] = i; temp[1] = 0;
-    } else {
-       temp[0] = 0xC0 | (i >> 6);
-       temp[1] = 0x80 | (i & 0x3F);
-       temp[2] = 0;
-    }
-    
-    u8g2.setFont(pickFont('T', false, false));
-    oled_char_widths[0][i] = u8g2.getUTF8Width(temp);
-    
-    u8g2.setFont(pickFont('T', true, false));
-    oled_char_widths[1][i] = u8g2.getUTF8Width(temp);
-    
-    u8g2.setFont(pickFont('T', false, true));
-    oled_char_widths[2][i] = u8g2.getUTF8Width(temp);
-    
-    u8g2.setFont(pickFont('T', true, true));
-    oled_char_widths[3][i] = u8g2.getUTF8Width(temp);
-    
-    u8g2.setFont(u8g2_font_5x7_tf);
-    oled_char_widths[4][i] = u8g2.getUTF8Width(temp);
-  }
-  oled_widths_cached = true;
-}
-
-inline uint8_t getFastOledCharWidth(uint16_t unicode, bool bold, bool italic, bool isTiny) {
-  if (unicode < 32 || unicode > 255) return 0; // Safely ignore control chars and unmapped blocks
-  if (isTiny) return oled_char_widths[4][unicode];
-  
-  uint8_t fontIdx = 0;
-  if (bold && italic) fontIdx = 3;
-  else if (italic) fontIdx = 2;
-  else if (bold) fontIdx = 1;
-  
-  return oled_char_widths[fontIdx][unicode];
-}
 
 // OLED Editor
 void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
@@ -1552,9 +1503,9 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
 
   auto charWidth = [&](uint16_t code, bool isSpecial) -> int {
     if (isSpecial) {
-      return FontEngine::oledCharWidth(code, FontStyle::Tiny);
+      return FontEngine::charWidth(DisplayTarget::OLED, code, FontStyle::Tiny);
     }
-      return FontEngine::oledCharWidth(code, FontStyle::Medium);
+      return FontEngine::charWidth(DisplayTarget::OLED, code, FontStyle::Medium);
     };
 
     // --- PASS 1: Single-sweep UTF-8 width and cursor calculation ---
@@ -1606,8 +1557,6 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
   italic = false;
   inlineCode = false;
 
-  FontEngine::setOledStyle(FontStyle::Medium);
-
   if (cursor_pos == 0) u8g2.drawVLine(xpos, 1, cursorH);
 
   i = 0;
@@ -1628,23 +1577,19 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
         }
       }
 
-      FontEngine::setOledStyle(FontStyle::Tiny);
-      int w = FontEngine::oledCharWidth('*', FontStyle::Tiny);
-      if (xpos + w >= 0 && xpos <= display_w) FontEngine::oledDrawGlyph(xpos, 8, '*');
+      int w = FontEngine::charWidth(DisplayTarget::OLED, '*', FontStyle::Tiny);
+      if (xpos + w >= 0 && xpos <= display_w) FontEngine::drawGlyph(DisplayTarget::OLED, xpos, 8, '*', FontStyle::Tiny);
       xpos += w;
-      FontEngine::setOledStyle(FontStyle::Medium);
     } else if (unicode == '`') {
       inlineCode = !inlineCode;
-      FontEngine::setOledStyle(FontStyle::Tiny);
-      int w = FontEngine::oledCharWidth('`', FontStyle::Tiny);
-      if (xpos + w >= 0 && xpos <= display_w) FontEngine::oledDrawGlyph(xpos, 8, '`');
+      int w = FontEngine::charWidth(DisplayTarget::OLED, '`', FontStyle::Tiny);
+      if (xpos + w >= 0 && xpos <= display_w) FontEngine::drawGlyph(DisplayTarget::OLED, xpos, 8, '`', FontStyle::Tiny);
       xpos += w;
-      FontEngine::setOledStyle(FontStyle::Medium);
     } else {
       int char_w = charWidth(unicode, false);
 
       if (xpos + char_w >= 0 && xpos <= display_w) {
-        FontEngine::oledDrawGlyph(xpos, bodyY, unicode);
+        FontEngine::drawGlyph(DisplayTarget::OLED, xpos, bodyY, unicode, FontStyle::Medium);
       }
 
       xpos += char_w;
@@ -1972,113 +1917,50 @@ void editor(char inchar) {
 
 #pragma region INIT
 void initFonts() {
-  // Mono (Courier)
-  fonts[mono].normal  = u8g2_font_courR10_tf;
-  fonts[mono].normal_B = u8g2_font_courB10_tf;
-  fonts[mono].normal_I = u8g2_font_courI10_tf;
-  fonts[mono].normal_BI = u8g2_font_courBI10_tf;
+  // FontMap is a flat mirror of the FontEngine txt[3][4][4] markdown matrix
+  // ([family][sizeIdx][variant]); FontEngine::txtFont() is the single source
+  // of truth.  family/size/variant enum values match FontFamily 1:1.
+  for (uint8_t family = TxtFamilySerif; family <= TxtFamilyMono; family++) {
+    FontMap& fm = fonts[family];
 
-  fonts[mono].h1   = u8g2_font_courB24_tf;
-  fonts[mono].h1_B = u8g2_font_courB24_tf;
-  fonts[mono].h1_I = u8g2_font_courBI24_tf;
-  fonts[mono].h1_BI = u8g2_font_courBI24_tf;
+    fm.normal    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantN);
+    fm.normal_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantB);
+    fm.normal_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantI);
+    fm.normal_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantBI);
 
-  fonts[mono].h2   = u8g2_font_courB18_tf;
-  fonts[mono].h2_B = u8g2_font_courB18_tf;
-  fonts[mono].h2_I = u8g2_font_courBI18_tf;
-  fonts[mono].h2_BI = u8g2_font_courBI18_tf;
+    fm.h1    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantN);
+    fm.h1_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantB);
+    fm.h1_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantI);
+    fm.h1_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantBI);
 
-  fonts[mono].h3   = u8g2_font_courB12_tf;
-  fonts[mono].h3_B = u8g2_font_courB12_tf;
-  fonts[mono].h3_I = u8g2_font_courBI12_tf;
-  fonts[mono].h3_BI = u8g2_font_courBI12_tf;
+    fm.h2    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantN);
+    fm.h2_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantB);
+    fm.h2_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantI);
+    fm.h2_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantBI);
 
-  fonts[mono].code   = u8g2_font_courR10_tf;
-  fonts[mono].code_B = u8g2_font_courR10_tf;
-  fonts[mono].code_I = u8g2_font_courI10_tf;
-  fonts[mono].code_BI = u8g2_font_courI10_tf;
+    fm.h3    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantN);
+    fm.h3_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantB);
+    fm.h3_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantI);
+    fm.h3_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantBI);
 
-  fonts[mono].quote   = u8g2_font_courR10_tf;
-  fonts[mono].quote_B = u8g2_font_courB10_tf;
-  fonts[mono].quote_I = u8g2_font_courI10_tf;
-  fonts[mono].quote_BI = u8g2_font_courBI10_tf;
+    // Code blocks render in monospace regardless of the document family.
+    // Legacy quirk preserved: the markdown lexer never tags code spans
+    // bold/italic, so bold aliases to regular and bold-italic to italic.
+    fm.code   = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantN);
+    fm.code_B = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantN);
+    fm.code_I = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantI);
+    fm.code_BI = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantI);
 
-  fonts[mono].list   = u8g2_font_courR10_tf;
-  fonts[mono].list_B = u8g2_font_courB10_tf;
-  fonts[mono].list_I = u8g2_font_courI10_tf;
-  fonts[mono].list_BI = u8g2_font_courBI10_tf;
+    fm.quote    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantN);
+    fm.quote_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantB);
+    fm.quote_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantI);
+    fm.quote_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantBI);
 
-  // Serif (New Century Schoolbook)
-  fonts[serif].normal  = u8g2_font_ncenR10_tf;
-  fonts[serif].normal_B = u8g2_font_ncenB10_tf;
-  fonts[serif].normal_I = u8g2_font_ncenI10_tf;
-  fonts[serif].normal_BI = u8g2_font_ncenBI10_tf;
-
-  fonts[serif].h1   = u8g2_font_ncenB24_tf;
-  fonts[serif].h1_B = u8g2_font_ncenB24_tf;
-  fonts[serif].h1_I = u8g2_font_ncenBI24_tf;
-  fonts[serif].h1_BI = u8g2_font_ncenBI24_tf;
-
-  fonts[serif].h2   = u8g2_font_ncenB18_tf;
-  fonts[serif].h2_B = u8g2_font_ncenB18_tf;
-  fonts[serif].h2_I = u8g2_font_ncenBI18_tf;
-  fonts[serif].h2_BI = u8g2_font_ncenBI18_tf;
-
-  fonts[serif].h3   = u8g2_font_ncenB12_tf;
-  fonts[serif].h3_B = u8g2_font_ncenB12_tf;
-  fonts[serif].h3_I = u8g2_font_ncenBI12_tf;
-  fonts[serif].h3_BI = u8g2_font_ncenBI12_tf;
-
-  fonts[serif].code   = u8g2_font_courR10_tf;
-  fonts[serif].code_B = u8g2_font_courR10_tf;
-  fonts[serif].code_I = u8g2_font_courI10_tf;
-  fonts[serif].code_BI = u8g2_font_courI10_tf;
-
-  fonts[serif].quote   = u8g2_font_ncenR10_tf;
-  fonts[serif].quote_B = u8g2_font_ncenB10_tf;
-  fonts[serif].quote_I = u8g2_font_ncenI10_tf;
-  fonts[serif].quote_BI = u8g2_font_ncenBI10_tf;
-
-  fonts[serif].list   = u8g2_font_ncenR10_tf;
-  fonts[serif].list_B = u8g2_font_ncenB10_tf;
-  fonts[serif].list_I = u8g2_font_ncenI10_tf;
-  fonts[serif].list_BI = u8g2_font_ncenBI10_tf;
-
-  // Sans (Helvetica)
-  fonts[sans].normal  = u8g2_font_helvR10_tf;
-  fonts[sans].normal_B = u8g2_font_helvB10_tf;
-  fonts[sans].normal_I = u8g2_font_helvI10_tf;
-  fonts[sans].normal_BI = u8g2_font_helvBI10_tf;
-
-  fonts[sans].h1   = u8g2_font_helvB24_tf;
-  fonts[sans].h1_B = u8g2_font_helvB24_tf;
-  fonts[sans].h1_I = u8g2_font_helvBI24_tf;
-  fonts[sans].h1_BI = u8g2_font_helvBI24_tf;
-
-  fonts[sans].h2   = u8g2_font_helvB18_tf;
-  fonts[sans].h2_B = u8g2_font_helvB18_tf;
-  fonts[sans].h2_I = u8g2_font_helvBI18_tf;
-  fonts[sans].h2_BI = u8g2_font_helvBI18_tf;
-
-  fonts[sans].h3   = u8g2_font_helvB12_tf;
-  fonts[sans].h3_B = u8g2_font_helvB12_tf;
-  fonts[sans].h3_I = u8g2_font_helvBI12_tf;
-  fonts[sans].h3_BI = u8g2_font_helvBI12_tf;
-
-  fonts[sans].code   = u8g2_font_courR10_tf;
-  fonts[sans].code_B = u8g2_font_courR10_tf;
-  fonts[sans].code_I = u8g2_font_courI10_tf;
-  fonts[sans].code_BI = u8g2_font_courI10_tf;
-
-  fonts[sans].quote   = u8g2_font_helvR10_tf;
-  fonts[sans].quote_B = u8g2_font_helvB10_tf;
-  fonts[sans].quote_I = u8g2_font_helvI10_tf;
-  fonts[sans].quote_BI = u8g2_font_helvBI10_tf;
-
-  fonts[sans].list   = u8g2_font_helvR10_tf;
-  fonts[sans].list_B = u8g2_font_helvB10_tf;
-  fonts[sans].list_I = u8g2_font_helvI10_tf;
-  fonts[sans].list_BI = u8g2_font_helvBI10_tf;
+    fm.list    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantN);
+    fm.list_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantB);
+    fm.list_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantI);
+    fm.list_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantBI);
+  }
 }
 
 void TXT_INIT(String inPath) {

@@ -143,10 +143,9 @@ void terminalScrollPreview() {
       u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
     }
 
-    FontEngine::setOledStyle(FontStyle::Tiny);
     String dispStr = terminalOutputs[i];
     if (dispStr.length() > 21) dispStr = dispStr.substring(0, 21);
-    FontEngine::oledDraw(6, y, dispStr);
+    FontEngine::drawText(DisplayTarget::OLED, 6, y, dispStr, FontStyle::Tiny);
 
     y += 8;
   }
@@ -182,9 +181,8 @@ void potionScrollPreview() {
       u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
     }
 
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw(6, y, lineNum);
-    FontEngine::oledDraw(30, y, potionLines[i]);
+    FontEngine::drawText(DisplayTarget::OLED, 6, y, lineNum, FontStyle::Tiny);
+    FontEngine::drawText(DisplayTarget::OLED, 30, y, potionLines[i], FontStyle::Tiny);
 
     y += 8;
   }
@@ -325,11 +323,11 @@ void updateTerminalDisp() {
   int endIdx = startIdx + termLinesPerPage;
   if (endIdx > (int)terminalOutputs.size()) endIdx = (int)terminalOutputs.size();
 
+  const FontStyle termStyle = termLargeFont ? FontStyle::MonoBold : FontStyle::Terminal;
   for (int i = startIdx; i < endIdx; i++) {
     const String& s = terminalOutputs[i];
     u8g2f.setForegroundColor(fgColor);
-    FontEngine::setEinkStyle(termLargeFont ? FontStyle::MonoBold : FontStyle::Terminal);
-    FontEngine::einkDraw(5, y, s);
+    FontEngine::drawText(DisplayTarget::EINK, 5, y, s, termStyle);
     y += yStep;
   }
 
@@ -1246,23 +1244,18 @@ void wr_inkText(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void*
 
   switch (size) {
     case 1:
-      FontEngine::setEinkStyle(FontStyle::Tiny);
-      break;
+      FontEngine::drawText(DisplayTarget::EINK, x_origin, y_origin, text, FontStyle::Tiny);
+      return;
     case 2:
-      FontEngine::setEinkStyle(FontStyle::MonoBold);
-      break;
+      FontEngine::drawText(DisplayTarget::EINK, x_origin, y_origin, text, FontStyle::MonoBold);
+      return;
     case 3:
-      u8g2f.setFont(u8g2_font_courB14_tf);
-      u8g2f.setFontMode(1);
-      u8g2f.setCursor(x_origin, y_origin);
-      u8g2f.print(text);
+      FontEngine::drawText(DisplayTarget::EINK, x_origin, y_origin, text, FontStyle::TerminalBig);
       return;
     default:
-      FontEngine::setEinkStyle(FontStyle::MonoBold);
-      break;
+      FontEngine::drawText(DisplayTarget::EINK, x_origin, y_origin, text, FontStyle::MonoBold);
+      return;
   }
-  
-  FontEngine::einkDraw(x_origin, y_origin, text);
 }
 
 // ----- OLED Display ----- //
@@ -1328,22 +1321,15 @@ void wr_oledText(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void
   
   u8g2.setDrawColor(color);
 
+  FontStyle oledStyle;
   switch (size) {
-    case 1:
-      FontEngine::setOledStyle(FontStyle::Tiny);
-      break;
-    case 2:
-      FontEngine::setOledStyle(FontStyle::MonoBold);
-      break;
-    case 3:
-      FontEngine::setOledStyle(FontStyle::SansBold);
-      break;
-    default:
-      FontEngine::setOledStyle(FontStyle::Large);
-      break;
+    case 1: oledStyle = FontStyle::Tiny;     break;
+    case 2: oledStyle = FontStyle::MonoBold; break;
+    case 3: oledStyle = FontStyle::SansBold; break;
+    default: oledStyle = FontStyle::Large;   break;
   }
-  
-  FontEngine::oledDraw(x_origin, y_origin, text);
+
+  FontEngine::drawText(DisplayTarget::OLED, x_origin, y_origin, text, oledStyle);
 
   u8g2.setDrawColor(1);
 }
@@ -1892,7 +1878,7 @@ void einkHandler_TERMINAL() {
           widestNum = "0" + widestNum;
         }
         String widestLineNum = "[" + widestNum + "]";
-        int codeX = POTION_LINE_X + FontEngine::einkTextWidth(FontStyle::Mono, widestLineNum) + 4;
+        int codeX = POTION_LINE_X + FontEngine::textWidth(DisplayTarget::EINK, widestLineNum, FontStyle::Mono) + 4;
 
         if (potionLines.size() <= POTION_PAGE_LINES) {
           int y = POTION_ROW_TOP;
@@ -1904,15 +1890,14 @@ void einkHandler_TERMINAL() {
               lineNum = "0" + lineNum;
             }
 
-            if (i == currentPotionLine) {
-              display.fillRect(0, y - 13, display.width(), 16, fgColor);
-              u8g2f.setForegroundColor(bgColor);
-            } else
-              u8g2f.setForegroundColor(fgColor);
-            FontEngine::setEinkStyle(FontStyle::Mono);
-            FontEngine::einkDraw(POTION_LINE_X, y, "[" + lineNum + "]");
-            FontEngine::einkDraw(codeX, y, s);
-            y += POTION_ROW_PITCH;
+              if (i == currentPotionLine) {
+                display.fillRect(0, y - 13, display.width(), 16, fgColor);
+                u8g2f.setForegroundColor(bgColor);
+              } else
+                u8g2f.setForegroundColor(fgColor);
+              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Mono);
+              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Mono);
+              y += POTION_ROW_PITCH;
           }
         } 
         else {
@@ -1933,9 +1918,8 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::setEinkStyle(FontStyle::Mono);
-              FontEngine::einkDraw(POTION_LINE_X, y, "[" + lineNum + "]");
-              FontEngine::einkDraw(codeX, y, s);
+              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Mono);
+              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Mono);
               y += POTION_ROW_PITCH;
             }
           }
@@ -1956,9 +1940,8 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::setEinkStyle(FontStyle::Mono);
-              FontEngine::einkDraw(POTION_LINE_X, y, "[" + lineNum + "]");
-              FontEngine::einkDraw(codeX, y, s);
+              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Mono);
+              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Mono);
               y += POTION_ROW_PITCH;
             }
           }

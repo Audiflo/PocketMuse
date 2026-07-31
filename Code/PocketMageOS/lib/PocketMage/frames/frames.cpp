@@ -234,7 +234,7 @@ void einkFramesDynamic(std::vector<Frame*> &frames, bool doFull_) {
 
         continue;
       }
-      const int lineStride = FontEngine::einkFontHeight() + EINK().getLineSpacing();
+      const int lineStride = FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body) + EINK().getLineSpacing();
 
       frame->maxLines = (lineStride > 1) ? (frameH / lineStride) - 1 : 0;
       if (frame->maxLines <= 0) continue;
@@ -284,7 +284,7 @@ void einkFramesDynamic(std::vector<Frame*> &frames, bool doFull_) {
 
         size_t pos = 0;
         while (pos < effLen) {
-          size_t take = sliceThatFits(lv.ptr + pos, effLen - pos, maxTextWidth);
+          size_t take = sliceThatFits(lv.ptr + pos, effLen - pos, maxTextWidth, FontStyle::Body);
           if (take == 0) break;
 
           String toPrint;
@@ -334,13 +334,13 @@ void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, 
     bool rightAlign  = line.startsWith("~R~");
     bool centerAlign = line.startsWith("~C~");
     if (rightAlign || centerAlign) line.remove(0, 3);
-    uint16_t lineWidth = FontEngine::einkTextWidth(line);
+    uint16_t lineWidth = FontEngine::textWidth(DisplayTarget::EINK, line, FontStyle::Body);
     int cursorX = computeCursorX(frame, rightAlign, centerAlign, 0, lineWidth);
-    int yRaw = frame.top + lineIndex * (FontEngine::einkFontHeight() + EINK().getLineSpacing());
-    int yDraw = yRaw + FontEngine::einkFontAscent();
+    int yRaw = frame.top + lineIndex * (FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body) + EINK().getLineSpacing());
+    int yDraw = yRaw + FontEngine::fontAscent(DisplayTarget::EINK, FontStyle::Body);
     if (clearLine) {
         int yClear = alignDown8(yRaw);
-        int clearHeight = alignUp8(FontEngine::einkFontHeight() + EINK().getLineSpacing());
+        int clearHeight = alignUp8(FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body) + EINK().getLineSpacing());
         display.fillRect(frame.left, yClear,
                          display.width() - frame.left - frame.right,
                          clearHeight,
@@ -348,7 +348,7 @@ void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, 
     }
     u8g2f.setForegroundColor(frame.invert ? GxEPD_WHITE : GxEPD_BLACK);
     u8g2f.setFontMode(1);
-    FontEngine::einkDraw(cursorX, yDraw, line);
+    FontEngine::drawText(DisplayTarget::EINK, cursorX, yDraw, line, FontStyle::Body);
 }
 
 ///////////////////////////// FRAME SCROLL FUNCTIONS
@@ -448,7 +448,7 @@ void oledScrollFrame() {
     String line = String(lv.ptr).substring(0, lv.len);
 
     if (line.startsWith("    ")) {
-      int lineWidth = map(FontEngine::einkTextWidth(line.substring(4)), 0, 320, 0, 49);
+      int lineWidth = map(FontEngine::textWidth(DisplayTarget::EINK, line.substring(4), FontStyle::Body), 0, 320, 0, 49);
       lineWidth = constrain(lineWidth, 0, 49);
 
       long posFromBottom = previewBottom - i;
@@ -457,7 +457,7 @@ void oledScrollFrame() {
         // u8g2.drawBox(68, boxY, lineWidth, 2);
       }
     } else {
-      int lineWidth = map(FontEngine::einkTextWidth(line), 0, 320, 0, 56);
+      int lineWidth = map(FontEngine::textWidth(DisplayTarget::EINK, line, FontStyle::Body), 0, 320, 0, 56);
       lineWidth = constrain(lineWidth, 0, 56);
 
       long posFromBottom = previewBottom - i;
@@ -477,15 +477,13 @@ void oledScrollFrame() {
 
       if (pLine.length() > 0) {
         if (pLine.startsWith("~C~") || pLine.startsWith("~R~")) pLine.remove(0, 3);
-        FontEngine::setOledStyle(FontStyle::BodyBold);
-        FontEngine::oledDraw((u8g2.getWidth() - FontEngine::oledTextWidth(pLine)) / 2, 24, pLine);
+        FontEngine::drawText(DisplayTarget::OLED, (u8g2.getWidth() - FontEngine::textWidth(DisplayTarget::OLED, pLine, FontStyle::BodyBold)) / 2, 24, pLine, FontStyle::BodyBold);
       }
     }
   } else {
-    FontEngine::setOledStyle(FontStyle::Status);
     String lineNumStr = String(count - CurrentFrameState->scroll) + "/" + String(count);
-    FontEngine::oledDraw(0, 12, "Lines:");
-    FontEngine::oledDraw(0, 24, lineNumStr);
+    FontEngine::drawText(DisplayTarget::OLED, 0, 12, "Lines:", FontStyle::Status);
+    FontEngine::drawText(DisplayTarget::OLED, 0, 24, lineNumStr, FontStyle::Status);
   }
   // send buffer
   u8g2.sendBuffer();

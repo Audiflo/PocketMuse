@@ -189,8 +189,6 @@ void tasksScrollPreview() {
       u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
     }
 
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    
     String tName = tasks[i][0];
     String tDate = convertDateFormat(tasks[i][1]);
     String dispStr = tName + " " + tDate;
@@ -204,7 +202,7 @@ void tasksScrollPreview() {
        dispStr = tName + " " + tDate;
     }
     
-    FontEngine::oledDraw(6, y, dispStr.c_str());
+    FontEngine::drawText(DisplayTarget::OLED, 6, y, dispStr, FontStyle::Tiny);
 
     y += 8;
   }
@@ -441,14 +439,13 @@ void einkHandler_TASKS() {
           int endIdx = std::min((int)tasks.size(), startIdx + MAX_FILES);
           int displayRow = 0;
 
-          FontEngine::setEinkStyle(FontStyle::Body);
           for (int i = startIdx; i < endIdx; i++) {
-            String tName = truncateWithEllipsis(tasks[i][0], 180);
+            String tName = truncateWithEllipsis(tasks[i][0], 180, FontStyle::Body);
 
-            FontEngine::einkDraw(29, 54 + (17 * displayRow), tName.c_str());
+            FontEngine::drawText(DisplayTarget::EINK, 29, 54 + (17 * displayRow), tName, FontStyle::Body);
             
             // PRINT TASK DUE DATE
-            FontEngine::einkDraw(231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]).c_str());
+            FontEngine::drawText(DisplayTarget::EINK, 231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]), FontStyle::Body);
 
             displayRow++;
           }
@@ -479,14 +476,13 @@ void einkHandler_TASKS() {
           int endIdx = std::min((int)tasks.size(), startIdx + MAX_FILES);
           int displayRow = 0;
 
-          FontEngine::setEinkStyle(FontStyle::Body);
           for (int i = startIdx; i < endIdx; i++) {
-            String tName = truncateWithEllipsis(tasks[i][0], 180);
+            String tName = truncateWithEllipsis(tasks[i][0], 180, FontStyle::Body);
 
-            FontEngine::einkDraw(29, 54 + (17 * displayRow), tName.c_str());
+            FontEngine::drawText(DisplayTarget::EINK, 29, 54 + (17 * displayRow), tName, FontStyle::Body);
             
             // PRINT TASK DUE DATE
-            FontEngine::einkDraw(231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]).c_str());
+            FontEngine::drawText(DisplayTarget::EINK, 231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]), FontStyle::Body);
 
             displayRow++;
           }

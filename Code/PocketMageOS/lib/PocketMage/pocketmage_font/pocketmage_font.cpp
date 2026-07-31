@@ -49,19 +49,108 @@ const FontTable kDefaultFontTable = {
   { u8g2_font_ncenB14_tf, u8g2_font_ncenB14_tf, 18 },
   // terminal (7x13B)
   { u8g2_font_7x13B_tf,   u8g2_font_7x13B_tf,   13 },
+  // micro (4x6)
+  { u8g2_font_4x6_tf,     u8g2_font_4x6_tf,     6 },
+  // terminalBig (courB14)
+  { u8g2_font_courB14_tf, u8g2_font_courB14_tf, 18 },
+  // clockDigit (luBIS14, non-transparent)
+  { u8g2_font_luBIS14_tn, u8g2_font_luBIS14_tn, 18 },
+
+  // TXT markdown matrix: [family][sizeIdx][variant]
+  {
+  {   // family 0 = serif (ncen)
+    {   // sizeIdx 0 = 10pt (body/code/quote/list)
+      { u8g2_font_ncenR10_tf,  u8g2_font_ncenR10_tf,  14 },   // N
+      { u8g2_font_ncenB10_tf,  u8g2_font_ncenB10_tf,  14 },   // B
+      { u8g2_font_ncenI10_tf,  u8g2_font_ncenI10_tf,  14 },   // I
+      { u8g2_font_ncenBI10_tf, u8g2_font_ncenBI10_tf, 14 },   // BI
+    },
+    {   // sizeIdx 1 = 12pt (h3)
+      { u8g2_font_ncenB12_tf,  u8g2_font_ncenB12_tf,  16 },
+      { u8g2_font_ncenB12_tf,  u8g2_font_ncenB12_tf,  16 },
+      { u8g2_font_ncenBI12_tf, u8g2_font_ncenBI12_tf, 16 },
+      { u8g2_font_ncenBI12_tf, u8g2_font_ncenBI12_tf, 16 },
+    },
+    {   // sizeIdx 2 = 18pt (h2)
+      { u8g2_font_ncenB18_tf,  u8g2_font_ncenB18_tf,  22 },
+      { u8g2_font_ncenB18_tf,  u8g2_font_ncenB18_tf,  22 },
+      { u8g2_font_ncenBI18_tf, u8g2_font_ncenBI18_tf, 22 },
+      { u8g2_font_ncenBI18_tf, u8g2_font_ncenBI18_tf, 22 },
+    },
+    {   // sizeIdx 3 = 24pt (h1)
+      { u8g2_font_ncenB24_tf,  u8g2_font_ncenB24_tf,  30 },
+      { u8g2_font_ncenB24_tf,  u8g2_font_ncenB24_tf,  30 },
+      { u8g2_font_ncenBI24_tf, u8g2_font_ncenBI24_tf, 30 },
+      { u8g2_font_ncenBI24_tf, u8g2_font_ncenBI24_tf, 30 },
+    },
+  },
+
+  {   // family 1 = sans (helv)
+    {   // sizeIdx 0 = 10pt
+      { u8g2_font_helvR10_tf,  u8g2_font_helvR10_tf,  14 },
+      { u8g2_font_helvB10_tf,  u8g2_font_helvB10_tf,  14 },
+      { u8g2_font_helvI10_tf,  u8g2_font_helvI10_tf,  14 },
+      { u8g2_font_helvBI10_tf, u8g2_font_helvBI10_tf, 14 },
+    },
+    {   // sizeIdx 1 = 12pt (h3)
+      { u8g2_font_helvB12_tf,  u8g2_font_helvB12_tf,  16 },
+      { u8g2_font_helvB12_tf,  u8g2_font_helvB12_tf,  16 },
+      { u8g2_font_helvBI12_tf, u8g2_font_helvBI12_tf, 16 },
+      { u8g2_font_helvBI12_tf, u8g2_font_helvBI12_tf, 16 },
+    },
+    {   // sizeIdx 2 = 18pt (h2)
+      { u8g2_font_helvB18_tf,  u8g2_font_helvB18_tf,  22 },
+      { u8g2_font_helvB18_tf,  u8g2_font_helvB18_tf,  22 },
+      { u8g2_font_helvBI18_tf, u8g2_font_helvBI18_tf, 22 },
+      { u8g2_font_helvBI18_tf, u8g2_font_helvBI18_tf, 22 },
+    },
+    {   // sizeIdx 3 = 24pt (h1)
+      { u8g2_font_helvB24_tf,  u8g2_font_helvB24_tf,  30 },
+      { u8g2_font_helvB24_tf,  u8g2_font_helvB24_tf,  30 },
+      { u8g2_font_helvBI24_tf, u8g2_font_helvBI24_tf, 30 },
+      { u8g2_font_helvBI24_tf, u8g2_font_helvBI24_tf, 30 },
+    },
+  },
+
+  {   // family 2 = mono (cour)
+    {   // sizeIdx 0 = 10pt
+      { u8g2_font_courR10_tf,  u8g2_font_courR10_tf,  14 },
+      { u8g2_font_courB10_tf,  u8g2_font_courB10_tf,  14 },
+      { u8g2_font_courI10_tf,  u8g2_font_courI10_tf,  14 },
+      { u8g2_font_courBI10_tf, u8g2_font_courBI10_tf, 14 },
+    },
+    {   // sizeIdx 1 = 12pt (h3)
+      { u8g2_font_courB12_tf,  u8g2_font_courB12_tf,  16 },
+      { u8g2_font_courB12_tf,  u8g2_font_courB12_tf,  16 },
+      { u8g2_font_courBI12_tf, u8g2_font_courBI12_tf, 16 },
+      { u8g2_font_courBI12_tf, u8g2_font_courBI12_tf, 16 },
+    },
+    {   // sizeIdx 2 = 18pt (h2)
+      { u8g2_font_courB18_tf,  u8g2_font_courB18_tf,  22 },
+      { u8g2_font_courB18_tf,  u8g2_font_courB18_tf,  22 },
+      { u8g2_font_courBI18_tf, u8g2_font_courBI18_tf, 22 },
+      { u8g2_font_courBI18_tf, u8g2_font_courBI18_tf, 22 },
+    },
+    {   // sizeIdx 3 = 24pt (h1)
+      { u8g2_font_courB24_tf,  u8g2_font_courB24_tf,  30 },
+      { u8g2_font_courB24_tf,  u8g2_font_courB24_tf,  30 },
+      { u8g2_font_courBI24_tf, u8g2_font_courBI24_tf, 30 },
+      { u8g2_font_courBI24_tf, u8g2_font_courBI24_tf, 30 },
+    },
+  },
+  }
 };
 
 // Static state
 const FontTable* FontEngine::table_          = &kDefaultFontTable;
-FontStyle        FontEngine::oledActiveStyle_ = FontStyle::Tiny;
-FontStyle        FontEngine::einkActiveStyle_ = FontStyle::Body;
 FontEngine::WidthCache FontEngine::widthCache_[static_cast<int>(FontStyle::_StyleCount)];
+FontEngine::Metrics FontEngine::metrics_[static_cast<int>(FontStyle::_StyleCount)][2];
 
 // Internal helpers
 const FontEntry& FontEngine::entry(FontStyle s) {
   // Map the style enum to the FontEntry inside the active table.
   // The enum values MUST match the struct field order in FontTable.
-  static_assert(static_cast<int>(FontStyle::_StyleCount) == 22,
+  static_assert(static_cast<int>(FontStyle::_StyleCount) == 25,
                 "FontStyle enum count must match FontTable field count");
   const FontTable& t = *table_;
   switch (s) {
@@ -87,7 +176,25 @@ const FontEntry& FontEngine::entry(FontStyle s) {
     case FontStyle::Status:        return t.status;
     case FontStyle::OledWord:      return t.oledWord;
     case FontStyle::Terminal:      return t.terminal;
+    case FontStyle::Micro:         return t.micro;
+    case FontStyle::TerminalBig:   return t.terminalBig;
+    case FontStyle::ClockDigit:    return t.clockDigit;
     default:                       return t.body;
+  }
+}
+
+void FontEngine::applyFont(DisplayTarget target, FontStyle style) {
+  const FontEntry& e = entry(style);
+  if (target == DisplayTarget::OLED) {
+    if (e.oled) {
+      u8g2.setFont(e.oled);
+      u8g2.setFontMode(1);
+    }
+  } else {
+    if (e.eink) {
+      u8g2f.setFont(e.eink);
+      u8g2f.setFontMode(1);
+    }
   }
 }
 
@@ -112,167 +219,137 @@ void FontEngine::buildWidthCache(FontStyle onStyle) {
   cache.valid = true;
 }
 
+void FontEngine::buildMetrics(DisplayTarget target, FontStyle onStyle) {
+  Metrics& m = metrics_[static_cast<int>(onStyle)][static_cast<int>(target)];
+  applyFont(target, onStyle);
+  if (target == DisplayTarget::OLED) {
+    m.ascent  = static_cast<uint8_t>(u8g2.getFontAscent());
+    m.descent = static_cast<uint8_t>(-u8g2.getFontDescent());
+  } else {
+    m.ascent  = static_cast<uint8_t>(u8g2f.getFontAscent());
+    m.descent = static_cast<uint8_t>(-u8g2f.getFontDescent());
+  }
+  m.valid = true;
+}
+
 // Lifecycle
 void FontEngine::init(const FontTable* table) {
   setFontTable(table ? table : &kDefaultFontTable);
-  // Reset width caches
+  // Reset width caches and metrics
   for (auto& c : widthCache_) c.valid = false;
+  for (auto& row : metrics_) for (auto& m : row) m.valid = false;
   // Transparent background by default
   u8g2.setFontMode(1);
   u8g2f.setFontMode(1);
-  // Set initial styles
-  setOledStyle(FontStyle::Tiny);
-  setEinkStyle(FontStyle::Body);
 }
 
 void FontEngine::setFontTable(const FontTable* table) {
   table_ = table ? table : &kDefaultFontTable;
-  // Invalidate all width caches so they rebuild with the new fonts
+  // Invalidate width caches and metrics so they rebuild with the new fonts
   for (auto& c : widthCache_) c.valid = false;
+  for (auto& row : metrics_) for (auto& m : row) m.valid = false;
 }
 
-// OLED
-void FontEngine::setOledStyle(FontStyle style) {
-  oledActiveStyle_ = style;
-  const FontEntry& e = entry(style);
-  if (e.oled) {
-    u8g2.setFont(e.oled);
-    u8g2.setFontMode(1);
+// ---- Unified API ----
+
+void FontEngine::drawText(DisplayTarget target, int x, int y,
+                          const char* text, FontStyle style) {
+  applyFont(target, style);
+  if (target == DisplayTarget::OLED) {
+    u8g2.drawUTF8(x, y, text);
+  } else {
+    u8g2f.drawUTF8(x, y, text);
   }
 }
 
-void FontEngine::oledDraw(int x, int y, const char* text) {
-  u8g2.drawUTF8(x, y, text);
+void FontEngine::drawText(DisplayTarget target, int x, int y,
+                          const String& text, FontStyle style) {
+  drawText(target, x, y, text.c_str(), style);
 }
 
-void FontEngine::oledDraw(int x, int y, const String& text) {
-  u8g2.drawUTF8(x, y, text.c_str());
-}
-
-void FontEngine::oledDrawGlyph(int x, int y, uint16_t unicode) {
-  u8g2.drawGlyph(x, y, unicode);
-}
-
-int FontEngine::oledTextWidth(const char* text) {
-  return u8g2.getUTF8Width(text);
-}
-
-int FontEngine::oledTextWidth(const String& text) {
-  return u8g2.getUTF8Width(text.c_str());
-}
-
-int FontEngine::oledTextWidth(FontStyle style, const char* text) {
-  FontStyle saved = oledActiveStyle_;
-  setOledStyle(style);
-  int w = oledTextWidth(text);
-  setOledStyle(saved);
-  return w;
-}
-
-int FontEngine::oledTextWidth(FontStyle style, const String& text) {
-  return oledTextWidth(style, text.c_str());
-}
-
-int FontEngine::oledCharWidth(uint16_t unicode, FontStyle style) {
-  if (unicode < 32 || unicode >= 256) {
-    FontStyle saved = oledActiveStyle_;
-    setOledStyle(style);
-    char utf8[5] = {};
-    if (unicode < 0x80) {
-      utf8[0] = unicode;
-    } else if (unicode < 0x800) {
-      utf8[0] = 0xC0 | (unicode >> 6);
-      utf8[1] = 0x80 | (unicode & 0x3F);
-    } else {
-      utf8[0] = 0xE0 | (unicode >> 12);
-      utf8[1] = 0x80 | ((unicode >> 6) & 0x3F);
-      utf8[2] = 0x80 | (unicode & 0x3F);
-    }
-    int w = u8g2.getUTF8Width(utf8);
-    setOledStyle(saved);
-    return w;
-  }
-  WidthCache& cache = widthCache_[static_cast<int>(style)];
-  if (!cache.valid) buildWidthCache(style);
-  return cache.widths[unicode];
-}
-
-int FontEngine::oledFontHeight() {
-  return u8g2.getFontAscent() - u8g2.getFontDescent();
-}
-int FontEngine::oledFontAscent() {
-  return u8g2.getFontAscent();
-}
-int FontEngine::oledFontDescent() {
-  return u8g2.getFontDescent();
-}
-
-void FontEngine::oledDrawEditor(int x, int y, const char* text,
-                                 const FontStyle* styles, int len) {
-  // Walk the string and apply per-character styles.
-  // This is used by the TXT.cpp editor OLED line renderer.
-  int xpos = x;
-  for (int i = 0; i < len; i++) {
-    setOledStyle(styles[i]);
-    uint16_t unicode = static_cast<uint8_t>(text[i]);
-    oledDrawGlyph(xpos, y, unicode);
-    xpos += oledCharWidth(unicode, styles[i]);
+void FontEngine::drawGlyph(DisplayTarget target, int x, int y,
+                           uint16_t unicode, FontStyle style) {
+  applyFont(target, style);
+  if (target == DisplayTarget::OLED) {
+    u8g2.drawGlyph(x, y, unicode);
+  } else {
+    u8g2f.drawGlyph(x, y, unicode);
   }
 }
 
-// E-Ink
-void FontEngine::setEinkStyle(FontStyle style) {
-  einkActiveStyle_ = style;
-  const FontEntry& e = entry(style);
-  if (e.eink) {
-    u8g2f.setFont(e.eink);
-    u8g2f.setFontMode(1);
+int FontEngine::textWidth(DisplayTarget target, const char* text, FontStyle style) {
+  applyFont(target, style);
+  if (target == DisplayTarget::OLED) {
+    return u8g2.getUTF8Width(text);
   }
-}
-
-void FontEngine::setEinkColor(uint16_t color) {
-  u8g2f.setForegroundColor(color);
-}
-
-void FontEngine::einkDraw(int x, int y, const char* text) {
-  u8g2f.drawUTF8(x, y, text);
-}
-
-void FontEngine::einkDraw(int x, int y, const String& text) {
-  u8g2f.drawUTF8(x, y, text.c_str());
-}
-
-int FontEngine::einkTextWidth(const char* text) {
   return u8g2f.getUTF8Width(text);
 }
 
-int FontEngine::einkTextWidth(const String& text) {
-  return u8g2f.getUTF8Width(text.c_str());
+int FontEngine::textWidth(DisplayTarget target, const String& text, FontStyle style) {
+  return textWidth(target, text.c_str(), style);
 }
 
-int FontEngine::einkTextWidth(FontStyle style, const char* text) {
-  FontStyle saved = einkActiveStyle_;
-  setEinkStyle(style);
-  int w = einkTextWidth(text);
-  setEinkStyle(saved);
-  return w;
+int FontEngine::charWidth(DisplayTarget target, uint16_t unicode, FontStyle style) {
+  if (target == DisplayTarget::OLED && unicode >= 32 && unicode < 256) {
+    WidthCache& cache = widthCache_[static_cast<int>(style)];
+    if (!cache.valid) buildWidthCache(style);
+    return cache.widths[unicode];
+  }
+
+  // Live measure: out-of-range codepoints on OLED, everything on E-Ink.
+  char utf8[5] = {};
+  if (unicode < 0x80) {
+    utf8[0] = static_cast<char>(unicode);
+  } else if (unicode < 0x800) {
+    utf8[0] = static_cast<char>(0xC0 | (unicode >> 6));
+    utf8[1] = static_cast<char>(0x80 | (unicode & 0x3F));
+  } else {
+    utf8[0] = static_cast<char>(0xE0 | (unicode >> 12));
+    utf8[1] = static_cast<char>(0x80 | ((unicode >> 6) & 0x3F));
+    utf8[2] = static_cast<char>(0x80 | (unicode & 0x3F));
+  }
+  applyFont(target, style);
+  if (target == DisplayTarget::OLED) {
+    return u8g2.getUTF8Width(utf8);
+  }
+  return u8g2f.getUTF8Width(utf8);
 }
 
-int FontEngine::einkTextWidth(FontStyle style, const String& text) {
-  return einkTextWidth(style, text.c_str());
+int FontEngine::fontHeight(DisplayTarget target, FontStyle style) {
+  return fontAscent(target, style) + fontDescent(target, style);
 }
 
-int FontEngine::einkFontHeight() {
-  return u8g2f.getFontAscent() - u8g2f.getFontDescent();
-}
-int FontEngine::einkFontAscent() {
-  return u8g2f.getFontAscent();
-}
-int FontEngine::einkFontDescent() {
-  return u8g2f.getFontDescent();
+int FontEngine::fontAscent(DisplayTarget target, FontStyle style) {
+  Metrics& m = metrics_[static_cast<int>(style)][static_cast<int>(target)];
+  if (!m.valid) buildMetrics(target, style);
+  return m.ascent;
 }
 
-// TXT.cpp editor helpers
+int FontEngine::fontDescent(DisplayTarget target, FontStyle style) {
+  Metrics& m = metrics_[static_cast<int>(style)][static_cast<int>(target)];
+  if (!m.valid) buildMetrics(target, style);
+  return m.descent;
+}
+
+void FontEngine::setTextColor(DisplayTarget target, uint16_t color) {
+  if (target == DisplayTarget::OLED) {
+    u8g2.setDrawColor(color);
+  } else {
+    u8g2f.setForegroundColor(color);
+  }
+}
+
+void FontEngine::drawTextEditor(DisplayTarget target, int x, int y,
+                                const char* text, const FontStyle* styles, int len) {
+  // Walk the string and apply per-character styles.
+  int xpos = x;
+  for (int i = 0; i < len; i++) {
+    uint16_t unicode = static_cast<uint8_t>(text[i]);
+    drawGlyph(target, xpos, y, unicode, styles[i]);
+    xpos += charWidth(target, unicode, styles[i]);
+  }
+}
+
 FontStyle FontEngine::resolveStyle(uint8_t family, bool bold,
                                     bool italic, uint8_t headingLevel) {
   // headingLevel: 0=body, 1=H1, 2=H2, 3=H3, 4=code, 5=quote, 6=list
@@ -316,11 +393,14 @@ FontStyle FontEngine::resolveStyle(uint8_t family, bool bold,
   return base;
 }
 
-// Raw pointer access
-const uint8_t* FontEngine::oledFontPtr(FontStyle style) {
-  return entry(style).oled;
+const uint8_t* FontEngine::fontPtr(DisplayTarget target, FontStyle style) {
+  const FontEntry& e = entry(style);
+  return (target == DisplayTarget::OLED) ? e.oled : e.eink;
 }
 
-const uint8_t* FontEngine::einkFontPtr(FontStyle style) {
-  return entry(style).eink;
+const uint8_t* FontEngine::txtFont(DisplayTarget target,
+                                   uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  if (family > 2 || sizeIdx > 3 || variant > 3) return nullptr;
+  const FontEntry& e = table_->txt[family][sizeIdx][variant];
+  return (target == DisplayTarget::OLED) ? e.oled : e.eink;
 }

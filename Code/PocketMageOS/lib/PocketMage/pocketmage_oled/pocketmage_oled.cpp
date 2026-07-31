@@ -19,31 +19,28 @@ U8G2_SSD1326_ER_256X32_F_4W_HW_SPI u8g2(U8G2_R2, OLED_CS, OLED_DC, OLED_RST);
 struct FontSlot { FontStyle style; int yBias; };
 
 static void drawKeyboardModifier(bool centered) {
-  FontEngine::setOledStyle(FontStyle::Tiny);
   int state = KB().getKeyboardState();
   if (state < 1 || state > 3) return;
   const uint16_t dw = u8g2.getDisplayWidth();
   const uint16_t dh = u8g2.getDisplayHeight();
   static const char* labels[] = { "SHIFT", "FN", "FN+SHIFT" };
   const char* label = labels[state - 1];
-  int tw = FontEngine::oledTextWidth(label);
-  FontEngine::oledDraw(centered ? (dw - tw) / 2 : dw - tw, dh, label);
+  int tw = FontEngine::textWidth(DisplayTarget::OLED, label, FontStyle::Tiny);
+  FontEngine::drawText(DisplayTarget::OLED, centered ? (dw - tw) / 2 : dw - tw, dh, label, FontStyle::Tiny);
 }
 
-static int pickFont(const String& text, int maxWidth, const FontSlot* table, int count, int& y, int& x) {
+static FontStyle pickFont(const String& text, int maxWidth, const FontSlot* table, int count, int& y, int& x) {
   const uint16_t dw = u8g2.getDisplayWidth();
   for (int i = 0; i < count; i++) {
-    FontEngine::setOledStyle(table[i].style);
-    if (FontEngine::oledTextWidth(text) < maxWidth) {
+    if (FontEngine::textWidth(DisplayTarget::OLED, text, table[i].style) < maxWidth) {
       y = 16 + table[i].yBias;
-      x = (dw - FontEngine::oledTextWidth(text)) / 2;
-      return i;
+      x = (dw - FontEngine::textWidth(DisplayTarget::OLED, text, table[i].style)) / 2;
+      return table[i].style;
     }
   }
-  FontEngine::setOledStyle(table[count - 1].style);
   y = 16 + table[count - 1].yBias;
-  x = dw - FontEngine::oledTextWidth(text);
-  return -1;
+  x = dw - FontEngine::textWidth(DisplayTarget::OLED, text, table[count - 1].style);
+  return table[count - 1].style;
 }
 
 // Setup for Oled Class
@@ -66,14 +63,12 @@ void PocketmageOled::oledWord(String word, bool allowLarge, bool showInfo, Strin
 
   if (showInfo && bottomText == "") infoBar();
   else if (bottomText != "") {
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomText)) / 2, dh, bottomText);
+    FontEngine::drawText(DisplayTarget::OLED, (dw - FontEngine::textWidth(DisplayTarget::OLED, bottomText, FontStyle::Tiny)) / 2, dh, bottomText, FontStyle::Tiny);
   }
 
   if (allowLarge) {
-    FontEngine::setOledStyle(FontStyle::Heading2);
-    if (FontEngine::oledTextWidth(word) < dw) {
-      FontEngine::oledDraw((dw - FontEngine::oledTextWidth(word)) / 2, 16 + 5, word);
+    if (FontEngine::textWidth(DisplayTarget::OLED, word, FontStyle::Heading2) < dw) {
+      FontEngine::drawText(DisplayTarget::OLED, (dw - FontEngine::textWidth(DisplayTarget::OLED, word, FontStyle::Heading2)) / 2, 16 + 5, word, FontStyle::Heading2);
       u8g2_.sendBuffer();
       return;
     }
@@ -87,8 +82,8 @@ void PocketmageOled::oledWord(String word, bool allowLarge, bool showInfo, Strin
   };
 
   int y = 16, x = 0;
-  pickFont(word, dw, cascade, 4, y, x);
-  FontEngine::oledDraw(x, y, word);
+  FontStyle s = pickFont(word, dw, cascade, 4, y, x);
+  FontEngine::drawText(DisplayTarget::OLED, x, y, word, s);
   u8g2_.sendBuffer();
 }
 
@@ -107,12 +102,12 @@ void PocketmageOled::sysMessage(String msg, int showTime) {
   };
 
   int y_offset = 16, x_offset = 0;
-  pickFont(msg, dw - 8, cascade, 4, y_offset, x_offset);
+  FontStyle s = pickFont(msg, dw - 8, cascade, 4, y_offset, x_offset);
 
   // --- Raise message animation ---
   for (int y = dh; y > 0; y -= 2) {
     u8g2_.clearBuffer();
-    FontEngine::oledDraw(x_offset, y + y_offset, msg);
+    FontEngine::drawText(DisplayTarget::OLED, x_offset, y + y_offset, msg, s);
     u8g2_.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2_.sendBuffer();
     delay(5);
@@ -124,7 +119,7 @@ void PocketmageOled::sysMessage(String msg, int showTime) {
   // --- Lower message animation ---
   for (int y = 0; y <= dh; y += 2) {
     u8g2_.clearBuffer();
-    FontEngine::oledDraw(x_offset, y + y_offset, msg);
+    FontEngine::drawText(DisplayTarget::OLED, x_offset, y + y_offset, msg, s);
     u8g2_.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2_.sendBuffer();
     delay(5);
@@ -143,8 +138,7 @@ void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, St
 
   //PROGRESS BAR
   if (doProgressBar && line.length() > 0) {
-    FontEngine::setOledStyle(FontStyle::Body);
-    const uint16_t charWidth = FontEngine::oledTextWidth(line);
+    const uint16_t charWidth = FontEngine::textWidth(DisplayTarget::OLED, line, FontStyle::Body);
 
     const uint16_t progress = map(charWidth, 0, display.width() - 5, 0, dw);
 
@@ -169,43 +163,41 @@ void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, St
   }
   // Display bottomMsg
   else {
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw(0, dh, bottomMsg);
+    FontEngine::drawText(DisplayTarget::OLED, 0, dh, bottomMsg, FontStyle::Tiny);
 
     drawKeyboardModifier(false);
   }
 
   // DRAW LINE TEXT
-  FontEngine::setOledStyle(FontStyle::Heading2);
-  int lineWidth = FontEngine::oledTextWidth(line);
+  int lineWidth = FontEngine::textWidth(DisplayTarget::OLED, line, FontStyle::Heading2);
 
   if (lineWidth < (dw - 5)) {
     if (line.length() > 0) {
       if (input_pos == 0) {
-        FontEngine::oledDraw(0, 20, line);
+        FontEngine::drawText(DisplayTarget::OLED, 0, 20, line, FontStyle::Heading2);
         u8g2_.drawVLine(0, 1, 22);
       } else if (input_pos == line.length()) {
-        FontEngine::oledDraw(0, 20, line);
+        FontEngine::drawText(DisplayTarget::OLED, 0, 20, line, FontStyle::Heading2);
         u8g2_.drawVLine(lineWidth + 2, 1, 22);
       } else {
         left = line.substring(0, input_pos);
-        FontEngine::oledDraw(0, 20, line);
-        u8g2_.drawVLine(FontEngine::oledTextWidth(left), 1, 22);
+        FontEngine::drawText(DisplayTarget::OLED, 0, 20, line, FontStyle::Heading2);
+        u8g2_.drawVLine(FontEngine::textWidth(DisplayTarget::OLED, left, FontStyle::Heading2), 1, 22);
       }
     } else {
-      FontEngine::oledDraw(0, 20, line);
+      FontEngine::drawText(DisplayTarget::OLED, 0, 20, line, FontStyle::Heading2);
       u8g2_.drawVLine(0, 1, 22);
     }
   } else {
     if (input_pos == 0) {
-      FontEngine::oledDraw(0, 20, line);
+      FontEngine::drawText(DisplayTarget::OLED, 0, 20, line, FontStyle::Heading2);
       u8g2_.drawVLine(0, 1, 22);
     } else if (input_pos == line.length()) {
-      FontEngine::oledDraw(dw - 8 - lineWidth, 20, line);
+      FontEngine::drawText(DisplayTarget::OLED, dw - 8 - lineWidth, 20, line, FontStyle::Heading2);
       u8g2_.drawVLine(dw - 6, 1, 22);
     } else {
       left = line.substring(0, input_pos);
-      int cursor_offset = FontEngine::oledTextWidth(left);
+      int cursor_offset = FontEngine::textWidth(DisplayTarget::OLED, left, FontStyle::Heading2);
       int line_start = 0;
 
       if (cursor_offset > (dw - 8) / 2) {
@@ -215,7 +207,7 @@ void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, St
         }
         cursor_offset += line_start;
       }
-      FontEngine::oledDraw(line_start, 20, line);
+      FontEngine::drawText(DisplayTarget::OLED, line_start, 20, line, FontStyle::Heading2);
       u8g2_.drawVLine(cursor_offset, 1, 22);
     }
   }
@@ -239,40 +231,36 @@ void PocketmageOled::infoBar() {
 
   // CLOCK
   if (SYSTEM_CLOCK) {
-    FontEngine::setOledStyle(FontStyle::Tiny);
     DateTime now = CLOCK().nowDT();
 
     String timeString = String(now.hour()) + ":" + (now.minute() < 10 ? "0" : "") + String(now.minute());
-    FontEngine::oledDraw(infoWidth, dh, timeString);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, dh, timeString, FontStyle::Tiny);
 
     String day3Char = String(daysOfTheWeek[now.dayOfTheWeek()]);
     day3Char = day3Char.substring(0, 3);
     if (SHOW_YEAR) day3Char += (" " + String(now.month()) + "/" + String(now.day()) + "/" + String(now.year()).substring(2, 4));
     else           day3Char += (" " + String(now.month()) + "/" + String(now.day()));
-    FontEngine::oledDraw(dw - FontEngine::oledTextWidth(day3Char), dh, day3Char);
+    FontEngine::drawText(DisplayTarget::OLED, dw - FontEngine::textWidth(DisplayTarget::OLED, day3Char, FontStyle::Tiny), dh, day3Char, FontStyle::Tiny);
 
-    infoWidth += (FontEngine::oledTextWidth(timeString) + 6);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, timeString, FontStyle::Tiny) + 6);
   }
 
   // MSC Indicator
   if (mscEnabled) {
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw(infoWidth, dh, "USB");
-    infoWidth += (FontEngine::oledTextWidth("USB") + 6);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, dh, "USB", FontStyle::Tiny);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, "USB", FontStyle::Tiny) + 6);
   }
 
   // Sink Indicator
   if (sinkEnabled) {
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw(infoWidth, dh, "SNK");
-    infoWidth += (FontEngine::oledTextWidth("SNK") + 6);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, dh, "SNK", FontStyle::Tiny);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, "SNK", FontStyle::Tiny) + 6);
   }
 
   // SD Indicator
   if (SDActive) {
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw(infoWidth, dh, "SD");
-    infoWidth += (FontEngine::oledTextWidth("SD") + 6);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, dh, "SD", FontStyle::Tiny);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, "SD", FontStyle::Tiny) + 6);
   }
 }
 
@@ -296,8 +284,7 @@ void PocketmageOled::oledScroll() {
     const String& s   = tabbed ? (allLines)[i].substring(4) : (allLines)[i];
 
     // Measure on OLED (not E-Ink) with a consistent tiny font for bar proportionality
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    const uint16_t w  = FontEngine::oledTextWidth(s);
+    const uint16_t w  = FontEngine::textWidth(DisplayTarget::OLED, s, FontStyle::Tiny);
 
     const int refMax  = tabbed ? 49 : 56;
     const int lineW   = constrain(map((int)w, 0, display.width(), 0, refMax), 0, refMax);
@@ -308,17 +295,15 @@ void PocketmageOled::oledScroll() {
   }
 
   // PRINT CURRENT LINE — using _tf (full Unicode) fonts throughout
-  FontEngine::setOledStyle(FontStyle::Status);
   String lineNumStr = String(startIndex) + "/" + String(count);
-  FontEngine::oledDraw(0, 12, "Line:");
-  FontEngine::oledDraw(0, 24, lineNumStr);
+  FontEngine::drawText(DisplayTarget::OLED, 0, 12, "Line:", FontStyle::Status);
+  FontEngine::drawText(DisplayTarget::OLED, 0, 24, lineNumStr, FontStyle::Status);
 
   // PRINT LINE PREVIEW
   if (startIndex >= 0 && (size_t)startIndex < allLines.size()) {
     const String& line = (allLines)[startIndex];
     if (line.length() > 0) {
-      FontEngine::setOledStyle(FontStyle::Heading2);
-      FontEngine::oledDraw(140, 24, line);
+      FontEngine::drawText(DisplayTarget::OLED, 140, 24, line, FontStyle::Heading2);
     }
   }
 

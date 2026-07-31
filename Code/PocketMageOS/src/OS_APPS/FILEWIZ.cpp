@@ -175,8 +175,7 @@ String renderWizMini(String folder, int8_t scrollDelta) {
         default:  u8g2.drawXBMP(1, 1, 30, 30, _LFileIcons[3]); break;
       }
       String dispName = f.name + f.extension;
-      FontEngine::setOledStyle(FontStyle::MonoBold);
-      FontEngine::oledDraw(34,29,dispName.c_str());
+      FontEngine::drawText(DisplayTarget::OLED, 34, 29, dispName, FontStyle::MonoBold);
     }
     else {
       int x = 34 + 18 * (i - scroll - 1);
@@ -190,7 +189,6 @@ String renderWizMini(String folder, int8_t scrollDelta) {
   }
 
   // Display KB state
-  FontEngine::setOledStyle(FontStyle::Tiny);
   {
     const char* label = nullptr;
     switch (KB().getKeyboardState()) {
@@ -199,11 +197,11 @@ String renderWizMini(String folder, int8_t scrollDelta) {
       case FN_SHIFT: label = "FN+SHIFT"; break;
     }
     if (label) {
-      int tw = FontEngine::oledTextWidth(label);
+      int tw = FontEngine::textWidth(DisplayTarget::OLED, label, FontStyle::Tiny);
       u8g2.setDrawColor(0);
       u8g2.drawBox(u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), tw, -8);
       u8g2.setDrawColor(1);
-      FontEngine::oledDraw(u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), label);
+      FontEngine::drawText(DisplayTarget::OLED, u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), label, FontStyle::Tiny);
     }
   }
 
@@ -529,7 +527,6 @@ void einkHandler_FILEWIZ() {
         updateRecentFilesList();
 
         // Draw the file list
-        FontEngine::setEinkStyle(FontStyle::Body);
         for (int i = 0; i < 10; i++) {
           String dispPath = PM_SDAUTO().getFilesListIndex(i);
           
@@ -539,7 +536,7 @@ void einkHandler_FILEWIZ() {
                dispPath = "..." + dispPath.substring(dispPath.length() - 27);
             }
             
-            FontEngine::einkDraw(30, 54 + (17 * i), dispPath);
+            FontEngine::drawText(DisplayTarget::EINK, 30, 54 + (17 * i), dispPath, FontStyle::Body);
           }
         }
 

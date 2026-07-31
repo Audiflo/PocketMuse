@@ -73,12 +73,11 @@ void PocketmageEink::statusBar(const String& input, bool fullWindow) {
 }
 
 void PocketmageEink::drawStatusBar(const String& input) {
-  FontEngine::setEinkStyle(FontStyle::MonoBold);
-  u8g2f.setForegroundColor(GxEPD_BLACK);
+  FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_BLACK);
   u8g2f.setBackgroundColor(GxEPD_WHITE);
   display_.fillRect(0, display_.height() - 26, display_.width(), 26, GxEPD_WHITE);
   display_.drawRect(0, display_.height() - 20, display_.width(), 20, GxEPD_BLACK);
-  FontEngine::einkDraw(4, display_.height() - 6, input);
+  FontEngine::drawText(DisplayTarget::EINK, 4, display_.height() - 6, input, FontStyle::MonoBold);
 }
 
 void PocketmageEink::resetDisplay(bool clearScreen, uint16_t color) {
@@ -131,9 +130,9 @@ void setupEink() {
 }
 
 uint8_t PocketmageEink::getFontHeight() {
-  return u8g2f.getFontAscent() - u8g2f.getFontDescent();
+  return FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body);
 }
 
 uint16_t PocketmageEink::getEinkTextWidth(const String& s) {
-  return FontEngine::einkTextWidth(s);
+  return FontEngine::textWidth(DisplayTarget::EINK, s, FontStyle::Body);
 }

@@ -28,15 +28,39 @@ enum class FontStyle : uint8_t {
   Status,        // ncenB08_tf     - status bar / dialog labels
   OledWord,      // ncenB14_tf     - oledWord / sysMessage cascade parent
   Terminal,      // 7x13B_tf       - terminal app
+  Micro,         // 4x6_tf         - calendar event times
+  TerminalBig,   // courB14_tf     - terminal wr_inkText size 3
+  ClockDigit,    // luBIS14_tn     - clock/date-set OLED digits
 
   _StyleCount    // sentinel, must be last
+};
+
+// Which physical display a text operation targets.
+enum class DisplayTarget : uint8_t {
+  OLED,          // u8g2 (U8G2_SSD1326_ER_256X32_F_4W_HW_SPI)
+  EINK,          // u8g2f (U8G2_FOR_ADAFRUIT_GFX on the GxEPD2 buffer)
 };
 
 // One style variant, resolved for both display targets.
 struct FontEntry {
   const uint8_t* oled;     // u8g2 font pointer for OLED
   const uint8_t* eink;     // u8g2 font pointer for E-Ink
-  uint8_t        height;   // full cell height in pixels (ascent - descent)
+  uint8_t        height;   // full cell height in pixels
+};
+
+// TXT.cpp markdown editor matrix indices.
+enum : uint8_t {
+  TxtFamilySerif = 0,
+  TxtFamilySans  = 1,
+  TxtFamilyMono  = 2,
+  TxtSizeBody    = 0,      // 10pt: body / code / quote / list
+  TxtSizeH3      = 1,      // 12pt
+  TxtSizeH2      = 2,      // 18pt
+  TxtSizeH1      = 3,      // 24pt
+  TxtVariantN    = 0,      // regular
+  TxtVariantB    = 1,      // bold
+  TxtVariantI    = 2,      // italic
+  TxtVariantBI   = 3,      // bold + italic
 };
 
 // A complete font table for one language/region.
@@ -64,6 +88,13 @@ struct FontTable {
   FontEntry status;
   FontEntry oledWord;
   FontEntry terminal;
+  FontEntry micro;
+  FontEntry terminalBig;
+  FontEntry clockDigit;
+
+  // TXT markdown editor fonts: [family][sizeIdx][variant].
+  // Heading regular variants alias to their bold font (headings are already bold).
+  FontEntry txt[3][4][4];
 };
 
 class FontEngine {
@@ -72,74 +103,63 @@ public:
   static void init(const FontTable* table = nullptr);
   static void setFontTable(const FontTable* table);
 
-  // OLED operations
-  // Select a style on the OLED display.  Subsequent oledDraw* / oledTextWidth
-  // calls use this style until changed.
-  static void setOledStyle(FontStyle style);
+  // ---- Unified API ----
 
-  // Draw UTF-8 text on OLED at (x, y).  y is the baseline (as in U8g2).
-  static void oledDraw(int x, int y, const char* text);
-  static void oledDraw(int x, int y, const String& text);
+  // Draw UTF-8 text on target at (x, y).  y is the baseline (as in U8g2).
+  static void drawText(DisplayTarget target, int x, int y,
+                       const char* text, FontStyle style);
+  static void drawText(DisplayTarget target, int x, int y,
+                       const String& text, FontStyle style);
 
-  // Draw a single glyph on OLED.
-  static void oledDrawGlyph(int x, int y, uint16_t unicode);
+  // Draw a single glyph on target.
+  static void drawGlyph(DisplayTarget target, int x, int y,
+                        uint16_t unicode, FontStyle style);
 
-  // Text width in the currently-set OLED style.
-  static int oledTextWidth(const char* text);
-  static int oledTextWidth(const String& text);
+  // Text width for a style.  Never changes the font that drawText left set.
+  static int textWidth(DisplayTarget target, const char* text, FontStyle style);
+  static int textWidth(DisplayTarget target, const String& text, FontStyle style);
 
-  // Text width for a specific style (without changing the active style).
-  static int oledTextWidth(FontStyle style, const char* text);
-  static int oledTextWidth(FontStyle style, const String& text);
+  // Per-character width for the given style.  Cached for OLED (codepoints
+  // 32-255); other codepoints and the E-Ink target are measured live.
+  static int charWidth(DisplayTarget target, uint16_t unicode, FontStyle style);
 
-  // Cached per-character width for the given style.  Builds the cache on
-  // first use for that style.  Cache covers codepoints 32-255; points
-  // outside that range are measured live and not cached.
-  static int oledCharWidth(uint16_t unicode, FontStyle style);
+  // Font metrics for a style.  First call per (target, style) measures the
+  // font, then the result is cached, so layout code never switches fonts
+  // merely to measure.
+  static int fontHeight(DisplayTarget target, FontStyle style);
+  static int fontAscent(DisplayTarget target, FontStyle style);
+  static int fontDescent(DisplayTarget target, FontStyle style);
 
-  // Font metrics for the currently-set OLED style.
-  static int oledFontHeight();
-  static int oledFontAscent();
-  static int oledFontDescent();
+  // Stateful text color for one target.  Value semantics match both
+  // u8g2.setDrawColor and u8g2f.setForegroundColor: 0 = black, 1 = white.
+  // Only the requested target's color is touched; an E-ink status bar draw
+  // must not change the OLED draw color and vice versa.
+  static void setTextColor(DisplayTarget target, uint16_t color);
 
-  // Convenience: resolve the FontStyle for the TXT.cpp editor's type/bold/italic
-  // combos and draw a line with per-character style switching.
-  static void oledDrawEditor(int x, int y, const char* text,
-                              const FontStyle* styles, int len);
+  // TXT.cpp editor helper: draw a line with per-character style switching.
+  static void drawTextEditor(DisplayTarget target, int x, int y,
+                             const char* text, const FontStyle* styles, int len);
 
-  // E-Ink operations
-  static void setEinkStyle(FontStyle style);
-  static void setEinkColor(uint16_t color);
-  static void einkDraw(int x, int y, const char* text);
-  static void einkDraw(int x, int y, const String& text);
-  static int  einkTextWidth(const char* text);
-  static int  einkTextWidth(const String& text);
-
-  // Measure in a specific style without changing the active E-Ink style.
-  static int  einkTextWidth(FontStyle style, const char* text);
-  static int  einkTextWidth(FontStyle style, const String& text);
-  static int  einkFontHeight();
-  static int  einkFontAscent();
-  static int  einkFontDescent();
-
-  // TXT.cpp editor helpers
   // Map (family, bold, italic, headingLevel) to a FontStyle.
   //   family 0 = serif, 1 = sans, 2 = mono
   //   headingLevel 0 = body, 1/2/3 = H1/H2/H3, 4 = code, 5 = quote, 6 = list
   static FontStyle resolveStyle(uint8_t family, bool bold,
-                                 bool italic, uint8_t headingLevel);
+                                bool italic, uint8_t headingLevel);
 
-  // Raw pointer access (for edge cases)
-  static const uint8_t* oledFontPtr(FontStyle style);
-  static const uint8_t* einkFontPtr(FontStyle style);
+  // Raw pointer access (for edge cases / the TXT markdown renderer).
+  static const uint8_t* fontPtr(DisplayTarget target, FontStyle style);
+
+  // TXT markdown matrix lookup: font pointer for family x sizeIdx x variant.
+  static const uint8_t* txtFont(DisplayTarget target,
+                                uint8_t family, uint8_t sizeIdx, uint8_t variant);
 
 private:
   static const FontEntry& entry(FontStyle s);
-  static const FontTable* table_;
-  static FontStyle        oledActiveStyle_;
-  static FontStyle        einkActiveStyle_;
+  static void applyFont(DisplayTarget target, FontStyle style);
 
-  // Width cache per style (covers codepoints 32-255 only).
+  static const FontTable* table_;
+
+  // Width cache per style (covers codepoints 32-255 only, OLED).
   static constexpr int kCacheCodepoints = 256;
   struct WidthCache {
     bool     valid = false;
@@ -147,8 +167,16 @@ private:
   };
   static WidthCache widthCache_[static_cast<int>(FontStyle::_StyleCount)];
 
-  // Build the width cache entry for onStyle.
+  // Lazily-measured font metrics per style and target.
+  struct Metrics {
+    bool     valid = false;
+    uint8_t  ascent;
+    uint8_t  descent;
+  };
+  static Metrics metrics_[static_cast<int>(FontStyle::_StyleCount)][2];
+
   static void buildWidthCache(FontStyle onStyle);
+  static void buildMetrics(DisplayTarget target, FontStyle onStyle);
 };
 
 // Built-in English font table

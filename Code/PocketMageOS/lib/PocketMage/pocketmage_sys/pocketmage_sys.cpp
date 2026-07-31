@@ -127,9 +127,8 @@ void deepSleep(bool alternateScreenSaver) {
             if (f.read(buf, 9600) == 9600) {
               f.close();
               display.drawBitmap(0, 0, buf, 320, 240, GxEPD_BLACK);
-              FontEngine::setEinkStyle(FontStyle::MonoBold);
-              u8g2f.setForegroundColor(GxEPD_BLACK);
-              FontEngine::einkDraw(5, display.height() - 5, binFiles[fileIndex]);
+              FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_BLACK);
+              FontEngine::drawText(DisplayTarget::EINK, 5, display.height() - 5, binFiles[fileIndex], FontStyle::MonoBold);
             } else {
               f.close();
             }
@@ -443,7 +442,7 @@ String vectorToString() {
   for (size_t i = 0; i < allLines.size(); i++) {
     result += allLines[i];
 
-    uint16_t charWidth = FontEngine::einkTextWidth(allLines[i]);
+    uint16_t charWidth = FontEngine::textWidth(DisplayTarget::EINK, allLines[i], FontStyle::Body);
 
     if (charWidth < display.width() && i < allLines.size() - 1) {
       result += '\n';
@@ -460,7 +459,7 @@ void stringToVector(String inputText) {
   for (size_t i = 0; i < inputText.length(); i++) {
     char c = inputText[i];
 
-    uint16_t charWidth = FontEngine::einkTextWidth(currentLine_);
+    uint16_t charWidth = FontEngine::textWidth(DisplayTarget::EINK, currentLine_, FontStyle::Body);
 
     if ((c == '\n' || charWidth >= display.width() - 5) && !currentLine_.isEmpty()) {
       if (currentLine_.endsWith(" ")) {

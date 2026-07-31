@@ -215,7 +215,6 @@ void drawHome() {
   uint8_t startX = 20;    // Initial X position
   uint8_t startY = 20;    // Initial Y position
 
-  FontEngine::setEinkStyle(FontStyle::Body);
   for (int i = 0; i < sizeof(appIcons) / sizeof(appIcons[0]); i++) {
     int row = i / appsPerRow;
     int col = i % appsPerRow;
@@ -225,10 +224,9 @@ void drawHome() {
     if (row == 2) yPos += 10;
 
     display.drawBitmap(xPos, yPos, appIcons[i], iconSize, iconSize, GxEPD_BLACK);
-    int w = FontEngine::einkTextWidth(appStateNames[i]);
-    FontEngine::einkDraw(xPos + (iconSize / 2) - (w / 2), yPos + iconSize + 13, appStateNames[i]);
+    int w = FontEngine::textWidth(DisplayTarget::EINK, appStateNames[i], FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, xPos + (iconSize / 2) - (w / 2), yPos + iconSize + 13, appStateNames[i], FontStyle::Body);
   }
-  FontEngine::setEinkStyle(FontStyle::MonoBold);
 
   // Draw sideload app rounded rect
   //display.drawRoundRect(startX-15, (3*spacingY) - iconSize, (5*spacingX)+10, spacingY + 10, 15, GxEPD_BLACK);
@@ -450,8 +448,7 @@ void einkHandler_HOME() {
 
           int loopCount = std::min((int)tasks.size(), 7);
           for (int i = 0; i < loopCount; i++) {
-            FontEngine::setEinkStyle(FontStyle::Body);
-            FontEngine::einkDraw(151, 68 + (25 * i), tasks[i][0].c_str());
+            FontEngine::drawText(DisplayTarget::EINK, 151, 68 + (25 * i), tasks[i][0], FontStyle::Body);
           }
         }
 

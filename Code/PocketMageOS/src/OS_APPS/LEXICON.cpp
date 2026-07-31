@@ -351,11 +351,9 @@ void einkHandler_LEXICON() {
         u8g2f.setForegroundColor(GxEPD_BLACK);
 
         // Draw Word
-        FontEngine::setEinkStyle(FontStyle::Body);
-        FontEngine::einkDraw(12, 50, defList[definitionIndex].first);
+        FontEngine::drawText(DisplayTarget::EINK, 12, 50, defList[definitionIndex].first, FontStyle::Body);
 
         // Draw Definition with Word Wrap
-        FontEngine::setEinkStyle(FontStyle::Body);
         
         String defText = defList[definitionIndex].second;
         int maxW = display.width() - (2 * LEX_MARGIN);
@@ -364,7 +362,7 @@ void einkHandler_LEXICON() {
         auto wrappedLines = wordWrap(defText, maxW, FontStyle::Body);
         for (const auto& line : wrappedLines) {
           if (line.length() > 0) {
-            FontEngine::einkDraw(LEX_MARGIN, cursorY, line);
+            FontEngine::drawText(DisplayTarget::EINK, LEX_MARGIN, cursorY, line, FontStyle::Body);
           }
           cursorY += LEX_LINE_HEIGHT;
         }

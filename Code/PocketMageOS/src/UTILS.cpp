@@ -172,7 +172,6 @@ void checkTimeout() {
             ESP_LOGE(TAG, "text sleep mode");
             EINK().setFullRefreshAfter(FULL_REFRESH_AFTER + 1);
             display.setFullWindow();
-            FontEngine::setEinkStyle(FontStyle::MonoBold);
 
             display.fillRect(0, display.height() - 26, display.width(), 26, GxEPD_WHITE);
             display.drawRect(0, display.height() - 20, display.width(), 20, GxEPD_BLACK);
@@ -541,28 +540,28 @@ int boolPrompt(String promptText) {
   int x_offset = 0;
   FontStyle activeStyle;
 
-  int w = FontEngine::oledTextWidth(FontStyle::OledWord, msg);
+  int w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::OledWord);
   if (w < dw-8) {
     y_offset = 16 + 3 + 5;
     x_offset = (dw - w) / 2;
     activeStyle = FontStyle::OledWord;
   } 
   else {
-    w = FontEngine::oledTextWidth(FontStyle::Heading3, msg);
+    w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Heading3);
     if (w < dw-8) {
       y_offset = 16 + 2 + 5;
       x_offset = (dw - w) / 2;
       activeStyle = FontStyle::Heading3;
     } 
     else {
-      w = FontEngine::oledTextWidth(FontStyle::BodyBold, msg);
+      w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::BodyBold);
       if (w < dw-8) {
         y_offset = 16 + 1 + 5;
         x_offset = (dw - w) / 2;
         activeStyle = FontStyle::BodyBold;
       } 
       else {
-        w = FontEngine::oledTextWidth(FontStyle::Status, msg);
+        w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Status);
         if (w < dw-8) {
           y_offset = 16 + 5;
           x_offset = (dw - w) / 2;
@@ -578,8 +577,7 @@ int boolPrompt(String promptText) {
 
   for (int y = dh; y > 0; y-=2) {
     u8g2.clearBuffer();
-    FontEngine::setOledStyle(activeStyle);
-    FontEngine::oledDraw(x_offset, y + y_offset, msg);
+    FontEngine::drawText(DisplayTarget::OLED, x_offset, y + y_offset, msg, activeStyle);
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
     delay(5);
@@ -603,8 +601,7 @@ int boolPrompt(String promptText) {
     if (currentSystemTime > lastSystemTime) {
         lastSystemTime = currentSystemTime;
         u8g2.clearBuffer();
-        FontEngine::setOledStyle(activeStyle);
-        FontEngine::oledDraw(x_offset, y_offset, msg);
+        FontEngine::drawText(DisplayTarget::OLED, x_offset, y_offset, msg, activeStyle);
         u8g2.drawRFrame(0, 0, dw, dh + 16, 10);
         u8g2.sendBuffer();
     }
@@ -639,8 +636,7 @@ int boolPrompt(String promptText) {
 
   for (int y = 0; y <= dh; y+=2) {
     u8g2.clearBuffer();
-    FontEngine::setOledStyle(activeStyle);
-    FontEngine::oledDraw(x_offset, y + y_offset, msg);
+    FontEngine::drawText(DisplayTarget::OLED, x_offset, y + y_offset, msg, activeStyle);
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
     delay(5);
@@ -817,7 +813,6 @@ int timePrompt(int defaultTime) {
     }
 
     // Draw digits dynamically with inverted active block
-    u8g2.setFont(u8g2_font_luBIS14_tn);
     for (int i = 0; i < 4; i++) {
       if (i == currentIndex) {
         u8g2.setDrawColor(1);
@@ -826,7 +821,7 @@ int timePrompt(int defaultTime) {
       } else {
         u8g2.setDrawColor(1);               // Standard white text
       }
-      u8g2.drawStr(tX[i], 16, String(digits[i]).c_str());
+      FontEngine::drawGlyph(DisplayTarget::OLED, tX[i], 16, digits[i], FontStyle::ClockDigit);
     }
     u8g2.setDrawColor(1); // Reset for next draw cycle
 
@@ -1032,7 +1027,6 @@ String datePrompt(String defaultYYYYMMDD) {
     u8g2.drawXBMP(dX[currentIndex] - 4, 21, 24, 11, ind);
 
     // Draw digits dynamically with inverted active block
-    u8g2.setFont(u8g2_font_luBIS14_tn);
     for (int i = 0; i < 8; i++) {
       if (i == currentIndex) {
         u8g2.setDrawColor(1);
@@ -1041,7 +1035,7 @@ String datePrompt(String defaultYYYYMMDD) {
       } else {
         u8g2.setDrawColor(1);               // Standard white text
       }
-      u8g2.drawStr(dX[i], 16, String(digits[i]).c_str());
+      FontEngine::drawGlyph(DisplayTarget::OLED, dX[i], 16, digits[i], FontStyle::ClockDigit);
     }
     u8g2.setDrawColor(1); // Reset for next draw cycle
 
@@ -1068,28 +1062,28 @@ void waitForKeypress(String message) {
   int x_offset = 0;
   FontStyle activeStyle;
 
-  int w = FontEngine::oledTextWidth(FontStyle::OledWord, msg);
+  int w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::OledWord);
   if (w < dw) {
     y_offset = 16 + 3;
     x_offset = (dw - w) / 2;
     activeStyle = FontStyle::OledWord;
   } 
   else {
-    w = FontEngine::oledTextWidth(FontStyle::Heading3, msg);
+    w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Heading3);
     if (w < dw) {
       y_offset = 16 + 2;
       x_offset = (dw - w) / 2;
       activeStyle = FontStyle::Heading3;
     } 
     else {
-      w = FontEngine::oledTextWidth(FontStyle::BodyBold, msg);
+      w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::BodyBold);
       if (w < dw) {
         y_offset = 16 + 1;
         x_offset = (dw - w) / 2;
         activeStyle = FontStyle::BodyBold;
       } 
       else {
-        w = FontEngine::oledTextWidth(FontStyle::Status, msg);
+        w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Status);
         if (w < dw) {
           y_offset = 16;
           x_offset = (dw - w) / 2;
@@ -1106,11 +1100,8 @@ void waitForKeypress(String message) {
   for (int y = dh; y > 0; y-=2) {
     u8g2.clearBuffer();
     
-    FontEngine::setOledStyle(activeStyle);
-    FontEngine::oledDraw(x_offset, y + y_offset, msg);
-    
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomMsg)) / 2, y + dh - 2, bottomMsg);
+    FontEngine::drawText(DisplayTarget::OLED, x_offset, y + y_offset, msg, activeStyle);
+    FontEngine::drawText(DisplayTarget::OLED, (dw - FontEngine::textWidth(DisplayTarget::OLED, bottomMsg, FontStyle::Tiny)) / 2, y + dh - 2, bottomMsg, FontStyle::Tiny);
     
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
@@ -1134,11 +1125,8 @@ void waitForKeypress(String message) {
         lastSystemTime = currentSystemTime;
         
         u8g2.clearBuffer();
-        FontEngine::setOledStyle(activeStyle);
-        FontEngine::oledDraw(x_offset, y_offset, msg);
-        
-        FontEngine::setOledStyle(FontStyle::Tiny);
-        FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomMsg)) / 2, dh - 2, bottomMsg);
+        FontEngine::drawText(DisplayTarget::OLED, x_offset, y_offset, msg, activeStyle);
+        FontEngine::drawText(DisplayTarget::OLED, (dw - FontEngine::textWidth(DisplayTarget::OLED, bottomMsg, FontStyle::Tiny)) / 2, dh - 2, bottomMsg, FontStyle::Tiny);
         
         u8g2.drawRFrame(0, 0, dw, dh + 16, 10);
         u8g2.sendBuffer();
@@ -1163,11 +1151,8 @@ void waitForKeypress(String message) {
   for (int y = 0; y <= dh; y+=2) {
     u8g2.clearBuffer();
     
-    FontEngine::setOledStyle(activeStyle);
-    FontEngine::oledDraw(x_offset, y + y_offset, msg);
-    
-    FontEngine::setOledStyle(FontStyle::Tiny);
-    FontEngine::oledDraw((dw - FontEngine::oledTextWidth(bottomMsg)) / 2, y + dh - 2, bottomMsg);
+    FontEngine::drawText(DisplayTarget::OLED, x_offset, y + y_offset, msg, activeStyle);
+    FontEngine::drawText(DisplayTarget::OLED, (dw - FontEngine::textWidth(DisplayTarget::OLED, bottomMsg, FontStyle::Tiny)) / 2, y + dh - 2, bottomMsg, FontStyle::Tiny);
     
     u8g2.drawRFrame(0, y, dw, dh + 16, 10);
     u8g2.sendBuffer();
