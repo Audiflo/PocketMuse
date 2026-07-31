@@ -7,6 +7,7 @@
 #include <pocketmage_clock/pocketmage_clock.h>
 #include <pocketmage_wifi/pocketmage_wifi.h>
 #include <pocketmage_font/pocketmage_font.h>
+#include <pocketmage_i18n/pocketmage_i18n.h>
 #include <pocketmage_sys/pocketmage_sys.h>
 #include <pocketmage_layout/pocketmage_layout.h>
 #include <pocketmage_ui/pocketmage_ui.h>

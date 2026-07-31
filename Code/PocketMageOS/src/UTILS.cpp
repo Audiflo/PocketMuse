@@ -17,7 +17,7 @@ void printDebug() {
 
     // Display system time
     ESP_LOGD(TAG, "SYSTEM_CLOCK: %d/%d/%d (%s) %d:%d:%d", now.month(), now.day(), now.year(),
-             daysOfTheWeek[now.dayOfTheWeek()], now.hour(), now.minute(), now.second());
+             I18n::dayName(now.dayOfTheWeek()), now.hour(), now.minute(), now.second());
   }
 }
 
@@ -33,13 +33,13 @@ void checkTimeout() {
       ESP_LOGD(TAG, "Device idle... Deep sleeping");
 
       // Give a chance to keep device awake
-      OLED().oledWord("  Going to sleep!  ");
+      OLED().oledWord(TR(STR_UTILS_SLEEP));
       unsigned long i = millis();
       unsigned long j = millis();
       while ((j - i) <= 4000) {  // 4 sec
         j = millis();
         if (KB().updateKeypress() != 0) {
-          OLED().oledWord("Good Save!");
+          OLED().oledWord(TR(STR_GOOD_SAVE));
           delay(500);
           CLOCK().setPrevTimeMillis(millis()); // Reset system idle timer
           keypad.flush();
@@ -97,13 +97,13 @@ void checkTimeout() {
       ESP_LOGD(TAG, "Device idle... Deep sleeping");
 
       // Give a chance to keep device awake
-      OLED().oledWord("  Going to sleep!  ");
+      OLED().oledWord(TR(STR_UTILS_SLEEP));
       unsigned long i = millis();
       unsigned long j = millis();
       while ((j - i) <= 4000) {  // 4 sec
         j = millis();
         if (KB().updateKeypress() != 0) {
-          OLED().oledWord("Good Save!");
+          OLED().oledWord(TR(STR_GOOD_SAVE));
           delay(500);
           CLOCK().setPrevTimeMillis(millis()); // Reset system idle timer
           keypad.flush();
@@ -230,6 +230,7 @@ void loadState(bool changeState) {
   HOME_ON_BOOT = prefs.getBool("HOME_ON_BOOT", false);
   OLED_BRIGHTNESS = prefs.getInt("OLED_BRIGHTNESS", 255);
   OLED_MAX_FPS = prefs.getInt("OLED_MAX_FPS", 60);
+  I18n::setLanguage(static_cast<Lang>(prefs.getInt("Language", static_cast<int>(Lang::English))));
 
   OTA1_APP = prefs.getString("OTA1", "-");
   OTA2_APP = prefs.getString("OTA2", "-");
@@ -312,7 +313,7 @@ void updateBattState() {
     bool low;
     if (PowerSystem.isBatteryLow(low)) {
       if (low) {
-        OLED().sysMessage("Battery Critical!",1000);
+        OLED().sysMessage(TR(STR_UTILS_BATT_CRITICAL),1000);
 
 #if !OTA_APP
         saveEditingFile();
@@ -531,7 +532,7 @@ int boolPrompt(String promptText) {
   KB().setKeyboardState(NORMAL);
   pocketmage::setCpuSpeed(240); // Boost clock for smooth animation
 
-  String msg = promptText + " (y/n)";
+  String msg = promptText + TR(STR_UTILS_YN_SUFFIX);
   u8g2.clearBuffer();
   const uint16_t dw = u8g2.getDisplayWidth();
   const uint16_t dh = u8g2.getDisplayHeight();
@@ -1052,7 +1053,7 @@ void waitForKeypress(String message) {
   pocketmage::setCpuSpeed(240); // Boost clock for smooth animation
 
   String msg = message;
-  String bottomMsg = "Press any key to continue...";
+  String bottomMsg = TR(STR_UTILS_PRESS_KEY);
   
   u8g2.clearBuffer();
   const uint16_t dw = u8g2.getDisplayWidth();
@@ -1170,18 +1171,18 @@ void checkCrashState() {
       reset_reason == ESP_RST_TASK_WDT || 
       reset_reason == ESP_RST_INT_WDT) {
     
-    String crashMsg = "Crash: ";
+    String crashMsg = TR(STR_UTILS_CRASH_PREFIX);
 
     switch (reset_reason) {
-      case ESP_RST_PANIC:    crashMsg += "Panic/Exception"; break;
-      case ESP_RST_WDT:      crashMsg += "Watchdog"; break;
-      case ESP_RST_TASK_WDT: crashMsg += "Task WDT"; break;
-      case ESP_RST_INT_WDT:  crashMsg += "Interrupt WDT"; break;
-      default:               crashMsg += "Unknown"; break;
+      case ESP_RST_PANIC:    crashMsg += TR(STR_UTILS_CRASH_PANIC); break;
+      case ESP_RST_WDT:      crashMsg += TR(STR_UTILS_CRASH_WDT); break;
+      case ESP_RST_TASK_WDT: crashMsg += TR(STR_UTILS_CRASH_TASK_WDT); break;
+      case ESP_RST_INT_WDT:  crashMsg += TR(STR_UTILS_CRASH_INT_WDT); break;
+      default:               crashMsg += TR(STR_UTILS_CRASH_UNKNOWN); break;
     }
 
     int romReason = (int)esp_rom_get_reset_reason(0);
-    crashMsg += " (Code " + String(romReason) + ")";
+    crashMsg += TR(STR_UTILS_CRASH_CODE_OPEN) + String(romReason) + ")";
 
     prefs.begin("PocketMage", false);
     prefs.putInt("CurrentAppState", HOME);
@@ -1219,7 +1220,7 @@ void checkRTCPowerLoss() {
     int defaultTime = (now.hour() * 100) + now.minute();
     
     // Display text
-    bool setTime = boolPrompt("Power lost, set clock?");
+    bool setTime = boolPrompt(TR(STR_UTILS_POWER_LOST));
     if (!setTime) {
       noTimeout = previousTimeoutState; // Restore before early exit
       return;
@@ -1244,7 +1245,7 @@ void checkRTCPowerLoss() {
     // Calling adjust() automatically clears the hardware lostPower() flag.
     CLOCK().getRTC().adjust(DateTime(y, m, d, h, min, 0));
     
-    OLED().sysMessage("Time Set",500);
+    OLED().sysMessage(TR(STR_UTILS_TIME_SET),500);
 
     // Restore the timeout state before continuing boot
     noTimeout = previousTimeoutState;
@@ -1254,7 +1255,7 @@ void checkRTCPowerLoss() {
 
 #if !OTA_APP
 void saveEditingFile() {
-    OLED().oledWord("Saving Work");
+    OLED().oledWord(TR(STR_UTILS_SAVING_WORK));
     String savePath = PM_SDAUTO().getEditingFile();
     if (savePath != "" && savePath != "-" && savePath != "/temp.txt" && fileLoaded) {
       if (!savePath.startsWith("/"))

@@ -28,6 +28,7 @@ void SETTINGS_INIT() {
 
 String settingCommandSelect(String command) {
   String returnText = "";
+  command = I18n::normalizeCommand(command);
   command.toLowerCase();
 
   if (command.startsWith("timeset") || command.startsWith("settime")) {
@@ -50,15 +51,15 @@ String settingCommandSelect(String command) {
       snprintf(timeBuf, sizeof(timeBuf), "%02d:%02d", newTime / 100, newTime % 100);
       
       CLOCK().setTimeFromString(String(timeBuf));
-      returnText = "Time Updated to " + String(timeBuf);
+      returnText = TR(STR_SETTINGS_TIME_UPDATED_TO) + String(timeBuf);
     } 
     // If a manual argument was provided, validate and parse it directly
     else if (timePart.length() >= 4) { 
       CLOCK().setTimeFromString(timePart);
-      returnText = "Time Updated";
+      returnText = TR(STR_SETTINGS_TIME_UPDATED);
     } 
     else {
-      returnText = "Invalid Format (HH:MM)";
+      returnText = TR(STR_SETTINGS_INVALID_FMT_HHMM);
     }
     
     return returnText;
@@ -86,7 +87,7 @@ String settingCommandSelect(String command) {
       DateTime now = CLOCK().nowDT();  // Preserve current time
       CLOCK().getRTC().adjust(DateTime(year, month, day, now.hour(), now.minute(), now.second()));
       
-      returnText = "Date Updated to " + newDate;
+      returnText = TR(STR_SETTINGS_DATE_UPDATED_TO) + newDate;
     }
     // If a manual argument was provided, validate and parse it directly
     else if (datePart.length() == 8 && datePart.toInt() > 0) {
@@ -98,14 +99,14 @@ String settingCommandSelect(String command) {
       int maxDay = dim[month - 1];
       if (month == 2 && ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)) maxDay = 29;
       if (year < 1970 || year > 2200 || month < 1 || month > 12 || day < 1 || day > maxDay) {
-        returnText = "Invalid date";
+        returnText = TR(STR_SETTINGS_INVALID_DATE);
       } else {
         DateTime now = CLOCK().nowDT();  // Preserve current time
         CLOCK().getRTC().adjust(DateTime(year, month, day, now.hour(), now.minute(), now.second()));
-        returnText = "Date Updated";
+        returnText = TR(STR_SETTINGS_DATE_UPDATED);
       }
     } else {
-      returnText = "Invalid format (YYYYMMDD)";
+      returnText = TR(STR_SETTINGS_INVALID_FMT_YYYYMMDD);
     }
     
     return returnText;
@@ -113,7 +114,7 @@ String settingCommandSelect(String command) {
   else if (command.startsWith("lumina ")) {
     String luminaPart = command.substring(7);
     int lumina = stringToInt(luminaPart);
-    if (lumina == -1) return "Invalid";
+    if (lumina == -1) return TR(STR_INVALID);
     
     if (lumina > 255) lumina = 255;
     else if (lumina < 0) lumina = 0;
@@ -126,12 +127,12 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("timeout ")) {
     String timeoutPart = command.substring(8);
     int timeout = stringToInt(timeoutPart);
-    if (timeout == -1) return "Invalid!";
+    if (timeout == -1) return TR(STR_SETTINGS_INVALID_BANG);
     
     if (timeout > 3600) timeout = 3600;
     else if (timeout < 15) timeout = 15;
@@ -143,12 +144,12 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("oledfps ")) {
     String oledfpsPart = command.substring(8);
     int oledfps = stringToInt(oledfpsPart);
-    if (oledfps == -1) return "Invalid";
+    if (oledfps == -1) return TR(STR_INVALID);
     
     if (oledfps > 144) oledfps = 144;
     else if (oledfps < 5) oledfps = 5;
@@ -160,7 +161,7 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("clock ")) {
     String clockPart = command.substring(6);
@@ -175,7 +176,7 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("showyear ")) {
     String yearPart = command.substring(9);
@@ -190,7 +191,7 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("savepower ")) {
     String savePowerPart = command.substring(10);
@@ -205,7 +206,7 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("debug ")) {
     String debugPart = command.substring(6);
@@ -220,7 +221,7 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("boottohome ")) {
     String bootHomePart = command.substring(11);
@@ -235,7 +236,7 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
   }
   else if (command.startsWith("allownosd ")) {
     String noSDPart = command.substring(10);
@@ -250,10 +251,24 @@ String settingCommandSelect(String command) {
     prefs.end();
     
     newState = true;
-    return "Settings Updated";
+    return TR(STR_SETTINGS_UPDATED);
+  }
+  else if (command.startsWith("lang ")) {
+    String langPart = command.substring(5);
+    langPart.trim();
+    langPart.toLowerCase();
+
+    if (!I18n::setLanguageByCode(langPart.c_str())) return TR(STR_TERM_HELP_LANG);
+
+    prefs.begin("PocketMage", false);
+    prefs.putInt("Language", static_cast<int>(I18n::language()));
+    prefs.end();
+
+    newState = true;
+    return String(TR(STR_TERM_LANG_SET)) + I18n::nativeName();
   }
   else {
-    return "Huh?";
+    return TR(STR_SETTINGS_HUH);
   }
 }
 
@@ -308,7 +323,7 @@ void einkHandler_SETTINGS() {
     // OLED_MAX_FPS
     FontEngine::drawText(DisplayTarget::EINK, SETTINGS_VAL2_X, SETTINGS_VAL_Y0, String(OLED_MAX_FPS), FontStyle::Body);
 
-    endEinkScreen("Type a Command:");
+    endEinkScreen(TR(STR_HOME_TYPE_CMD));
   }
 }
 #endif

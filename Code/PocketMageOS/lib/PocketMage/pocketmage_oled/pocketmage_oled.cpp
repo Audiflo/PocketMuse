@@ -22,8 +22,8 @@ static void drawKeyboardModifier(bool centered) {
   int state = KB().getKeyboardState();
   if (state < 1 || state > 3) return;
   const uint16_t dw = u8g2.getDisplayWidth();
-  static const char* labels[] = { "SHIFT", "FN", "FN+SHIFT" };
-  const char* label = labels[state - 1];
+  static const StringID labels[] = { STR_KB_SHIFT, STR_KB_FN, STR_KB_FN_SHIFT };
+  const char* label = TR(labels[state - 1]);
   int tw = FontEngine::textWidth(DisplayTarget::OLED, label, FontStyle::Tiny);
   FontEngine::drawText(DisplayTarget::OLED, centered ? (dw - tw) / 2 : dw - tw, kOledInfoBaseline, label, FontStyle::Tiny);
 }
@@ -232,7 +232,7 @@ void PocketmageOled::infoBar() {
     String timeString = String(now.hour()) + ":" + (now.minute() < 10 ? "0" : "") + String(now.minute());
     FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, timeString, FontStyle::Tiny);
 
-    String day3Char = String(daysOfTheWeek[now.dayOfTheWeek()]);
+    String day3Char = String(I18n::dayName(now.dayOfTheWeek()));
     day3Char = day3Char.substring(0, 3);
     if (SHOW_YEAR) day3Char += (" " + String(now.month()) + "/" + String(now.day()) + "/" + String(now.year()).substring(2, 4));
     else           day3Char += (" " + String(now.month()) + "/" + String(now.day()));
@@ -243,20 +243,20 @@ void PocketmageOled::infoBar() {
 
   // MSC Indicator
   if (mscEnabled) {
-    FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, "USB", FontStyle::Tiny);
-    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, "USB", FontStyle::Tiny) + kOledInfoGap);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, TR(STR_INFO_USB), FontStyle::Tiny);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, TR(STR_INFO_USB), FontStyle::Tiny) + kOledInfoGap);
   }
 
   // Sink Indicator
   if (sinkEnabled) {
-    FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, "SNK", FontStyle::Tiny);
-    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, "SNK", FontStyle::Tiny) + kOledInfoGap);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, TR(STR_INFO_SNK), FontStyle::Tiny);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, TR(STR_INFO_SNK), FontStyle::Tiny) + kOledInfoGap);
   }
 
   // SD Indicator
   if (SDActive) {
-    FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, "SD", FontStyle::Tiny);
-    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, "SD", FontStyle::Tiny) + kOledInfoGap);
+    FontEngine::drawText(DisplayTarget::OLED, infoWidth, kOledInfoBaseline, TR(STR_INFO_SD), FontStyle::Tiny);
+    infoWidth += (FontEngine::textWidth(DisplayTarget::OLED, TR(STR_INFO_SD), FontStyle::Tiny) + kOledInfoGap);
   }
 }
 
@@ -292,7 +292,7 @@ void PocketmageOled::oledScroll() {
 
   // PRINT CURRENT LINE — using _tf (full Unicode) fonts throughout
   String lineNumStr = String(startIndex) + "/" + String(count);
-  FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, "Line:", FontStyle::Status);
+  FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, TR(STR_OLED_LINE), FontStyle::Status);
   FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Status);
 
   // PRINT LINE PREVIEW

@@ -311,7 +311,7 @@ void processKB_COMM() {
             chatMode = LOCAL_CHAT;
             currentState = CHAT_VIEW;
             newState = true;
-            OLED().oledWord("Local Chat");
+            OLED().oledWord(TR(STR_COMM_LOCAL_CHAT));
           } else {
             mesh_peer_t* peers = mesh_now_get_peers();
             int pc = mesh_now_get_peer_count();
@@ -351,7 +351,7 @@ void processKB_COMM() {
             chatInputBuffer = "";
             chatCursorPos = 0;
             newState = true;
-            OLED().oledWord("Chat");
+            OLED().oledWord(TR(STR_COMM_CHAT));
         }
         else if (ch == 17) {
             KB().toggleShift();
@@ -408,10 +408,10 @@ void processKB_COMM() {
   if (nowMs - OLEDFPSMillis >= (1000 / OLED_MAX_FPS)) {
     OLEDFPSMillis = nowMs;
     if (currentState == PEER_LIST) {
-      if (TOUCH().getLastTouch() == -1) OLED().oledWord("Chat");
+      if (TOUCH().getLastTouch() == -1) OLED().oledWord(TR(STR_COMM_CHAT));
     } else {
       if (TOUCH().getLastTouch() == -1) {
-        OLED().oledLine(chatInputBuffer, chatCursorPos, false, "Message: ");
+        OLED().oledLine(chatInputBuffer, chatCursorPos, false, TR(STR_COMM_MSG_PREFIX));
       } else {
         chatScrollPreview();
       }
@@ -465,7 +465,7 @@ void einkHandler_COMM() {
   FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_WHITE);
 
   if (currentState == PEER_LIST) {
-    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "Select Room", FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, TR(STR_COMM_SELECT_ROOM), FontStyle::Body);
     FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, "Me " + String(myMacStr), FontStyle::SmallHeading);
     FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
 
@@ -489,7 +489,7 @@ void einkHandler_COMM() {
       String label;
       
       if (idx == 0) {
-        label = "Local Chat";
+        label = TR(STR_COMM_LOCAL_CHAT);
       } else {
         int peerIdx = idx - 1;
         if (peerIdx < mesh_now_get_peer_count()) {
@@ -518,12 +518,12 @@ void einkHandler_COMM() {
     }
   } else {
     if (chatMode == LOCAL_CHAT) {
-      FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "Local Chat", FontStyle::Body);
+      FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, TR(STR_COMM_LOCAL_CHAT), FontStyle::Body);
     } else {
       String name = displayName(peerMacStr);
       FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "> " + name, FontStyle::Body);
     }
-    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct", FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, chatMode == LOCAL_CHAT ? "ESP-NOW" : TR(STR_COMM_DIRECT), FontStyle::SmallHeading);
     FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
   }
 

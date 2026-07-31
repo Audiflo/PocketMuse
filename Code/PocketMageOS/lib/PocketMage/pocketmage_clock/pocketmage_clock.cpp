@@ -12,8 +12,6 @@ static constexpr const char* TAG = "CLOCK";
 
 RTC_PCF8563 rtc;
 
-const char daysOfTheWeek[7][12] = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-
 // Initialization of clock class
 static PocketmageCLOCK pm_clock(rtc);
 
@@ -138,7 +136,7 @@ void PocketmageCLOCK::setTimeFromString(String timeStr) {
 
   if (res != TIME_OK) {
     ESP_LOGE(TAG, "Invalid time (%d): %s", res, timeStr.c_str());
-    OLED().sysMessage("Invalid", 500);
+    OLED().sysMessage(TR(STR_INVALID), 500);
     return;
   }
 

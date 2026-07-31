@@ -1033,18 +1033,18 @@ void toolBar(Line& line, bool bold, bool italic) {
   switch (KB().getKeyboardState()) {
     case 1:
       FontEngine::drawText(DisplayTarget::OLED,
-                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "SHIFT", FontStyle::Tiny)) / 2,
-                   u8g2.getDisplayHeight(), "SHIFT", FontStyle::Tiny);
+                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, TR(STR_KB_SHIFT), FontStyle::Tiny)) / 2,
+                   u8g2.getDisplayHeight(), TR(STR_KB_SHIFT), FontStyle::Tiny);
       break;
     case 2:
       FontEngine::drawText(DisplayTarget::OLED,
-                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "FN", FontStyle::Tiny)) / 2,
-                   u8g2.getDisplayHeight(), "FN", FontStyle::Tiny);
+                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, TR(STR_KB_FN), FontStyle::Tiny)) / 2,
+                   u8g2.getDisplayHeight(), TR(STR_KB_FN), FontStyle::Tiny);
       break;
     case 3:
       FontEngine::drawText(DisplayTarget::OLED,
-                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, "FN+SHIFT", FontStyle::Tiny)) / 2,
-                   u8g2.getDisplayHeight(), "FN+SHIFT", FontStyle::Tiny);
+                   (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, TR(STR_KB_FN_SHIFT), FontStyle::Tiny)) / 2,
+                   u8g2.getDisplayHeight(), TR(STR_KB_FN_SHIFT), FontStyle::Tiny);
     default:
       break;
   }
@@ -1058,18 +1058,18 @@ void toolBar(Line& line, bool bold, bool italic) {
 
   switch (currentDocLineType) {
     case ' ': lineTypeLabel = " "; break;
-    case 'T': lineTypeLabel = "BODY"; break;
+    case 'T': lineTypeLabel = TR(STR_TXT_STYLE_BODY); break;
     case '1': lineTypeLabel = "H1"; break;
     case '2': lineTypeLabel = "H2"; break;
     case '3': lineTypeLabel = "H3"; break;
-    case 'C': lineTypeLabel = "CODE"; break;
-    case '>': lineTypeLabel = "QUOTE"; break;
+    case 'C': lineTypeLabel = TR(STR_TXT_STYLE_CODE); break;
+    case '>': lineTypeLabel = TR(STR_TXT_STYLE_QUOTE); break;
     case 'U':
-    case 'u': lineTypeLabel = "U LIST"; break;
+    case 'u': lineTypeLabel = TR(STR_TXT_STYLE_ULIST); break;
     case 'O':
-    case 'o': lineTypeLabel = "O LIST"; break;
-    case 'H': lineTypeLabel = "H RULE"; break;
-    case 'B': lineTypeLabel = "BLANK LINE"; break;
+    case 'o': lineTypeLabel = TR(STR_TXT_STYLE_OLIST); break;
+    case 'H': lineTypeLabel = TR(STR_TXT_STYLE_HRULE); break;
+    case 'B': lineTypeLabel = TR(STR_TXT_STYLE_BLANK_LINE); break;
     default:  lineTypeLabel = ""; break;  
   }
 
@@ -1079,12 +1079,12 @@ void toolBar(Line& line, bool bold, bool italic) {
 
   uint16_t dw = u8g2.getDisplayWidth();
 
-  static const char* fontShortLabels[] = {"SER", "SAN", "MON"};
+  const char* fontShortLabels[] = {TR(STR_TXT_FONT_SER), TR(STR_TXT_FONT_SAN), TR(STR_TXT_FONT_MON)};
   String styleLabel;
-  if (bold && italic) styleLabel = "BOLD+ITALIC";
-  else if (bold)      styleLabel = "BOLD";
-  else if (italic)    styleLabel = "ITALIC";
-  else                styleLabel = "NORMAL";
+  if (bold && italic) styleLabel = TR(STR_TXT_STYLE_BOLD_ITALIC);
+  else if (bold)      styleLabel = TR(STR_TXT_STYLE_BOLD);
+  else if (italic)    styleLabel = TR(STR_TXT_STYLE_ITALIC);
+  else                styleLabel = TR(STR_TXT_STYLE_NORMAL);
 
   String fontAndStyle = String(fontShortLabels[fontStyle]) + " " + styleLabel;
   u8g2.drawStr(dw - u8g2.getStrWidth(fontAndStyle.c_str()), u8g2.getDisplayHeight(),
@@ -1187,16 +1187,16 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
     case '1': typeLabel = "H1"; break;
     case '2': typeLabel = "H2"; break;
     case '3': typeLabel = "H3"; break;
-    case '>': typeLabel = "QUOTE"; break;
-    case 'C': typeLabel = "CODE"; break;
+    case '>': typeLabel = TR(STR_TXT_STYLE_QUOTE); break;
+    case 'C': typeLabel = TR(STR_TXT_STYLE_CODE); break;
     case 'U': 
-    case 'u': typeLabel = "U LIST"; break;
+    case 'u': typeLabel = TR(STR_TXT_STYLE_ULIST); break;
     case 'O': 
-    case 'o': typeLabel = "O LIST"; break;
-    case 'H': typeLabel = "H RULE"; break;
-    case 'B': typeLabel = "BLANK"; break;
+    case 'o': typeLabel = TR(STR_TXT_STYLE_OLIST); break;
+    case 'H': typeLabel = TR(STR_TXT_STYLE_HRULE); break;
+    case 'B': typeLabel = TR(STR_TXT_STYLE_BLANK); break;
     case ' ': typeLabel = " "; break;
-    default:  typeLabel = "BODY"; break;
+    default:  typeLabel = TR(STR_TXT_STYLE_BODY); break;
   }
 
   String lineStr = "L: " + String(activeCursorLine);
@@ -1250,7 +1250,7 @@ bool isFolderEmpty(const char* dirPath) {
 #pragma region Mrkdn File Ops
 void saveMarkdownFile(const String& path) {
   if (PM_SDAUTO().getNoSD()) {
-    OLED().sysMessage("SAVE FAILED - No SD!",3000);
+    OLED().sysMessage(TR(STR_SD_SAVE_FAILED),3000);
     return;
   }
 
@@ -1266,7 +1266,7 @@ void saveMarkdownFile(const String& path) {
 
   File file = global_fs->open(savePath.c_str(), FILE_WRITE);
   if (!file) {
-    OLED().sysMessage("SAVE FAILED - OPEN ERR",2000);
+    OLED().sysMessage(TR(STR_TXT_SAVE_FAILED_OPEN),2000);
     ESP_LOGE("SD", "Failed to open file for writing: %s", savePath.c_str());
     PM_SDAUTO().endIO();
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -1325,7 +1325,7 @@ void saveMarkdownFile(const String& path) {
   PM_SDAUTO().writeMetadata(savePath);
   PM_SDAUTO().setEditingFile(savePath);
 
-  OLED().sysMessage("Saved: " + savePath,1000);
+  OLED().sysMessage(TR(STR_SAVED_PREFIX) + savePath,1000);
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ); 
   PM_SDAUTO().endIO();
@@ -1341,7 +1341,7 @@ bool loadMarkdownFile(const String& path) {
   }
 
   if (PM_SDAUTO().getNoSD()) {
-    OLED().sysMessage("LOAD FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_LOAD_FAILED),5000);
     PM_SDAUTO().endIO();
     return false;
   }
@@ -1447,14 +1447,14 @@ bool loadMarkdownFile(const String& path) {
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
   PM_SDAUTO().endIO();
 
-  OLED().sysMessage("FILE LOADED",500);
+  OLED().sysMessage(TR(STR_TXT_FILE_LOADED),500);
 
   return true;
 }
 
 void newMarkdownFile(const String& path) {
   if (PM_SDAUTO().getNoSD()) {
-    OLED().sysMessage("CREATE FAILED - No SD!",3000);
+    OLED().sysMessage(TR(STR_TXT_CREATE_FAILED_SD),3000);
     return;
   }
 
@@ -1468,7 +1468,7 @@ void newMarkdownFile(const String& path) {
 
   File file = global_fs->open(savePath.c_str(), FILE_WRITE);
   if (!file) {
-    OLED().sysMessage("CREATE FAILED",2000);
+    OLED().sysMessage(TR(STR_TXT_CREATE_FAILED),2000);
     ESP_LOGE("SD", "Failed to create file: %s", savePath.c_str());
     PM_SDAUTO().endIO();
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -1479,7 +1479,7 @@ void newMarkdownFile(const String& path) {
   PM_SDAUTO().writeMetadata(savePath);
   PM_SDAUTO().setEditingFile(savePath);
 
-  OLED().sysMessage("Created File",1000);
+  OLED().sysMessage(TR(STR_TXT_CREATED),1000);
 
   loadMarkdownFile(savePath);
   
@@ -1827,7 +1827,7 @@ void editor(char inchar) {
     else if (inchar == 25) {
       KB().setKeyboardState(FUNC);
       {
-        String cmd = textPrompt("GOTO LINE:");
+        String cmd = textPrompt(TR(STR_GOTO_LINE));
         if (cmd != "_RETURN_" && cmd != "_EXIT_") {
           int line = atoi(cmd.c_str());
           if (line >= 0 && line < document.lineCount) {
@@ -1848,7 +1848,7 @@ void editor(char inchar) {
     else if (inchar == 9) {
       if (KB().getKeyboardState() == FUNC) {
         fontStyle = (fontStyle + 1) % 3;
-        static const char* fontLabels[] = {"SERIF", "SANS", "MONO"};
+        const char* fontLabels[] = {TR(STR_TXT_FONT_SERIF), TR(STR_TXT_FONT_SANS), TR(STR_TXT_FONT_MONO)};
         OLED().sysMessage(fontLabels[fontStyle], 1200);
         reflowAllLines(currentLineNum, cursor_pos);
         updateScreen = true;
@@ -2066,7 +2066,7 @@ void processKB_TXT_NEW() {
               saveMarkdownFile(inputBuffer);
               CurrentTXTState_NEW = TXT_;
             } else {
-              OLED().sysMessage("Invalid Name", 2000);
+              OLED().sysMessage(TR(STR_TXT_INVALID_NAME), 2000);
             }
             inputBuffer = "";
           }
@@ -2105,7 +2105,7 @@ void processKB_TXT_NEW() {
         OLEDFPSMillis = currentMillis;
         // Make sure we didn't just jump back to the text editor!
         if (CurrentTXTState_NEW == SAVE_AS) {
-            OLED().oledLine(inputBuffer, inputBuffer.length(), false, "Input Filename");
+            OLED().oledLine(inputBuffer, inputBuffer.length(), false, TR(STR_TXT_INPUT_FILENAME));
         }
       }
       break;
@@ -2124,7 +2124,7 @@ void processKB_TXT_NEW() {
               CurrentTXTState_NEW = TXT_;
               updateScreen = true;
             } else {
-              OLED().sysMessage("Invalid Name", 2000);
+              OLED().sysMessage(TR(STR_TXT_INVALID_NAME), 2000);
             }
             inputBuffer = "";
           }
@@ -2163,7 +2163,7 @@ void processKB_TXT_NEW() {
         OLEDFPSMillis = currentMillis;
         // Make sure we didn't just jump back to the text editor!
         if (CurrentTXTState_NEW == NEW_FILE) {
-            OLED().oledLine(inputBuffer, inputBuffer.length(), false, "Name New File");
+            OLED().oledLine(inputBuffer, inputBuffer.length(), false, TR(STR_TXT_NAME_NEW_FILE));
         }
       }
       break;
@@ -2182,7 +2182,7 @@ void processKB_TXT_NEW() {
           CurrentTXTState_NEW = TXT_;
           updateScreen = true;
         } else {
-          OLED().sysMessage("Incompatible Filetype!", 2000);
+          OLED().sysMessage(TR(STR_TXT_BAD_FILETYPE), 2000);
           CurrentTXTState_NEW = TXT_;
         }
       }

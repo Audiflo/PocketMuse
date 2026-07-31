@@ -1,5 +1,7 @@
 #include "pocketmage_wifi.h"
 
+#include <pocketmage_i18n/pocketmage_i18n.h>
+
 #include <esp_log.h>
 #include <esp_task_wdt.h>
 
@@ -228,7 +230,7 @@ void PocketMageWifi::wifiTaskFunc(void* param) {
 void PocketMageWifi::taskLoop() {
   Command cmd = Command::None;
   unsigned long lastAutoScan = 0;
-  setStatus("WiFi idle");
+  setStatus(TR(STR_WIFI_IDLE));
   while (true) {
     esp_task_wdt_reset();  // Reset watchdog
     // Wait for command or periodic auto-scan
@@ -320,11 +322,11 @@ void PocketMageWifi::espEventHandler(void* arg, esp_event_base_t base, int32_t i
 void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
   switch (id) {
     case WIFI_EVENT_STA_START:
-      setStatus("WiFi started");
+      setStatus(TR(STR_WIFI_STARTED));
       break;
     case WIFI_EVENT_STA_CONNECTED: {
       auto* connected = static_cast<wifi_event_sta_connected_t*>(data);
-      setStatus("WiFi connected");
+      setStatus(TR(STR_WIFI_CONNECTED));
       _connectError[0] = 0;
       _retryCount = 0;
       size_t len = connected->ssid_len;
@@ -345,15 +347,15 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
         case WIFI_REASON_ASSOC_FAIL:
         case WIFI_REASON_HANDSHAKE_TIMEOUT:
           _retryCount = MAX_RETRIES;
-          strncpy(_connectError, "Authentication failed", sizeof(_connectError) - 1);
+          strncpy(_connectError, TR(STR_WIFI_AUTH_FAILED), sizeof(_connectError) - 1);
           _connectError[sizeof(_connectError) - 1] = 0;
-          setStatus("Authentication failed");
+          setStatus(TR(STR_WIFI_AUTH_FAILED));
           break;
         case WIFI_REASON_NO_AP_FOUND:
           _retryCount = MAX_RETRIES;
-          strncpy(_connectError, "Network not found", sizeof(_connectError) - 1);
+          strncpy(_connectError, TR(STR_WIFI_NETWORK_NOT_FOUND), sizeof(_connectError) - 1);
           _connectError[sizeof(_connectError) - 1] = 0;
-          setStatus("Network not found");
+          setStatus(TR(STR_WIFI_NETWORK_NOT_FOUND));
           break;
         default:
           if (_retryCount < MAX_RETRIES) {
@@ -363,12 +365,12 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
             _retryAt = millis() + delay;
             _retryCount++;
             char buf[48];
-            snprintf(buf, sizeof(buf), "Reconnecting in %lums...", delay);
+            snprintf(buf, sizeof(buf), TR(STR_WIFI_RECONNECTING), delay);
             setStatus(buf);
           } else {
-            strncpy(_connectError, "Max retries reached", sizeof(_connectError) - 1);
+            strncpy(_connectError, TR(STR_WIFI_MAX_RETRIES), sizeof(_connectError) - 1);
             _connectError[sizeof(_connectError) - 1] = 0;
-            setStatus("Connection failed");
+            setStatus(TR(STR_WIFI_CONN_FAILED));
           }
           break;
       }
@@ -376,7 +378,7 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
       break;
     }
     case WIFI_EVENT_SCAN_DONE:
-      setStatus("Scan done");
+      setStatus(TR(STR_WIFI_SCAN_DONE));
       {
         uint16_t num = 0;
         esp_wifi_scan_get_ap_num(&num);
@@ -408,7 +410,7 @@ void PocketMageWifi::handleIpEvent(int32_t id, void* data) {
   if (id == IP_EVENT_STA_GOT_IP) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)data;
     snprintf(_ipAddress, sizeof(_ipAddress), "%d.%d.%d.%d", IP2STR(&event->ip_info.ip));
-    setStatus("Got IP");
+    setStatus(TR(STR_WIFI_GOT_IP));
     _state = WifiRadioState::Connected;
     publishEvent();
   }
@@ -417,18 +419,18 @@ void PocketMageWifi::handleIpEvent(int32_t id, void* data) {
 void PocketMageWifi::doEnable() {
   if (_state == WifiRadioState::Off || _state == WifiRadioState::TurningOff) {
     _state = WifiRadioState::TurningOn;
-    setStatus("Enabling WiFi...");
+    setStatus(TR(STR_WIFI_ENABLING));
     if (_staNetif)
       esp_netif_destroy(_staNetif);
     _staNetif = esp_netif_create_default_wifi_sta();
     if (!_staNetif) {
-      setStatus("Failed to create netif");
+      setStatus(TR(STR_WIFI_CREATE_NETIF_FAILED));
       _state = WifiRadioState::Off;
       return;
     }
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     if (esp_wifi_init(&cfg) != ESP_OK) {
-      setStatus("Failed to init WiFi");
+      setStatus(TR(STR_WIFI_INIT_FAILED));
       _state = WifiRadioState::Off;
       return;
     }
@@ -437,17 +439,17 @@ void PocketMageWifi::doEnable() {
     esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
                                         &PocketMageWifi::espEventHandler, this, &_ipEventHandler);
     if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK) {
-      setStatus("Failed to set mode");
+      setStatus(TR(STR_WIFI_SET_MODE_FAILED));
       _state = WifiRadioState::Off;
       return;
     }
     if (esp_wifi_start() != ESP_OK) {
-      setStatus("Failed to start WiFi");
+      setStatus(TR(STR_WIFI_START_FAILED));
       _state = WifiRadioState::Off;
       return;
     }
     _state = WifiRadioState::On;
-    setStatus("WiFi enabled");
+    setStatus(TR(STR_WIFI_ENABLED));
     publishEvent();
   }
 }
@@ -455,7 +457,7 @@ void PocketMageWifi::doEnable() {
 void PocketMageWifi::doDisable() {
   if (_state != WifiRadioState::Off && _state != WifiRadioState::TurningOff) {
     _state = WifiRadioState::TurningOff;
-    setStatus("Disabling WiFi...");
+    setStatus(TR(STR_WIFI_DISABLING));
     esp_wifi_stop();
     esp_wifi_deinit();
     if (_staNetif) {
@@ -463,7 +465,7 @@ void PocketMageWifi::doDisable() {
       _staNetif = nullptr;
     }
     _state = WifiRadioState::Off;
-    setStatus("WiFi disabled");
+    setStatus(TR(STR_WIFI_DISABLED));
     publishEvent();
   }
 }
@@ -471,7 +473,7 @@ void PocketMageWifi::doDisable() {
 void PocketMageWifi::doScan() {
   if (_state == WifiRadioState::On) {
     _state = WifiRadioState::Scanning;
-    setStatus("Scanning...");
+    setStatus(TR(STR_WIFI_SCANNING));
     wifi_scan_config_t scanConf = {};
     scanConf.ssid = nullptr;
     scanConf.bssid = nullptr;
@@ -489,7 +491,7 @@ void PocketMageWifi::doConnect() {
   xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
   if (_pendingSSID[0] == 0) {
     xSemaphoreGiveRecursive(_mutex);
-    setStatus("No SSID");
+    setStatus(TR(STR_WIFI_NO_SSID));
     return;
   }
   strncpy(ssid, _pendingSSID, sizeof(ssid));
@@ -498,7 +500,7 @@ void PocketMageWifi::doConnect() {
   password[sizeof(password) - 1] = 0;
   save = _pendingSave;
   xSemaphoreGiveRecursive(_mutex);
-  setStatus("Connecting...");
+  setStatus(TR(STR_WIFI_CONNECTING));
   wifi_config_t config = {};
   strncpy((char*)config.sta.ssid, ssid, sizeof(config.sta.ssid));
   config.sta.ssid[sizeof(config.sta.ssid) - 1] = 0;
@@ -523,7 +525,7 @@ void PocketMageWifi::doConnect() {
 
 void PocketMageWifi::doDisconnect() {
   esp_wifi_disconnect();
-  setStatus("Disconnecting...");
+  setStatus(TR(STR_WIFI_DISCONNECTING));
   _state = WifiRadioState::On;
   publishEvent();
 }

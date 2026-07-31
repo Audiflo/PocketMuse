@@ -168,7 +168,7 @@ String renderWizMini(String folder, int8_t scrollDelta) {
 
   // Empty folder
   if (cachedFiles.empty()) {
-    String msg = folder + " is empty!";
+    String msg = folder + TR(STR_FILEWIZ_EMPTY);
     OLED().oledWord(msg);
     return "";
   }
@@ -210,9 +210,9 @@ String renderWizMini(String folder, int8_t scrollDelta) {
   {
     const char* label = nullptr;
     switch (KB().getKeyboardState()) {
-      case SHIFT:   label = "SHIFT";    break;
-      case FUNC:    label = "FN";       break;
-      case FN_SHIFT: label = "FN+SHIFT"; break;
+      case SHIFT:    label = TR(STR_KB_SHIFT);    break;
+      case FUNC:     label = TR(STR_KB_FN);       break;
+      case FN_SHIFT: label = TR(STR_KB_FN_SHIFT); break;
     }
     if (label) {
       int tw = FontEngine::textWidth(DisplayTarget::OLED, label, FontStyle::Tiny);
@@ -460,10 +460,10 @@ void processKB_FILEWIZ() {
             // --- 1. RENAME FILE ---
             if (inchar == '1') { 
               KB().setKeyboardState(NORMAL);
-              String input = textPrompt("Enter new filename:");
+              String input = textPrompt(TR(STR_FILEWIZ_ENTER_NEW_NAME));
               if (input == "_RETURN_") return;
               else if (input != "_EXIT_" && input != "") {
-                OLED().oledWord("Renaming...");
+                OLED().oledWord(TR(STR_FILEWIZ_RENAMING));
                 
                 String newName = dirPath + input + extension; 
                 PM_SDAUTO().renFile(oldPath, newName);
@@ -475,9 +475,9 @@ void processKB_FILEWIZ() {
             }
             // --- 2. DELETE FILE ---
             else if (inchar == '2') { 
-              int response = boolPrompt("Delete File?");
+              int response = boolPrompt(TR(STR_FILEWIZ_DELETE_Q));
               if (response == 1) {
-                OLED().oledWord("Deleting...");
+                OLED().oledWord(TR(STR_FILEWIZ_DELETING));
                 PM_SDAUTO().delFile(oldPath);
                 
                 refreshFiles = true;
@@ -488,10 +488,10 @@ void processKB_FILEWIZ() {
             // --- 3. COPY FILE ---
             else if (inchar == '3') { 
               KB().setKeyboardState(NORMAL);
-              String input = textPrompt("Enter copy name:");
+              String input = textPrompt(TR(STR_FILEWIZ_ENTER_COPY_NAME));
               if (input == "_RETURN_") return;
               else if (input != "_EXIT_" && input != "") {
-                OLED().oledWord("Copying...");
+                OLED().oledWord(TR(STR_FILEWIZ_COPYING));
                 
                 String newName = dirPath + input + extension;
                 PM_SDAUTO().copyFile(oldPath, newName);
@@ -508,10 +508,10 @@ void processKB_FILEWIZ() {
                 size_t fSize = f.size();
                 f.close(); // Safety close
                 
-                String info = "Size: " + String(fSize) + " Bytes.";
+                String info = TR(STR_FILEWIZ_SIZE_PREFIX) + String(fSize) + TR(STR_FILEWIZ_SIZE_SUFFIX);
                 waitForKeypress(info);
               } else {
-                OLED().sysMessage("Error reading file",1500);
+                OLED().sysMessage(TR(STR_FILEWIZ_ERR_READING),1500);
               }
               KB().setKeyboardState(FUNC); 
             }
@@ -524,7 +524,7 @@ void processKB_FILEWIZ() {
       if (currentMillis - OLEDFPSMillis >= (1000/OLED_MAX_FPS)) {
         OLEDFPSMillis = currentMillis;
         if (CurrentFileWizState == WIZ1_) { // Make sure we didn't just jump back to WIZ0_
-          OLED().oledWord("Select an operation");
+          OLED().oledWord(TR(STR_FILEWIZ_SELECT_OP));
         }
       }
       break;
@@ -553,7 +553,7 @@ void einkHandler_FILEWIZ() {
           }
         }
 
-        endEinkScreen("Select a File (0-9)");
+        endEinkScreen(TR(STR_FILEWIZ_SELECT_FILE));
       }
       break;
     case WIZ1_:

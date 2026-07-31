@@ -190,7 +190,7 @@ void USB_INIT() {
   PowerSystem.setUSBControlESP();
 
   // OPEN USB FILE TRANSFER
-  OLED().oledWord("Initializing USB");
+  OLED().oledWord(TR(STR_USB_INIT));
   pocketmage::setCpuSpeed(240);
   delay(50);
 
@@ -230,7 +230,7 @@ void USB_INIT() {
   esp_err_t err = sdmmc_host_init();
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "Host init failed %s\n", esp_err_to_name(err));
-    OLED().sysMessage("Host init failed: " + String(esp_err_to_name(err)),2000);
+    OLED().sysMessage(TR(STR_USB_HOST_FAIL) + String(esp_err_to_name(err)),2000);
     cleanup();
     return;
   }
@@ -238,7 +238,7 @@ void USB_INIT() {
   err = sdmmc_host_init_slot(SDMMC_HOST_SLOT_1, &slot_config);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "Slot init failed: %s\n", esp_err_to_name(err));
-    OLED().sysMessage("Slot init failed: " + String(esp_err_to_name(err)),2000);
+    OLED().sysMessage(TR(STR_USB_SLOT_FAIL) + String(esp_err_to_name(err)),2000);
     sdmmc_host_deinit();
     cleanup();
     return;
@@ -248,7 +248,7 @@ void USB_INIT() {
   card = (sdmmc_card_t*)malloc(sizeof(sdmmc_card_t));
   if (!card) {
     ESP_LOGE(TAG, "Failed to allocate card struct\n");
-    OLED().sysMessage("Failed to allocate card struct",2000);
+    OLED().sysMessage(TR(STR_USB_CARD_STRUCT_FAIL),2000);
     sdmmc_host_deinit();
     cleanup();
     return;
@@ -257,8 +257,8 @@ void USB_INIT() {
   err = sdmmc_card_init(&host, card);
   if (err != ESP_OK) {
     ESP_LOGE(TAG, "Card init failed: %s\n", esp_err_to_name(err));
-    OLED().sysMessage("Card init failed: " + String(esp_err_to_name(err)),2000);
-    OLED().sysMessage("Please type 'sdreset' in home",2000);
+    OLED().sysMessage(TR(STR_USB_CARD_FAIL) + String(esp_err_to_name(err)),2000);
+    OLED().sysMessage(TR(STR_USB_SDRESET),2000);
     free(card);
     card = nullptr;
     sdmmc_host_deinit();
@@ -328,7 +328,7 @@ void einkHandler_USB() {
     newState = false;
     beginEinkScreen();
     display.drawBitmap(0, 0, _usb, 320, 218, GxEPD_BLACK);
-    endEinkScreen("Connect to a Computer:");
+    endEinkScreen(TR(STR_USB_CONNECT));
   }
 }
 #endif

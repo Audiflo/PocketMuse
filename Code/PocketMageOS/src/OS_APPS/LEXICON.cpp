@@ -81,7 +81,7 @@ void LEXICON_INIT() {
   pocketmage::setCpuSpeed(240);
   delay(50);
   if (!global_fs->exists("/dict/A.txt")) {
-    OLED().sysMessage("Please install dict from GitHub!",5000);
+    OLED().sysMessage(TR(STR_LEX_INSTALL_DICT),5000);
     pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     HOME_INIT();
     return;
@@ -90,7 +90,7 @@ void LEXICON_INIT() {
 }
 
 void loadDefinitions(String input) {
-  OLED().oledWord("Loading Definitions");
+  OLED().oledWord(TR(STR_LEX_LOADING));
   PM_SDAUTO().beginIO();
   pocketmage::setCpuSpeed(240);
   delay(50);
@@ -121,7 +121,7 @@ void loadDefinitions(String input) {
 
   File file = global_fs->open(filePath);
   if (!file) {
-    OLED().sysMessage("Missing Dictionary!",2000);
+    OLED().sysMessage(TR(STR_LEX_MISSING),2000);
     PM_SDAUTO().endIO();
     if (SAVE_POWER)
       pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -164,7 +164,7 @@ void loadDefinitions(String input) {
   file.close();
 
   if (defList.empty()) {
-    OLED().sysMessage("No definitions found",2000);    
+    OLED().sysMessage(TR(STR_LEX_NONE),2000);    
 
     CurrentLexState = MENU; 
     newState = true;
@@ -341,7 +341,7 @@ void einkHandler_LEXICON() {
         beginEinkScreen(true);
         display.drawBitmap(0, 0, _lex0, 320, 218, GxEPD_BLACK);
 
-        endEinkScreen("Type a Word:");
+        endEinkScreen(TR(STR_LEX_TYPE_WORD));
       }
       break;
       
@@ -371,7 +371,7 @@ void einkHandler_LEXICON() {
           cursorY += LEX_LINE_HEIGHT;
         }
 
-        endEinkScreen("Type a New Word:", EinkRefresh::ForceFull);
+        endEinkScreen(TR(STR_LEX_TYPE_NEW_WORD), EinkRefresh::ForceFull);
       }
       break;
   }

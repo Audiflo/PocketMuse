@@ -38,6 +38,7 @@ void HOME_INIT() {
 
 String commandSelect(String command) {
   String returnText = "";
+  command = I18n::normalizeCommand(command);
   command.toLowerCase();
 
   // OPEN IN FILE WIZARD
@@ -83,10 +84,10 @@ String commandSelect(String command) {
     String numStr = command.substring(6);
     int sides = numStr.toInt();
     if (sides < 1) {
-      OLED().sysMessage("Invalid Number",1000);
+      OLED().sysMessage(TR(STR_HOME_INVALID_NUMBER),1000);
     } 
     else if (sides == 1) {
-      OLED().sysMessage("D1: you rolled a 1, duh!",2000);
+      OLED().sysMessage(TR(STR_HOME_D1_SILLY),2000);
     }
     else {
       int roll = (esp_random() % sides) + 1;
@@ -111,7 +112,7 @@ String commandSelect(String command) {
     prefs.begin("PocketMage", false);
     prefs.putBool("SD_SPI_CMPT", false);
     prefs.end();
-    returnText = "SD compatibility mode disabled";
+    returnText = TR(STR_HOME_SD_COMPAT_OFF);
   }
   /////////////////////////////
   else if (command == "sleep") {
@@ -121,7 +122,7 @@ String commandSelect(String command) {
   /////////////////////////////
   else if (command == "home") {
     if (CurrentAppState == HOME) {
-      returnText = "You're home, silly!";
+      returnText = TR(STR_HOME_WELCOME);
     }
     else {
       HOME_INIT();
@@ -170,32 +171,32 @@ String commandSelect(String command) {
     COMM_INIT();
   }
   else if (command == "version" || command == "ver") {
-    OLED().sysMessage("PMOS: " + String(OS_VERSION_STR),2000);   
+    OLED().sysMessage(TR(STR_HOME_PMOS_PREFIX) + String(OS_VERSION_STR),2000);   
   }
   /////////////////////////////
   else if (command == "i farted") {
-    returnText = "That smells";
+    returnText = TR(STR_HOME_SMELLS);
   } 
   else if (command == "poop") {
-    returnText = "Yuck";
+    returnText = TR(STR_HOME_YUCK);
   } 
   else if (command == "hello") {
-    returnText = "Hey, you!";
+    returnText = TR(STR_HOME_HEY);
   } 
   else if (command == "hi") {
-    returnText = "What's up?";
+    returnText = TR(STR_HOME_WHATS_UP);
   } 
   else if (command == "i love you") {
-    returnText = "luv u 2 <3";
+    returnText = TR(STR_HOME_LOVE);
   } 
   else if (command == "what can you do") {
-    returnText = "idk man";
+    returnText = TR(STR_HOME_IDK);
   } 
   else if (command == "alexa") {
     returnText = "...";
   } 
   else if (command == "crash") {
-    OLED().oledWord("Crashing CPU...");
+    OLED().oledWord(TR(STR_HOME_CRASHING));
     // Force an ALU math exception
     volatile int a = 10;
     volatile int b = 0;
@@ -230,8 +231,8 @@ void drawHome() {
     if (row == 2) yPos += row2Shift;
 
     display.drawBitmap(xPos, yPos, appIcons[i], kIconCellSize, kIconCellSize, GxEPD_BLACK);
-    int w = FontEngine::textWidth(DisplayTarget::EINK, appStateNames[i], FontStyle::Body);
-    FontEngine::drawText(DisplayTarget::EINK, xPos + (kIconCellSize / 2) - (w / 2), yPos + kIconCellSize + kIconNameGap, appStateNames[i], FontStyle::Body);
+    int w = FontEngine::textWidth(DisplayTarget::EINK, I18n::appName(i), FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, xPos + (kIconCellSize / 2) - (w / 2), yPos + kIconCellSize + kIconNameGap, I18n::appName(i), FontStyle::Body);
   }
 
   // Draw sideload app rounded rect
@@ -245,7 +246,7 @@ void drawHome() {
   loadAndDrawAppIcon(260, 150, 4, true, 7);  // OTA4
 
   // Draw status bar
-  EINK().drawStatusBar("Type a Command:");
+  EINK().drawStatusBar(TR(STR_HOME_TYPE_CMD));
 }
 
 void drawThickLine(int x0, int y0, int x1, int y1, int thickness) {

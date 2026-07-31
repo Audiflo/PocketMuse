@@ -482,7 +482,7 @@ void oledScrollFrame() {
     }
   } else {
     String lineNumStr = String(count - CurrentFrameState->scroll) + "/" + String(count);
-    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, "Lines:", FontStyle::Status);
+    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, TR(STR_FRAMES_LINES), FontStyle::Status);
     FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Status);
   }
   // send buffer

@@ -84,7 +84,7 @@ void updateTasksFile() {
     }
   } else {
     ESP_LOGE(TAG, "Failed to write to temporary tasks file.");
-    OLED().sysMessage("SAVE FAILED!",1000);
+    OLED().sysMessage(TR(STR_SAVE_FAILED),1000);
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -171,7 +171,7 @@ void deleteTask(int index) {
 String convertDateFormat(String yyyymmdd) {
   if (yyyymmdd.length() != 8) {
     ESP_LOGE(TAG, "Invalid Date: %s", yyyymmdd.c_str());
-    return "Invalid";
+    return TR(STR_INVALID);
   }
 
   String year = yyyymmdd.substring(2, 4);  // Get last two digits of the year
@@ -298,7 +298,7 @@ void processKB_TASKS() {
       if (newTaskState == 0) {
         // Step 1: Text entry for task name
         KB().setKeyboardState(NORMAL);
-        input = textPrompt("Enter Task Name:");
+        input = textPrompt(TR(STR_TASKS_ENTER_NAME));
         if (input == "_RETURN_") return;
         else if (input != "_EXIT_") {
           newTaskName = input;
@@ -317,7 +317,7 @@ void processKB_TASKS() {
 
             // ADD NEW TASK
             addTask(newTaskName, newTaskDueDate, "0", "0");
-            OLED().sysMessage("New Task Added",1000);
+            OLED().sysMessage(TR(STR_TASKS_ADDED),1000);
         }
 
         // RETURN TO MAIN MENU
@@ -352,10 +352,10 @@ void processKB_TASKS() {
             if (selectedTask >= 0 && selectedTask < tasks.size()) {
                 if (inchar == '1') {      // RENAME TASK
                   KB().setKeyboardState(NORMAL);
-                  input = textPrompt("Enter a new task name:");
+                  input = textPrompt(TR(STR_TASKS_ENTER_NEW_NAME));
                   if (input == "_RETURN_") return;
                   else if (input != "_EXIT_") {
-                    OLED().oledWord("updating task...");
+                    OLED().oledWord(TR(STR_TASKS_UPDATING));
                     tasks[selectedTask][0] = input;
                     updateTasksFile();
 
@@ -371,7 +371,7 @@ void processKB_TASKS() {
                   String uiDate = datePrompt(tasks[selectedTask][1]);
                   
                   if (uiDate != "_EXIT_" && uiDate.length() == 10) {
-                    OLED().oledWord("updating task...");
+                    OLED().oledWord(TR(STR_TASKS_UPDATING));
 
                     // Convert "DD/MM/YYYY" to internal "YYYYMMDD"
                     newTaskDueDate = uiDate.substring(6, 10) + uiDate.substring(3, 5) + uiDate.substring(0, 2);
@@ -389,9 +389,9 @@ void processKB_TASKS() {
                   }
                 }
                 else if (inchar == '3') { // DELETE TASK
-                  int response = boolPrompt("Delete Task?");
+                  int response = boolPrompt(TR(STR_TASKS_DELETE_Q));
                   if (response == 1) {
-                    OLED().oledWord("deleting...");
+                    OLED().oledWord(TR(STR_TASKS_DELETING));
                     deleteTask(selectedTask);
                     updateTasksFile();
 
@@ -403,7 +403,7 @@ void processKB_TASKS() {
                   }
                 }
                 else if (inchar == '4') { // COPY TASK
-                  OLED().oledWord("copying...");
+                  OLED().oledWord(TR(STR_TASKS_COPYING));
                   addTask(tasks[selectedTask][0]+"_COPY", tasks[selectedTask][1], "0", "0");
 
                   CurrentTasksState = TASKS0;
@@ -441,7 +441,7 @@ void einkHandler_TASKS() {
 
         if (!tasks.empty()) {
           ESP_LOGV(TAG, "Printing Tasks");
-          EINK().drawStatusBar("Select (1-0),New Task (N)");
+          EINK().drawStatusBar(TR(STR_TASKS_SELECT_HINT));
 
           int maxScroll = tasks.size() > MAX_FILES ? tasks.size() - MAX_FILES : 0;
           if (taskScrollIndex > maxScroll) taskScrollIndex = maxScroll;
@@ -463,7 +463,7 @@ void einkHandler_TASKS() {
 
           drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, TASKS_SCROLL_X, TASKS_SCROLL_Y, TASKS_SCROLL_H, TASKS_SCROLL_W);
         }
-        else EINK().drawStatusBar("No Tasks! Add New Task (N)");
+        else EINK().drawStatusBar(TR(STR_TASKS_NO_TASKS));
 
         EINK().refresh();
       }
@@ -503,10 +503,10 @@ void einkHandler_TASKS() {
         
         switch (newTaskState) {
           case 0:
-            EINK().drawStatusBar("Enter Task Name:");
+            EINK().drawStatusBar(TR(STR_TASKS_ENTER_NAME));
             break;
           case 1:
-            EINK().drawStatusBar("Set Due Date on OLED");
+            EINK().drawStatusBar(TR(STR_TASKS_SET_DUE));
             break;
         }
 

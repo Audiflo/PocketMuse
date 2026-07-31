@@ -189,7 +189,7 @@ void deepSleep(bool alternateScreenSaver) {
 bool setRebootFlagOTA() {
   if (OTA_APP) {
     ESP_LOGE(TAG, "Entering OTA reboot mode");
-    OLED().oledWord("WARNING: Rebooting to PocketMage OS!");
+    OLED().oledWord(TR(STR_SYS_REBOOT_WARNING));
     PWR_BTN_event = false;
     unsigned long i = millis();
     unsigned long j = millis();
@@ -202,7 +202,7 @@ bool setRebootFlagOTA() {
       }
       j = millis();
       if (digitalRead(KB_IRQ) == 0) {
-        OLED().oledWord("Good Save!");
+        OLED().oledWord(TR(STR_GOOD_SAVE));
         delay(500);
         CLOCK().setPrevTimeMillis(millis());
         keypad.flush();
@@ -255,7 +255,7 @@ void hardReset(void* parameter) {
 
     // Hold power button for 3s to return home
     if ((millis() - heldSince) > 3000) {
-      OLED().sysMessage("Process Interrupted",1000);
+      OLED().sysMessage(TR(STR_SYS_PROCESS_INTERRUPTED),1000);
 
 #if !OTA_APP_FLAG
       resetRequested = true;

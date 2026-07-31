@@ -665,8 +665,8 @@ void drawProgressBar(uint8_t progress) {
 
   // Show text
   String progressText = "";
-  if (progress < 52) progressText = "Extracting";
-  else               progressText = "Installing";
+  if (progress < 52) progressText = TR(STR_APPLOADER_EXTRACTING);
+  else               progressText = TR(STR_APPLOADER_INSTALLING);
   int pw = FontEngine::textWidth(DisplayTarget::OLED, progressText, FontStyle::MonoBold);
   FontEngine::drawText(DisplayTarget::OLED,
                (u8g2.getDisplayWidth() - pw)/2,
@@ -732,7 +732,7 @@ void processKB_APPLOADER() {
       currentMillis = millis();
       if (currentMillis - OLEDFPSMillis >= (1000/OLED_MAX_FPS)) {
         OLEDFPSMillis = currentMillis;
-        OLED().oledWord("Choose slot: (A)(B)(C)(D)");
+        OLED().oledWord(TR(STR_APPLOADER_CHOOSE_SLOT));
       }
       break;
 
@@ -771,7 +771,7 @@ void processKB_APPLOADER() {
               }
             }
 
-            OLED().sysMessage("App removed", 2000);
+            OLED().sysMessage(TR(STR_APPLOADER_APP_REMOVED), 2000);
 
             newState = true;
             CurrentAppLoaderState = MENU;
@@ -783,7 +783,7 @@ void processKB_APPLOADER() {
       currentMillis = millis();
       if (currentMillis - OLEDFPSMillis >= (1000/OLED_MAX_FPS)) {
         OLEDFPSMillis = currentMillis;
-        OLED().oledWord("(S)wap app or (D)elete app");
+        OLED().oledWord(TR(STR_APPLOADER_SWAP_DELETE));
       }
       break;
 
@@ -800,7 +800,7 @@ void processKB_APPLOADER() {
       else if (outPath != "") {
         // Reject MacOS metadata files disguised as tar files
         if (outPath.indexOf("/._") != -1) {
-            OLED().sysMessage("Cannot install MacOS metadata files!", 2000);
+            OLED().sysMessage(TR(STR_APPLOADER_MACOS_META), 2000);
             CurrentAppLoaderState = MENU;
             newState = true; // Force background redraw just in case
             break;
@@ -820,7 +820,7 @@ void processKB_APPLOADER() {
           installAppTarToOtaAsync(relName.c_str(), selectedSlot);
           CurrentAppLoaderState = INSTALLING;
         } else {
-          OLED().sysMessage("Not a .tar file!", 2000);
+          OLED().sysMessage(TR(STR_APPLOADER_NOT_TAR), 2000);
           CurrentAppLoaderState = MENU;
           newState = true;
         }
@@ -834,10 +834,10 @@ void processKB_APPLOADER() {
       } else {
         vTaskDelay(pdMS_TO_TICKS(500));
         if (g_installFailed) {
-          OLED().sysMessage("Install Failed!", 2000);
+          OLED().sysMessage(TR(STR_APPLOADER_INSTALL_FAILED), 2000);
         } 
         else {
-          OLED().sysMessage("Install Complete!", 2000);
+          OLED().sysMessage(TR(STR_APPLOADER_INSTALL_COMPLETE), 2000);
         }
         newState = true;
         CurrentAppLoaderState = MENU;
@@ -859,7 +859,7 @@ void einkHandler_APPLOADER() {
         loadAndDrawAppIcon(174, 146, 3, true, 7);  // OTA3
         loadAndDrawAppIcon(238, 146, 4, true, 7);  // OTA4
 
-        endEinkScreen("Type Letter A-D:", EinkRefresh::Normal);
+        endEinkScreen(TR(STR_APPLOADER_TYPE_LETTER), EinkRefresh::Normal);
       }
       break;
   }

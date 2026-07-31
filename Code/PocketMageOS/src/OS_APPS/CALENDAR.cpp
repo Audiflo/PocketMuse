@@ -189,7 +189,7 @@ void updateEventsFile() {
       PM_SDAUTO().renameFile(*global_fs, tempFile, eventsFile);
     }
   } else {
-    OLED().sysMessage("SAVE FAILED!",1000);
+    OLED().sysMessage(TR(STR_SAVE_FAILED),1000);
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -261,21 +261,7 @@ String intToYYYYMMDD(int year_, int month_, int date_) {
 }
 
 String getMonthName(int month) {
-  switch(month) {
-    case 1: return "Jan";
-    case 2: return "Feb";
-    case 3: return "Mar";
-    case 4: return "Apr";
-    case 5: return "May";
-    case 6: return "Jun";
-    case 7: return "Jul";
-    case 8: return "Aug";
-    case 9: return "Sep";
-    case 10: return "Oct";
-    case 11: return "Nov";
-    case 12: return "Dec";
-    default: return "ERR";
-  }
+  return I18n::monthName(month);
 }
 
 int getDayOfWeek(int year, int month, int day) {
@@ -433,7 +419,7 @@ String repeatPrompt(String startDateStr) {
       mNameStr[0] = toupper(mNameStr[0]);
       
       dateStr = mNameStr + " " + String(day);
-      ordStr = String(ordinal) + getOrdinalSuffix(ordinal) + " " + dowNames[dow] + " in " + mNameStr;
+      ordStr = String(ordinal) + getOrdinalSuffix(ordinal) + " " + dowNames[dow] + TR(STR_CAL_MONTHLY_IN) + mNameStr;
     }
 
     while(true) {
@@ -525,7 +511,7 @@ void commandSelectMonth(String command) {
     int date = command.substring(6, 8).toInt();
 
     if (year < 1970 || year > 2200 || month < 1 || month > 12 || date < 1 || date > daysInMonth(month, year)) {
-      OLED().sysMessage("Invalid",500);
+      OLED().sysMessage(TR(STR_INVALID),500);
       return;
     }
 
@@ -552,7 +538,7 @@ void commandSelectMonth(String command) {
       if (prefix == monthNames[i]) {
         int yearInt = stringToInt(yearPart);
         if (yearInt == -1 || yearInt < 1970 || yearInt > 2200) {
-          OLED().sysMessage("Invalid",500);
+          OLED().sysMessage(TR(STR_INVALID),500);
           return;
         }
 
@@ -569,7 +555,7 @@ void commandSelectMonth(String command) {
         return;
       }
     }
-    OLED().sysMessage("Invalid",500);
+    OLED().sysMessage(TR(STR_INVALID),500);
     return;
   }
 
@@ -578,7 +564,7 @@ void commandSelectMonth(String command) {
     int intDay = stringToPositiveInt(command);
     DateTime now = CLOCK().nowDT();
     if (intDay == -1 || intDay > daysInMonth(currentMonth, currentYear)) {
-      OLED().sysMessage("Invalid",500);
+      OLED().sysMessage(TR(STR_INVALID),500);
       return;
     }
     else {
@@ -943,7 +929,7 @@ void drawCalendarMonth(int monthOffset) {
   currentYear = year;
 
   // Draw Background
-  EINK().drawStatusBar(getMonthName(currentMonth) + " " + String(currentYear)+ " | Type a Date:");
+  EINK().drawStatusBar(getMonthName(currentMonth) + " " + String(currentYear)+ TR(STR_CAL_TYPE_A_DATE));
   display.drawBitmap(0, 0, calendar_allArray[1], 320, 218, GxEPD_BLACK);
 
   // Step 2: Day of the week for the 1st of the month (0 = Sun, 6 = Sat)
@@ -1010,7 +996,7 @@ void drawCalendarMonth(int monthOffset) {
 }
 
 void drawCalendarWeek(int weekOffset) {
-  EINK().drawStatusBar("Type Sun, etc. or (N)ew");
+  EINK().drawStatusBar(TR(STR_CAL_WEEK_HINT));
   display.drawBitmap(0, 0, calendar_allArray[0], 320, 218, GxEPD_BLACK);
 
   // Get current date
@@ -1194,7 +1180,7 @@ void processKB_CALENDAR() {
     case NEW_EVENT:
       if (newEventState == 0) {
         KB().setKeyboardState(NORMAL);
-        String input = textPrompt("Enter Event Name:");
+        String input = textPrompt(TR(STR_CAL_EVENT_NAME));
         if (input == "_RETURN_") return;
         else if (input != "_EXIT_") { 
           newEventName = input; 
@@ -1244,12 +1230,12 @@ void processKB_CALENDAR() {
       }
       else if (newEventState == 5) {
         KB().setKeyboardState(NORMAL);
-        String note = textPrompt("Attach Note:");
+        String note = textPrompt(TR(STR_CAL_ATTACH_NOTE));
         if (note == "_RETURN_") return;
         else if (note != "_EXIT_") {
           newEventNote = note;
           addEvent(newEventName, newEventStartDate, newEventStartTime, newEventDuration, newEventRepeat, newEventNote);
-          OLED().sysMessage("Event Created!",1000);
+          OLED().sysMessage(TR(STR_CAL_EVENT_CREATED),1000);
           CurrentCalendarState = MONTH;
           newState = true;
         } else {
@@ -1272,7 +1258,7 @@ void processKB_CALENDAR() {
             newState = true;
           }  
           else if (inchar == '1') {
-            String input = textPrompt("Edit Event Name:");
+            String input = textPrompt(TR(STR_CAL_EDIT_NAME));
             if (input == "_RETURN_") return;
             else if (input != "_EXIT_") { newEventName = input; newState = true; }
           }
@@ -1309,15 +1295,15 @@ void processKB_CALENDAR() {
             }
           }
           else if (inchar == '6') {
-            String note = textPrompt("Edit Note:");
+            String note = textPrompt(TR(STR_CAL_EDIT_NOTE));
             if (note == "_RETURN_") return;
             else if (note != "_EXIT_") { newEventNote = note; newState = true; }
           }
           else if (inchar == '$') { // 'd' in FUNC layer
-            if (boolPrompt("Delete Event?") == 1) {
+            if (boolPrompt(TR(STR_CAL_DELETE_Q)) == 1) {
               deleteEventByIndex(editingEventIndex);
               updateEventsFile();
-              OLED().sysMessage("Event Deleted",1000);
+              OLED().sysMessage(TR(STR_CAL_EVENT_DELETED),1000);
               CurrentCalendarState = MONTH;
               newState = true;
             }
@@ -1325,7 +1311,7 @@ void processKB_CALENDAR() {
           else if (inchar == '!') { // 's' in FUNC layer
             updateEventByIndex(editingEventIndex);
             updateEventsFile();
-            OLED().sysMessage("Event Saved",1000);
+            OLED().sysMessage(TR(STR_CAL_EVENT_SAVED),1000);
             CurrentCalendarState = MONTH;
             newState = true;
           }
@@ -1337,7 +1323,7 @@ void processKB_CALENDAR() {
         OLEDFPSMillis = currentMillis;
         // Make sure we only draw this if we didn't just exit the view state!
         if (CurrentCalendarState == VIEW_EVENT) {
-            OLED().oledLine("", 0, false, "Type 1-6,(D)el, or (S)ave");
+            OLED().oledLine("", 0, false, TR(STR_CAL_VIEW_HINT));
         }
       }
       break;
@@ -1480,12 +1466,12 @@ void einkHandler_CALENDAR() {
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
 
         switch (newEventState) {
-          case 0: EINK().drawStatusBar("Enter Event Name on OLED"); break;
-          case 1: EINK().drawStatusBar("Set Start Date on OLED"); break;
-          case 2: EINK().drawStatusBar("Set Start Time on OLED"); break;
-          case 3: EINK().drawStatusBar("Set Duration on OLED"); break;
-          case 4: EINK().drawStatusBar("Set Repeat Code on OLED"); break;
-          case 5: EINK().drawStatusBar("Attach Note on OLED"); break;
+          case 0: EINK().drawStatusBar(TR(STR_CAL_STEP_NAME)); break;
+          case 1: EINK().drawStatusBar(TR(STR_CAL_STEP_START_DATE)); break;
+          case 2: EINK().drawStatusBar(TR(STR_CAL_STEP_START_TIME)); break;
+          case 3: EINK().drawStatusBar(TR(STR_CAL_STEP_DURATION)); break;
+          case 4: EINK().drawStatusBar(TR(STR_CAL_STEP_REPEAT)); break;
+          case 5: EINK().drawStatusBar(TR(STR_CAL_STEP_NOTE)); break;
         }
 
         #if POCKETMAGE_HW_VERSION != 2
@@ -1500,7 +1486,7 @@ void einkHandler_CALENDAR() {
         newState = false;
         EINK().resetDisplay();
 
-        EINK().drawStatusBar("Type 1-6,(D)el, or (S)ave");
+        EINK().drawStatusBar(TR(STR_CAL_VIEW_HINT));
         display.drawBitmap(0, 0, calendar_allArray[3], 320, 218, GxEPD_BLACK);
 
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (0 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventName, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
@@ -1528,7 +1514,7 @@ void einkHandler_CALENDAR() {
         newState = false;
         EINK().resetDisplay();
 
-        EINK().drawStatusBar("Events 1-7 or (N)ew");
+        EINK().drawStatusBar(TR(STR_CAL_DAY_HINT));
         display.drawBitmap(0, 0, calendar_allArray[CurrentCalendarState], 320, 218, GxEPD_BLACK);
 
         u8g2f.setForegroundColor(GxEPD_BLACK);
@@ -1542,7 +1528,7 @@ void einkHandler_CALENDAR() {
         
         for (int j = 0; j < eventCount; j++) {
           String name       = truncateWithEllipsis(dayEvents[j][0], CAL_DAY_TEXT_W, FontStyle::Tiny);
-          String bottomInfo = truncateWithEllipsis("Starts: " + dayEvents[j][2] + ", Dur: " + dayEvents[j][3] + ", Rep: " + dayEvents[j][4], CAL_DAY_TEXT_W, FontStyle::Tiny);
+          String bottomInfo = truncateWithEllipsis(TR(STR_CAL_STARTS) + dayEvents[j][2] + TR(STR_CAL_DUR) + dayEvents[j][3] + TR(STR_CAL_REP) + dayEvents[j][4], CAL_DAY_TEXT_W, FontStyle::Tiny);
 
           FontEngine::drawText(DisplayTarget::EINK, CAL_DAY_TEXT_X, CAL_DAY_NAME_Y + (j * CAL_DAY_ROW_H), name, FontStyle::Tiny);
           FontEngine::drawText(DisplayTarget::EINK, CAL_DAY_TEXT_X, CAL_DAY_INFO_Y + (j * CAL_DAY_ROW_H), bottomInfo, FontStyle::Tiny);

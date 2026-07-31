@@ -272,17 +272,17 @@ void setupSD() {
         ESP_LOGE(TAG, "MOUNT FAILED");
         if (startedSD) {
             OLED().oledWord(
-                String("SD Not Detected! [") +
+                String(TR(STR_SD_NOT_DETECTED)) + " [" +
                 (cardType == CARD_MMC  ? "MMC"  :
                   cardType == CARD_SD   ? "SD"   :
                   cardType == CARD_SDHC ? "SDHC" :
-                                          "NONE") + "]",
+                                          "NONE") + TR(STR_SD_BRACKET_CLOSE),
                 false, false
             );
         } else {
-          OLED().oledWord("SD Not Detected! [START_FAIL]", false, false);
+          OLED().oledWord(TR(STR_SD_NOT_DETECTED_START_FAIL), false, false);
           delay(3000);
-          OLED().oledWord("Entering Compatibility Mode", false, false);
+          OLED().oledWord(TR(STR_SD_COMPAT_MODE), false, false);
           prefs.begin("PocketMage", false);
           prefs.putBool("SD_SPI_CMPT", true);
           prefs.end();
@@ -292,11 +292,11 @@ void setupSD() {
 
         delay(5000);
         if (ALLOW_NO_MICROSD) {
-          OLED().sysMessage("All Work Will be Lost!",5000);
+          OLED().sysMessage(TR(STR_SD_ALL_WORK_LOST),5000);
           PM_SD().setNoSD(true);
           return;
         } else {
-          OLED().sysMessage("Insert SD Card and Reboot!",5000);
+          OLED().sysMessage(TR(STR_SD_INSERT_REBOOT),5000);
           OLED().setPowerSave(1);
           BZ().playJingle(Jingles::Shutdown);
           esp_deep_sleep_start();
@@ -320,16 +320,16 @@ void setupSD() {
       pinMode(hspi->pinSS(), OUTPUT);
       if (!SD.begin(SD_CS, *hspi, 40000000)) {
           ESP_LOGE(TAG, "SPI SD Mount Failed");
-          OLED().oledWord("SPI SD Not Detected!", false, false);
+          OLED().oledWord(TR(STR_SD_SPI_NOT_DETECTED), false, false);
           delay(2000);
 
           if (ALLOW_NO_MICROSD) {
-              OLED().oledWord("All Work Will Be Lost!", false, false);
+              OLED().oledWord(TR(STR_SD_ALL_WORK_LOST), false, false);
               delay(5000);
               PM_SD().setNoSD(true);
               return;
           } else {
-              OLED().oledWord("Compatibility Mode Failed. Retrying...", false, false);
+              OLED().oledWord(TR(STR_SD_COMPAT_FAILED), false, false);
               prefs.begin("PocketMage", false);
               prefs.putBool("SD_SPI_CMPT", false);
               prefs.end();
@@ -340,7 +340,7 @@ void setupSD() {
               return;
           }
       }
-      OLED().oledWord("SD Started In Compatibility Mode", false, false);
+      OLED().oledWord(TR(STR_SD_COMPAT_STARTED), false, false);
 
       provisionFilesystem();
   }
@@ -351,7 +351,7 @@ void setupSD() {
 void PocketmageSD::saveFile() {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
   if (noSD_) {
-    OLED().sysMessage("SAVE FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_SAVE_FAILED),5000);
     return;
   }
   beginIO();
@@ -388,7 +388,7 @@ void PocketmageSD::writeMetadata(const String& path) {
 
   File file = global_fs->open(path);
   if (!file || file.isDirectory()) {
-    OLED().sysMessage("META WRITE ERR",1000);
+    OLED().sysMessage(TR(STR_SD_META_WRITE_ERR),1000);
     ESP_LOGE(TAG, "Invalid file for metadata: %s", path.c_str());
     return;
   }
@@ -449,7 +449,7 @@ void PocketmageSD::writeMetadata(const String& path) {
 void PocketmageSD::loadFile(bool showOLED) {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
   if (noSD_) {
-    OLED().sysMessage("LOAD FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_LOAD_FAILED),5000);
     return;
   }
   beginIO();
@@ -460,7 +460,7 @@ void PocketmageSD::loadFile(bool showOLED) {
 
   keypad.disableInterrupts();
   if (showOLED)
-    OLED().oledWord("Loading File");
+    OLED().oledWord(TR(STR_SD_LOADING_FILE));
   if (!editingFile_.startsWith("/"))
     editingFile_ = "/" + editingFile_;
   String textToLoad = readFileToString(fs, editingFile_.c_str());
@@ -469,7 +469,7 @@ void PocketmageSD::loadFile(bool showOLED) {
   stringToVector(textToLoad);
   keypad.enableInterrupts();
   if (showOLED) {
-    OLED().oledWord("File Loaded");
+    OLED().oledWord(TR(STR_SD_FILE_LOADED));
     delay(200);
   }
   if (SAVE_POWER)
@@ -480,7 +480,7 @@ void PocketmageSD::loadFile(bool showOLED) {
 void PocketmageSD::delFile(String fileName) {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
   if (noSD_) {
-    OLED().sysMessage("DELETE FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_DELETE_FAILED),5000);
     return;
   }
   beginIO();
@@ -550,7 +550,7 @@ void PocketmageSD::deleteMetadata(String path) {
 void PocketmageSD::renFile(String oldFile, String newFile) {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
   if (noSD_) {
-    OLED().sysMessage("RENAME FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_RENAME_FAILED),5000);
     return;
   }
   beginIO();
@@ -630,7 +630,7 @@ void PocketmageSD::renMetadata(String oldPath, String newPath) {
 void PocketmageSD::copyFile(String oldFile, String newFile) {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
   if (noSD_) {
-    OLED().sysMessage("COPY FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_COPY_FAILED),5000);
     return;
   }
   beginIO();
@@ -638,14 +638,14 @@ void PocketmageSD::copyFile(String oldFile, String newFile) {
   delay(50);
 
   keypad.disableInterrupts();
-  OLED().oledWord("Loading File");
+  OLED().oledWord(TR(STR_SD_LOADING_FILE));
   if (!oldFile.startsWith("/"))
     oldFile = "/" + oldFile;
   if (!newFile.startsWith("/"))
     newFile = "/" + newFile;
   String textToLoad = readFileToString(fs, oldFile.c_str());
   writeFile(fs, newFile.c_str(), textToLoad.c_str());
-  OLED().oledWord("Saved: " + newFile);
+  OLED().oledWord(String(TR(STR_SAVED_PREFIX)) + newFile);
 
   writeMetadata(newFile);
 
@@ -660,7 +660,7 @@ void PocketmageSD::copyFile(String oldFile, String newFile) {
 void PocketmageSD::appendToFile(String path, String inText) {
   fs::FS& fs = (mode_ == SDMMC) ? static_cast<fs::FS&>(SD_MMC) : static_cast<fs::FS&>(SD);
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   beginIO();
@@ -683,7 +683,7 @@ void PocketmageSD::appendToFile(String path, String inText) {
 
 void PocketmageSD::listDir(fs::FS &fs, const char *dirname) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   pocketmage::setCpuSpeed(240);
@@ -735,7 +735,7 @@ void PocketmageSD::listDir(fs::FS &fs, const char *dirname) {
 
 void PocketmageSD::readFile(fs::FS &fs, const char *path) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   pocketmage::setCpuSpeed(240);
@@ -758,7 +758,7 @@ void PocketmageSD::readFile(fs::FS &fs, const char *path) {
 
 String PocketmageSD::readFileToString(fs::FS &fs, const char *path) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return "";
   }
   pocketmage::setCpuSpeed(240);
@@ -772,7 +772,7 @@ String PocketmageSD::readFileToString(fs::FS &fs, const char *path) {
   if (!file || file.isDirectory()) {
     noTimeout = prevTimeout;
     ESP_LOGE(tag, "Failed to open file for reading: %s", path);
-    OLED().sysMessage("Load Failed",500);
+    OLED().sysMessage(TR(STR_SD_LOAD_FAILED_SHORT),500);
     return "";
   }
 
@@ -787,7 +787,7 @@ String PocketmageSD::readFileToString(fs::FS &fs, const char *path) {
 
 void PocketmageSD::writeFile(fs::FS &fs, const char *path, const char *message) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   pocketmage::setCpuSpeed(240);
@@ -814,7 +814,7 @@ void PocketmageSD::writeFile(fs::FS &fs, const char *path, const char *message) 
 
 void PocketmageSD::appendFile(fs::FS &fs, const char *path, const char *message) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   pocketmage::setCpuSpeed(240);
@@ -841,7 +841,7 @@ void PocketmageSD::appendFile(fs::FS &fs, const char *path, const char *message)
 
 void PocketmageSD::renameFile(fs::FS &fs, const char *path1, const char *path2) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   pocketmage::setCpuSpeed(240);
@@ -861,7 +861,7 @@ void PocketmageSD::renameFile(fs::FS &fs, const char *path1, const char *path2) 
 
 void PocketmageSD::deleteFile(fs::FS &fs, const char *path) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return;
   }
   pocketmage::setCpuSpeed(240);
@@ -880,7 +880,7 @@ void PocketmageSD::deleteFile(fs::FS &fs, const char *path) {
 
 bool PocketmageSD::readBinaryFile(const char* path, uint8_t* buf, size_t len) {
   if (noSD_) {
-    OLED().sysMessage("OP FAILED - No SD!",5000);
+    OLED().sysMessage(TR(STR_SD_OP_FAILED),5000);
     return false;
   }
 

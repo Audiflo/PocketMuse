@@ -37,7 +37,6 @@ enum KBState { NORMAL, SHIFT, FUNC, FN_SHIFT };    // Keyboard state
 
 // ===================== APP STATES =====================
 enum AppState { HOME, TXT, FILEWIZ, USB_APP, COMM, SETTINGS, TASKS, CALENDAR, JOURNAL, LEXICON, APPLOADER, TERMINAL };
-extern const String appStateNames[];            // App state names
 extern const unsigned char *appIcons[11];       // App icons
 extern AppState CurrentAppState;                // Current app state
 

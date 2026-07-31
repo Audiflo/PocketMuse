@@ -50,7 +50,7 @@ void drawJMENU() {
 
   // Display background
   u8g2f.setForegroundColor(GxEPD_BLACK);
-  EINK().drawStatusBar("Choose (D)ate or (T)oday");
+  EINK().drawStatusBar(TR(STR_JOURNAL_CHOOSE));
   display.drawBitmap(0, 0, _journal, 320, 218, GxEPD_BLACK);
 
   // Update current progress graph

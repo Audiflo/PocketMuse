@@ -689,7 +689,7 @@ void IRAM_ATTR KB_irq_handler() { KB().setTCA8418Event(); }
 void setupKB(int KB_irq_pin) {
   if (!keypad.begin(TCA8418_DEFAULT_ADDR, &Wire)) {
     ESP_LOGE(TAG, "Error Initializing the Keyboard");
-    OLED().sysMessage("Keyboard INIT Failed", 1000);
+    OLED().sysMessage(TR(STR_KB_INIT_FAILED), 1000);
     while (1);
   }
   keypad.matrix(4, 10);
@@ -870,7 +870,7 @@ char PocketmageKB::updateKeypress() {
                 u8g2.setDrawColor(0);
                 u8g2.drawBox(u8g2.getDisplayWidth()-FontEngine::textWidth(DisplayTarget::OLED, "XXXX/XX/XXXX", FontStyle::Tiny), u8g2.getDisplayHeight()- 8, FontEngine::textWidth(DisplayTarget::OLED, "XXXX/XX/XXXX", FontStyle::Tiny), 8);
                 u8g2.setDrawColor(1);
-                FontEngine::drawText(DisplayTarget::OLED, u8g2.getDisplayWidth()-FontEngine::textWidth(DisplayTarget::OLED, "SPECIAL", FontStyle::Tiny), u8g2.getDisplayHeight(), "SPECIAL", FontStyle::Tiny);
+                FontEngine::drawText(DisplayTarget::OLED, u8g2.getDisplayWidth()-FontEngine::textWidth(DisplayTarget::OLED, TR(STR_KB_SPECIAL), FontStyle::Tiny), u8g2.getDisplayHeight(), TR(STR_KB_SPECIAL), FontStyle::Tiny);
                 u8g2.sendBuffer();
                 uiDrawn = true;
               }
@@ -921,7 +921,7 @@ char PocketmageKB::updateKeypress() {
                         }
                     }
                     else if (CurrentAppState == USB_APP) {
-                      OLED().sysMessage("Please close USB connection",2000);
+                      OLED().sysMessage(TR(STR_KB_USB_CLOSE),2000);
                       if (shift_oneshot) { shift_oneshot = false; sync_and_update_state(); }
                       return 0;
                     }
@@ -964,7 +964,6 @@ char PocketmageKB::updateKeypress() {
                   
                   // App Switcher Arrays
                   static const char* cyc_appSwitch[] = {" ", "N", "F", "U", "M", "S", "T", "C", "J", "D", "P", "L"};
-                  static const char* appSwitchNames[] = {"cancel", "txt", "filewiz", "USB", "chat", "settings", "tasks", "calendar", "journal", "lexicon", "terminal", "app loader"};
 
                   bool matched = true;
                   if (nestedBaseC == 'a') { activeCycle = cyc_a; activeCycleLen = 8; }
@@ -1034,14 +1033,14 @@ char PocketmageKB::updateKeypress() {
                     
                     if (activeCycle == cyc_appSwitch) {
                       u8g2.setDrawColor(0);
-                      u8g2.drawRBox((u8g2.getDisplayWidth() - (FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6))/2, u8g2.getDisplayHeight()-12,FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6,11,4);
+                      u8g2.drawRBox((u8g2.getDisplayWidth() - (FontEngine::textWidth(DisplayTarget::OLED, I18n::kbAppName(cycleIndex), FontStyle::Tiny)+6))/2, u8g2.getDisplayHeight()-12,FontEngine::textWidth(DisplayTarget::OLED, I18n::kbAppName(cycleIndex), FontStyle::Tiny)+6,11,4);
                       
                       // Draw border
                       u8g2.setDrawColor(1);
-                      u8g2.drawRFrame((u8g2.getDisplayWidth() - (FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6))/2, u8g2.getDisplayHeight()-12,FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny)+6,11,4);
+                      u8g2.drawRFrame((u8g2.getDisplayWidth() - (FontEngine::textWidth(DisplayTarget::OLED, I18n::kbAppName(cycleIndex), FontStyle::Tiny)+6))/2, u8g2.getDisplayHeight()-12,FontEngine::textWidth(DisplayTarget::OLED, I18n::kbAppName(cycleIndex), FontStyle::Tiny)+6,11,4);
                     
                       // Draw app name
-                      FontEngine::drawText(DisplayTarget::OLED, (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, appSwitchNames[cycleIndex], FontStyle::Tiny))/2,u8g2.getDisplayHeight()-3,appSwitchNames[cycleIndex], FontStyle::Tiny);
+                      FontEngine::drawText(DisplayTarget::OLED, (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, I18n::kbAppName(cycleIndex), FontStyle::Tiny))/2,u8g2.getDisplayHeight()-3,I18n::kbAppName(cycleIndex), FontStyle::Tiny);
                     }
 
                     u8g2.sendBuffer();
