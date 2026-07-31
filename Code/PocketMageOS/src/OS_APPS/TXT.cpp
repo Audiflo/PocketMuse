@@ -629,6 +629,60 @@ void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
   }
 }
 
+// Re-wrap a single line's text to the active font width, splitting it across
+// multiple lines when needed. Adjacent lines are left untouched so paragraph
+// structure and content are preserved across font switches. Returns the number
+// of lines the original line now occupies (always >= 1).
+ulong reflowLineAt(ulong lineIdx) {
+  char style = document.lines[lineIdx].type;
+  String text = String(document.lines[lineIdx].text);
+  int textIndex = 0;
+  int textLen = text.length();
+
+  if (textLen == 0) return 1;
+
+  ulong writeIdx = lineIdx;
+  while (textIndex < textLen) {
+    int wrapLen = findWrapIndex(text, textIndex, style);
+
+    String chunk = text.substring(textIndex, textIndex + wrapLen);
+    textIndex += wrapLen;
+
+    if (writeIdx > lineIdx) insertLineArray(writeIdx);
+
+    Line& writeLine = document.lines[writeIdx];
+    writeLine.type = style;
+    strncpy(writeLine.text, chunk.c_str(), LINE_CAP);
+    writeLine.text[LINE_CAP] = '\0';
+    writeLine.len = strlen(writeLine.text);
+
+    if (textIndex < textLen && text[textIndex] == ' ') textIndex++;
+
+    writeIdx++;
+  }
+
+  return writeIdx - lineIdx;
+}
+
+// Re-wrap every line in the document with the current font metrics. The edit
+// cursor is pinned to its original line/column, clamped to the new layout.
+void reflowAllLines(ulong& currLine, uint16_t& cursor) {
+  if (document.lineCount == 0) return;
+
+  ulong savedLine = currLine;
+  uint16_t savedCursor = cursor;
+
+  ulong i = 0;
+  while (i < document.lineCount) {
+    i += reflowLineAt(i);
+  }
+
+  currLine = savedLine;
+  if (currLine >= document.lineCount) currLine = document.lineCount - 1;
+  cursor = savedCursor;
+  if (cursor > document.lines[currLine].len) cursor = document.lines[currLine].len;
+}
+
 void mergeLinesUp(ulong currLine, uint16_t& cursor) {
   if (currLine == 0) return;
   ulong prevLine = currLine - 1;
@@ -1841,6 +1895,7 @@ void editor(char inchar) {
         fontStyle = (fontStyle + 1) % 3;
         static const char* fontLabels[] = {"SERIF", "SANS", "MONO"};
         OLED().sysMessage(fontLabels[fontStyle], 1200);
+        reflowAllLines(currentLineNum, cursor_pos);
         updateScreen = true;
       } else {
         if (cursor_pos >= line.len) {

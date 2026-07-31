@@ -61,6 +61,13 @@ static ulong currentPotionLine = 0;
 static std::vector<String> potionLines;
 static long lastInput = millis();
 
+static const int POTION_ROW_TOP     = 10;
+static const int POTION_ROW_PITCH   = 16;
+static const int POTION_PAGE_LINES  = 15;  // rows that fit on screen
+static const int POTION_BACK_OFFSET = 11;  // page - ahead - 1
+static const int POTION_AHEAD_LINES = 3;
+static const int POTION_LINE_X      = 5;
+
 // Command Links
 static std::vector<String> potLinkAliases;
 static std::vector<String> potLinkPaths;
@@ -258,6 +265,45 @@ void potionInit() {
     TERMINAL_INIT();
 }
 
+// Resolve a potion file argument against currentDir and enter the editor.
+// Returns true if the editor was entered (caller must return immediately),
+// false otherwise with the failure reason in message.
+bool openFileInPotion(const String& arg, String& message) {
+  pocketmage::setCpuSpeed(240);
+
+  if (arg.length() == 0) {
+    message = "Usage: potion <filename>";
+    return false;
+  }
+
+  String filePath = arg.startsWith("/") ? arg : (currentDir + (currentDir.endsWith("/") ? "" : "/") + arg);
+
+  if (!filePath.endsWith(".c") && !filePath.endsWith(".txt")) {
+    int dotIdx = arg.lastIndexOf('.');
+    if (dotIdx != -1) {
+      message = "Only .c and .txt files supported";
+      return false;
+    }
+    bool hasC = global_fs->exists(filePath + ".c");
+    bool hasTxt = global_fs->exists(filePath + ".txt");
+    if (hasTxt && !hasC) {
+      filePath += ".txt";
+    } else {
+      filePath += ".c";
+    }
+  }
+
+  if (!global_fs->exists(filePath)) {
+    message = "File not found";
+    return false;
+  }
+
+  editFile = filePath;
+  if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+  potionInit();
+  return true;
+}
+
 #pragma region TERMINAL
 void updateTerminalDisp() {
   newState = false;
@@ -274,7 +320,7 @@ void updateTerminalDisp() {
   if (termScrollIndex > (ulong)maxScroll) termScrollIndex = maxScroll;
 
   int y = termLargeFont ? 14 : 10;
-  int yStep = termLargeFont ? 16 : 10;
+  int yStep = termLargeFont ? 16 : 14;
   int startIdx = (int)termScrollIndex;
   int endIdx = startIdx + termLinesPerPage;
   if (endIdx > (int)terminalOutputs.size()) endIdx = (int)terminalOutputs.size();
@@ -282,7 +328,7 @@ void updateTerminalDisp() {
   for (int i = startIdx; i < endIdx; i++) {
     const String& s = terminalOutputs[i];
     u8g2f.setForegroundColor(fgColor);
-    FontEngine::setEinkStyle(termLargeFont ? FontStyle::MonoBold : FontStyle::Tiny);
+    FontEngine::setEinkStyle(termLargeFont ? FontStyle::MonoBold : FontStyle::Terminal);
     FontEngine::einkDraw(5, y, s);
     y += yStep;
   }
@@ -868,57 +914,35 @@ void funcSelect(String command) {
       newState = true;
       return;
     }
+
+    // "pot <file>": not a link command, treat as open-in-potion.
+    String potMsg;
+    if (openFileInPotion(potArg, potMsg)) return;
+    returnText = potMsg;
+
+    if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
+    if (returnText != "") {
+      terminalOutputs.push_back(returnText);
+      OLED().sysMessage(returnText, 1000);
+    }
+    termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+    newState = true;
+    return;
   }
 
   // Open in potion
-  else if (verb == "potion" || verb == "pot") {
-    pocketmage::setCpuSpeed(240);
-
-    String arg = "";
-    if (command.startsWith("potion"))
-      arg = command.substring(6);
-    else if (command.startsWith("pot"))
-      arg = command.substring(3);
+  else if (verb == "potion") {
+    String arg = command.substring(6);
     arg.trim();
 
-    if (arg.length() == 0) {
-      returnText = "Usage: potion <filename>";
-    } else {
-      String filePath = arg.startsWith("/") ? arg : (currentDir + (currentDir.endsWith("/") ? "" : "/") + arg);
-
-      if (!filePath.endsWith(".c") && !filePath.endsWith(".txt")) {
-        int dotIdx = arg.lastIndexOf('.');
-        if (dotIdx != -1) {
-          returnText = "Only .c and .txt files supported";
-        } else {
-          bool hasC = global_fs->exists(filePath + ".c");
-          bool hasTxt = global_fs->exists(filePath + ".txt");
-
-          if (hasTxt && !hasC) {
-            filePath += ".txt";
-          } else {
-            filePath += ".c"; 
-          }
-        }
-      }
-
-      if (returnText == "") {
-        if (!global_fs->exists(filePath)) {
-          returnText = "File not found";
-        } else {
-          editFile = filePath;
-          if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-          potionInit();
-          return;
-        }
-      }
-    }
+    String potMsg;
+    if (openFileInPotion(arg, potMsg)) return;
+    returnText = potMsg;
 
     if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
-
     if (returnText != "") {
       terminalOutputs.push_back(returnText);
-      OLED().sysMessage(returnText,1000);
+      OLED().sysMessage(returnText, 1000);
     }
     termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
     newState = true;
@@ -998,7 +1022,7 @@ void funcSelect(String command) {
       returnText = "Font set to Large";
     } else if (arg == "s") {
       termLargeFont = false;
-      termLinesPerPage = 23; 
+      termLinesPerPage = 17; 
       termMaxLineLen = 52;
       returnText = "Font set to Small";
     } else {
@@ -1537,7 +1561,7 @@ void TERMINAL_INIT() {
     termLinesPerPage = 14;
     termMaxLineLen = 28;
   } else {
-    termLinesPerPage = 23;
+    termLinesPerPage = 17;
     termMaxLineLen = 52;
   }
   
@@ -1861,8 +1885,17 @@ void einkHandler_TERMINAL() {
         uint16_t fgColor = termDarkTheme ? GxEPD_WHITE : GxEPD_BLACK;
         display.fillRect(0, 0, display.width(), display.height(), bgColor);
 
-        if (potionLines.size() < 24) {
-          int y = 10;
+        // Line numbers are zero-padded to 3 digits, so size() must be padded
+        // to match or the measured column comes out too narrow.
+        String widestNum = String(potionLines.size());
+        while (widestNum.length() < 3) {
+          widestNum = "0" + widestNum;
+        }
+        String widestLineNum = "[" + widestNum + "]";
+        int codeX = POTION_LINE_X + FontEngine::einkTextWidth(FontStyle::Mono, widestLineNum) + 4;
+
+        if (potionLines.size() <= POTION_PAGE_LINES) {
+          int y = POTION_ROW_TOP;
           for (size_t i = 0; i < potionLines.size(); i++) {
             const String& s = potionLines[i];
 
@@ -1872,19 +1905,19 @@ void einkHandler_TERMINAL() {
             }
 
             if (i == currentPotionLine) {
-              display.fillRect(0, y - 9, display.width(), 11, fgColor);
+              display.fillRect(0, y - 13, display.width(), 16, fgColor);
               u8g2f.setForegroundColor(bgColor);
             } else
               u8g2f.setForegroundColor(fgColor);
-            FontEngine::setEinkStyle(FontStyle::Tiny);
-            FontEngine::einkDraw(5, y, "[" + lineNum + "]");
-            FontEngine::einkDraw(35, y, s);
-            y += 10;
+            FontEngine::setEinkStyle(FontStyle::Mono);
+            FontEngine::einkDraw(POTION_LINE_X, y, "[" + lineNum + "]");
+            FontEngine::einkDraw(codeX, y, s);
+            y += POTION_ROW_PITCH;
           }
         } 
         else {
-          if (currentPotionLine <= 20) {
-            int y = 10;
+          if (currentPotionLine <= POTION_BACK_OFFSET) {
+            int y = POTION_ROW_TOP;
             for (size_t i = 0; i < potionLines.size(); i++) {
               if (i >= potionLines.size() || y < 0 || y > (display.height()+10)) continue;
 
@@ -1896,19 +1929,19 @@ void einkHandler_TERMINAL() {
               }
 
               if (i == currentPotionLine) {
-                display.fillRect(0, y - 9, display.width(), 11, fgColor);
+                display.fillRect(0, y - 13, display.width(), 16, fgColor);
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::setEinkStyle(FontStyle::Tiny);
-              FontEngine::einkDraw(5, y, "[" + lineNum + "]");
-              FontEngine::einkDraw(35, y, s);
-              y += 10;
+              FontEngine::setEinkStyle(FontStyle::Mono);
+              FontEngine::einkDraw(POTION_LINE_X, y, "[" + lineNum + "]");
+              FontEngine::einkDraw(codeX, y, s);
+              y += POTION_ROW_PITCH;
             }
           }
           else {
-            int y = 10;
-            for (size_t i = currentPotionLine - 20; i < currentPotionLine + 3; i++) {
+            int y = POTION_ROW_TOP;
+            for (size_t i = currentPotionLine - POTION_BACK_OFFSET; i < currentPotionLine + POTION_AHEAD_LINES; i++) {
               if (i >= potionLines.size() || y < 0 || y > (display.height()+10)) continue;
 
               const String& s = potionLines[i];
@@ -1919,14 +1952,14 @@ void einkHandler_TERMINAL() {
               }
 
               if (i == currentPotionLine) {
-                display.fillRect(0, y - 9, display.width(), 11, fgColor);
+                display.fillRect(0, y - 13, display.width(), 16, fgColor);
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::setEinkStyle(FontStyle::Tiny);
-              FontEngine::einkDraw(5, y, "[" + lineNum + "]");
-              FontEngine::einkDraw(35, y, s);
-              y += 10;
+              FontEngine::setEinkStyle(FontStyle::Mono);
+              FontEngine::einkDraw(POTION_LINE_X, y, "[" + lineNum + "]");
+              FontEngine::einkDraw(codeX, y, s);
+              y += POTION_ROW_PITCH;
             }
           }
         }
