@@ -482,8 +482,8 @@ void oledScrollFrame() {
     }
   } else {
     String lineNumStr = String(count - CurrentFrameState->scroll) + "/" + String(count);
-    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, TR(STR_FRAMES_LINES), FontStyle::Status);
-    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Status);
+    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, TR(STR_FRAMES_LINES), FontStyle::Caption);
+    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Caption);
   }
   // send buffer
   u8g2.sendBuffer();

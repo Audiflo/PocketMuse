@@ -196,7 +196,7 @@ bool loadAppInfo(int otaIndex, AppInfo &info) {
   return n == sizeof(info);
 }
 
-void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameChars) {
+void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameWidth) {
   pocketmage::setCpuSpeed(240);
 
   AppInfo app;
@@ -228,20 +228,19 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameCh
   }
 
   if (showName) {
-    // Make a copy and truncate
-    String appNameStr = String(app.name);
-    if (appNameStr.length() > maxNameChars) {
-        appNameStr = appNameStr.substring(0, maxNameChars);
-    }
+    FontStyle nameStyle = FontEngine::fitStyle(DisplayTarget::EINK, app.name,
+                                               maxNameWidth, kGridLabelCascade,
+                                               kGridLabelCascadeCount);
+    String appNameStr = truncateWithEllipsis(app.name, maxNameWidth, nameStyle);
 
     u8g2f.setForegroundColor(GxEPD_BLACK);
 
-    int w = FontEngine::textWidth(DisplayTarget::EINK, appNameStr, FontStyle::Body);
+    int w = FontEngine::textWidth(DisplayTarget::EINK, appNameStr, nameStyle);
 
     int tx = x + (APPLOADER_ICON_S - w) / 2;
     int ty = y + APPLOADER_ICON_S + APPLOADER_NAME_GAP;
 
-    FontEngine::drawText(DisplayTarget::EINK, tx, ty, appNameStr, FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, tx, ty, appNameStr, nameStyle);
   }
 
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
@@ -667,10 +666,10 @@ void drawProgressBar(uint8_t progress) {
   String progressText = "";
   if (progress < 52) progressText = TR(STR_APPLOADER_EXTRACTING);
   else               progressText = TR(STR_APPLOADER_INSTALLING);
-  int pw = FontEngine::textWidth(DisplayTarget::OLED, progressText, FontStyle::MonoBold);
+  int pw = FontEngine::textWidth(DisplayTarget::OLED, progressText, FontStyle::Body);
   FontEngine::drawText(DisplayTarget::OLED,
                (u8g2.getDisplayWidth() - pw)/2,
-               u8g2.getDisplayHeight()-3, progressText, FontStyle::MonoBold);
+               u8g2.getDisplayHeight()-3, progressText, FontStyle::Body);
 
   u8g2.sendBuffer();
 }
@@ -854,10 +853,10 @@ void einkHandler_APPLOADER() {
         beginEinkScreen(true);
         display.drawBitmap(0, 0, _appLoader, 320, 218, GxEPD_BLACK);
 
-        loadAndDrawAppIcon(42 , 146, 1, true, 7);  // OTA1
-        loadAndDrawAppIcon(106, 146, 2, true, 7);  // OTA2
-        loadAndDrawAppIcon(174, 146, 3, true, 7);  // OTA3
-        loadAndDrawAppIcon(238, 146, 4, true, 7);  // OTA4
+        loadAndDrawAppIcon(42 , 146, 1, true, kGridLabelMaxW);  // OTA1
+        loadAndDrawAppIcon(106, 146, 2, true, kGridLabelMaxW);  // OTA2
+        loadAndDrawAppIcon(174, 146, 3, true, kGridLabelMaxW);  // OTA3
+        loadAndDrawAppIcon(238, 146, 4, true, kGridLabelMaxW);  // OTA4
 
         endEinkScreen(TR(STR_APPLOADER_TYPE_LETTER), EinkRefresh::Normal);
       }

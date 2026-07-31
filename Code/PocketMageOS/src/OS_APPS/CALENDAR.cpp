@@ -1054,7 +1054,7 @@ void drawCalendarWeek(int weekOffset) {
       String eventName = dayEvents[j][0].substring(0, CAL_WEEK_NAME_MAX);
 
       u8g2f.setForegroundColor(GxEPD_BLACK);
-      FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_TEXT_X + (i * CAL_WEEK_COL_W), CAL_WEEK_TIME_Y + (j * CAL_WEEK_ROW_H), startTime, FontStyle::Micro);
+      FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_TEXT_X + (i * CAL_WEEK_COL_W), CAL_WEEK_TIME_Y + (j * CAL_WEEK_ROW_H), startTime, FontStyle::Tiny);
       FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_TEXT_X + (i * CAL_WEEK_COL_W), CAL_WEEK_NAME_Y + (j * CAL_WEEK_ROW_H), eventName, FontStyle::Tiny);
     }
   }

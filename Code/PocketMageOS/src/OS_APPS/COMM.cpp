@@ -46,11 +46,14 @@ constexpr int COMM_NAME_PAD      = 8;     // name baseline offset from bubble to
 constexpr int COMM_MSG_OFFSET    = 7;     // message baseline offset from name baseline
 constexpr int COMM_BUBBLE_AVG_H  = 64;    // average bubble height (scrollbar ratio)
 
-// Pick a message-bubble font based on content length.
-static FontStyle msgFont(int textLen) {
-  if (textLen <= 30) return FontStyle::MonoBold;
-  if (textLen <= 70) return FontStyle::Mono;
-  return FontStyle::SmallHeading;
+// Message-bubble font: the largest mono ladder face whose full content still
+// fits the bubble text width; anything longer falls back to the Caption face.
+// Shared with wrapTextPx() so font choice and wrapping agree.
+static FontStyle msgFont(const char* content) {
+  const FontStyle cascade[] = { FontStyle::MonoBold, FontStyle::Mono, FontStyle::Caption };
+  return FontEngine::fitStyle(DisplayTarget::EINK, content,
+                              kEinkWidth - COMM_WRAP_RESERVE,
+                              cascade, sizeof(cascade) / sizeof(cascade[0]));
 }
 
 // TYPES
@@ -269,7 +272,7 @@ void processKB_COMM() {
           int totalH = 0;
           int top = msgCount - 1;
           while (top >= 0) {
-              FontStyle mf = msgFont(strlen(msgs[top].content));
+              FontStyle mf = msgFont(msgs[top].content);
               int lineH = FontEngine::fontHeight(DisplayTarget::EINK, mf);
               int lineSpacing = lineH + 2;
               std::vector<String> lines = wrapTextPx(msgs[top].content, mf);
@@ -466,8 +469,8 @@ void einkHandler_COMM() {
 
   if (currentState == PEER_LIST) {
     FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, TR(STR_COMM_SELECT_ROOM), FontStyle::Body);
-    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, "Me " + String(myMacStr), FontStyle::SmallHeading);
-    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, "Me " + String(myMacStr), FontStyle::Caption);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::Caption);
 
     int totalRooms = 1 + mesh_now_get_peer_count();
     mesh_peer_t* allPeers = mesh_now_get_peers();
@@ -523,8 +526,8 @@ void einkHandler_COMM() {
       String name = displayName(peerMacStr);
       FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "> " + name, FontStyle::Body);
     }
-    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, chatMode == LOCAL_CHAT ? "ESP-NOW" : TR(STR_COMM_DIRECT), FontStyle::SmallHeading);
-    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, chatMode == LOCAL_CHAT ? "ESP-NOW" : TR(STR_COMM_DIRECT), FontStyle::Caption);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::Caption);
   }
 
   // Separator line
@@ -539,7 +542,7 @@ void einkHandler_COMM() {
         int totalH = 0;
         int top = msgCount - 1;
         while (top >= 0) {
-            FontStyle mf = msgFont(strlen(msgs[top].content));
+            FontStyle mf = msgFont(msgs[top].content);
             int lineH = FontEngine::fontHeight(DisplayTarget::EINK, mf);
             int lineSpacing = lineH + COMM_LINE_SPACE;
             std::vector<String> lines = wrapTextPx(msgs[top].content, mf);
@@ -557,7 +560,7 @@ void einkHandler_COMM() {
 
     for (int i = chatScrollIndex; i < msgCount && y < kEinkHeight; i++) {
       ChatMsg* m = &msgs[i];
-      FontStyle mf = msgFont(strlen(m->content));
+      FontStyle mf = msgFont(m->content);
       int ascent = FontEngine::fontAscent(DisplayTarget::EINK, mf);
       int lineH = FontEngine::fontHeight(DisplayTarget::EINK, mf);
       int lineSpacing = lineH + COMM_LINE_SPACE;
@@ -568,7 +571,7 @@ void einkHandler_COMM() {
       String timeText = String(m->hr) + ":" + (m->mn < 10 ? "0" : "") + String(m->mn);
 
       int nameW = FontEngine::textWidth(DisplayTarget::EINK, nameText, mf);
-      int timeW = FontEngine::textWidth(DisplayTarget::EINK, timeText, FontStyle::SmallHeading);
+      int timeW = FontEngine::textWidth(DisplayTarget::EINK, timeText, FontStyle::Caption);
       int metaW = nameW + timeW + COMM_META_GAP;
 
       int textW = 0;
@@ -592,7 +595,7 @@ void einkHandler_COMM() {
 
       int nameY = y + COMM_NAME_PAD + ascent;
       FontEngine::drawText(DisplayTarget::EINK, x + COMM_BUBBLE_PAD_X, nameY, nameText, mf);
-      FontEngine::drawText(DisplayTarget::EINK, x + bubbleW - COMM_BUBBLE_PAD_X - timeW, nameY, timeText, FontStyle::SmallHeading);
+      FontEngine::drawText(DisplayTarget::EINK, x + bubbleW - COMM_BUBBLE_PAD_X - timeW, nameY, timeText, FontStyle::Caption);
 
       display.drawFastHLine(x + COMM_BUBBLE_PAD_X, nameY + 2, bubbleW - COMM_BUBBLE_PAD, m->sentByLocal ? GxEPD_WHITE : GxEPD_BLACK);
 

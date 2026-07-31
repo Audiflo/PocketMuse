@@ -64,12 +64,3 @@ void drawListItem(int x, int y, const String& text, int maxWidth) {
     FontEngine::drawText(DisplayTarget::EINK, x, y, text, FontStyle::Body);
   }
 }
-
-void drawAppIcon(int x, int y, const uint8_t* bitmap, const String& name) {
-  display.fillRect(x, y, 40, 40, GxEPD_WHITE);
-  if (bitmap) {
-    display.drawBitmap(x, y, bitmap, 40, 40, GxEPD_BLACK);
-  }
-  int w = FontEngine::textWidth(DisplayTarget::EINK, name, FontStyle::Body);
-  FontEngine::drawText(DisplayTarget::EINK, x + (40 - w) / 2, y + 53, name, FontStyle::Body);
-}

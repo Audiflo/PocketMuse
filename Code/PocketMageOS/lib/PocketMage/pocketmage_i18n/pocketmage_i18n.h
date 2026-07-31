@@ -5,9 +5,7 @@
 // Language / string-table support.
 //
 // Every user-visible string in the OS is a StringID index into a per-language
-// table.  The FontTable swap (FontEngine::setFontTable) is the font half of
-// i18n; this library is the text half.  Language switches at runtime via
-// setLanguage().
+// table.  Language switches at runtime via setLanguage().
 //
 // The Lang and StringID enums plus the per-language string tables are
 // generated from the .po/.aliases catalogs in this directory.

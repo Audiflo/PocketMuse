@@ -55,6 +55,10 @@ String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style)
       hi = mid - 1;
   }
 
+  // Binary search can cut inside a UTF-8 multi-byte sequence; back off any
+  // continuation byte (0x80..0xBF) so the prefix ends on a char boundary.
+  while (lo > 0 && (static_cast<uint8_t>(text[lo]) & 0xC0) == 0x80) lo--;
+
   return text.substring(0, lo) + dots;
 }
 

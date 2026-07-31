@@ -76,7 +76,7 @@ void PocketmageOled::oledWord(String word, bool allowLarge, bool showInfo, Strin
     {FontStyle::OledWord, 3},
     {FontStyle::Heading3, 2},
     {FontStyle::BodyBold, 1},
-    {FontStyle::Status,   0},
+    {FontStyle::Caption,   0},
   };
 
   int y = 16, x = 0;
@@ -96,7 +96,7 @@ void PocketmageOled::sysMessage(String msg, int showTime) {
     {FontStyle::Heading2, 3 + kOledSysMsgRaise},
     {FontStyle::OledWord, 2 + kOledSysMsgRaise},
     {FontStyle::BodyBold, 1 + kOledSysMsgRaise},
-    {FontStyle::Status,   kOledSysMsgRaise},
+    {FontStyle::Caption,   kOledSysMsgRaise},
   };
 
   int y_offset = kOledWordBaseline, x_offset = 0;
@@ -292,8 +292,8 @@ void PocketmageOled::oledScroll() {
 
   // PRINT CURRENT LINE — using _tf (full Unicode) fonts throughout
   String lineNumStr = String(startIndex) + "/" + String(count);
-  FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, TR(STR_OLED_LINE), FontStyle::Status);
-  FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Status);
+  FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, TR(STR_OLED_LINE), FontStyle::Caption);
+  FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Caption);
 
   // PRINT LINE PREVIEW
   if (startIndex >= 0 && (size_t)startIndex < allLines.size()) {

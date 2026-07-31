@@ -20,5 +20,3 @@ void beginEinkScreen(bool preserveBg = false);
 void endEinkScreen(const char* statusText, EinkRefresh mode = EinkRefresh::MultiPass2);
 
 void drawListItem(int x, int y, const String& text, int maxWidth = -1);
-
-void drawAppIcon(int x, int y, const uint8_t* bitmap, const String& name);

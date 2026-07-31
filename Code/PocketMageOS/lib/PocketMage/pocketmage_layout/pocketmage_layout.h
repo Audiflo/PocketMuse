@@ -61,6 +61,18 @@ constexpr int kOledSysMsgRaise      = 5;    // raise sysMessage text above the o
 constexpr int kIconCellSize = 40;   // app icon cell size
 constexpr int kIconNameGap  = 13;   // icon-to-name baseline gap
 
+// App-name label cascade: largest style first, all non-bold.  A name under a
+// 40px icon in a 60px grid cell uses Body, else Small (ncenR08, the compact
+// regular serif).  Picks the largest style whose width fits the 60px cell pitch
+// (FontEngine::fitStyle); truncateWithEllipsis() handles anything that still
+// overflows Small.
+static constexpr FontStyle kGridLabelCascade[] = {
+  FontStyle::Body, FontStyle::Small,
+};
+static constexpr int kGridLabelCascadeCount =
+    sizeof(kGridLabelCascade) / sizeof(kGridLabelCascade[0]);
+constexpr int kGridLabelMaxW = 60;  // max label width = grid cell pitch
+
 // OLED scroll-preview rows (task/terminal/chat scroll previews)
 constexpr int kOledPrevY0     = 7;   // first preview-row baseline
 constexpr int kOledPrevPitch  = 8;   // preview row pitch
@@ -75,7 +87,9 @@ constexpr int kOledPrevTriH   = 3;   // cursor triangle half-height
 size_t sliceThatFits(const char* s, size_t n, int maxTextWidth, FontStyle style);
 
 // Truncate text to fit within maxWidthPx using the given e-ink style.
-// Appends "..." when truncated and returns the shortened string.
+// Appends "..." when truncated and returns the shortened string.  The cut
+// always lands on a UTF-8 character boundary (a multi-byte sequence is never
+// split).
 String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style);
 
 // Word-wrap text to fit within maxWidthPx using the given font style.

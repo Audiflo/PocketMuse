@@ -562,7 +562,7 @@ int boolPrompt(String promptText) {
         activeStyle = FontStyle::BodyBold;
       } 
       else {
-        w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Status);
+        w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Caption);
         if (w < dw-8) {
           y_offset = 16 + 5;
           x_offset = (dw - w) / 2;
@@ -571,7 +571,7 @@ int boolPrompt(String promptText) {
           y_offset = 16 + 5;
           x_offset = dw - w;
         }
-        activeStyle = FontStyle::Status;
+        activeStyle = FontStyle::Caption;
       }
     }
   }
@@ -1084,7 +1084,7 @@ void waitForKeypress(String message) {
         activeStyle = FontStyle::BodyBold;
       } 
       else {
-        w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Status);
+        w = FontEngine::textWidth(DisplayTarget::OLED, msg, FontStyle::Caption);
         if (w < dw) {
           y_offset = 16;
           x_offset = (dw - w) / 2;
@@ -1093,7 +1093,7 @@ void waitForKeypress(String message) {
           y_offset = 16;
           x_offset = dw - w;
         }
-        activeStyle = FontStyle::Status;
+        activeStyle = FontStyle::Caption;
       }
     }
   }

@@ -4,7 +4,7 @@
 #include <U8g2_for_Adafruit_GFX.h>
 
 // Logical text role.  A FontTable maps each role to a concrete font per display target
-// (OLED / E-Ink).  Swapping the FontTable at runtime is how language / i18n support works.
+// (OLED / E-Ink).
 enum class FontStyle : uint8_t {
   Tiny,          // u8g2_font_5x7_tf
   Body,          // ncenR10_tf     - serif body
@@ -12,6 +12,7 @@ enum class FontStyle : uint8_t {
   BodyItalic,    // ncenI10_tf
   BodyBoldItalic,// ncenBI10_tf
   Medium,        // ncenR12_tf     - 12pt serif for OLED
+  Small,         // ncenR08_tf     - compact regular serif (grid names, labels)
   Mono,          // courR10_tf     - monospace body
   MonoBold,      // courB10_tf
   MonoItalic,    // courI10_tf
@@ -20,15 +21,13 @@ enum class FontStyle : uint8_t {
   SansBold,      // helvB10_tf
   SansItalic,    // helvI10_tf
   SansBoldItalic,// helvBI10_tf
-  SmallHeading,  // ncenB08_tf     - status bars / compact labels
+  Caption,       // ncenB08_tf     - status bars / scroll labels / compact captions
   Heading3,      // ncenB12_tf     - 12pt heading
   Heading2,      // ncenB18_tf     - 18pt heading
   Heading1,      // ncenB24_tf     - 24pt heading
   Large,         // lubR18_tf      - scroll preview / large OLED text
-  Status,        // ncenB08_tf     - status bar / dialog labels
   OledWord,      // ncenB14_tf     - oledWord / sysMessage cascade parent
   Terminal,      // 7x13B_tf       - terminal app
-  Micro,         // 4x6_tf         - calendar event times
   TerminalBig,   // courB14_tf     - terminal wr_inkText size 3
   ClockDigit,    // luBIS14_tn     - clock/date-set OLED digits
 
@@ -63,8 +62,7 @@ enum : uint8_t {
   TxtVariantBI   = 3,      // bold + italic
 };
 
-// A complete font table for one language/region.
-// The default English table is built-in; call setFontTable() to swap at runtime.
+// A complete font table for the active language/region.
 struct FontTable {
   FontEntry tiny;
   FontEntry body;
@@ -72,6 +70,7 @@ struct FontTable {
   FontEntry bodyItalic;
   FontEntry bodyBoldItalic;
   FontEntry medium;
+  FontEntry small;
   FontEntry mono;
   FontEntry monoBold;
   FontEntry monoItalic;
@@ -80,15 +79,13 @@ struct FontTable {
   FontEntry sansBold;
   FontEntry sansItalic;
   FontEntry sansBoldItalic;
-  FontEntry smallHeading;
+  FontEntry caption;
   FontEntry heading3;
   FontEntry heading2;
   FontEntry heading1;
   FontEntry large;
-  FontEntry status;
   FontEntry oledWord;
   FontEntry terminal;
-  FontEntry micro;
   FontEntry terminalBig;
   FontEntry clockDigit;
 
@@ -99,9 +96,8 @@ struct FontTable {
 
 class FontEngine {
 public:
-  // Apply a font table.  Passing nullptr re-applies the built-in default.
+  // Apply a font table.  Passing nullptr applies the built-in default.
   static void init(const FontTable* table = nullptr);
-  static void setFontTable(const FontTable* table);
 
   // ---- Unified API ----
 
@@ -118,6 +114,13 @@ public:
   // Text width for a style.  Never changes the font that drawText left set.
   static int textWidth(DisplayTarget target, const char* text, FontStyle style);
   static int textWidth(DisplayTarget target, const String& text, FontStyle style);
+
+  // Width-aware font selection: the largest cascade entry whose textWidth()
+  // fits maxWidth, or the last (smallest) entry when none fit.  The cascade
+  // must be ordered largest font first.  Used by the HOME/APPLOADER grid to
+  // keep localized app names inside a 60px cell pitch.
+  static FontStyle fitStyle(DisplayTarget target, const char* text, int maxWidth,
+                            const FontStyle* cascade, int count);
 
   // Per-character width for the given style.  Cached for OLED (codepoints
   // 32-255); other codepoints and the E-Ink target are measured live.
@@ -136,26 +139,26 @@ public:
   // must not change the OLED draw color and vice versa.
   static void setTextColor(DisplayTarget target, uint16_t color);
 
-  // TXT.cpp editor helper: draw a line with per-character style switching.
-  static void drawTextEditor(DisplayTarget target, int x, int y,
-                             const char* text, const FontStyle* styles, int len);
-
-  // Map (family, bold, italic, headingLevel) to a FontStyle.
-  //   family 0 = serif, 1 = sans, 2 = mono
-  //   headingLevel 0 = body, 1/2/3 = H1/H2/H3, 4 = code, 5 = quote, 6 = list
-  static FontStyle resolveStyle(uint8_t family, bool bold,
-                                bool italic, uint8_t headingLevel);
-
-  // Raw pointer access (for edge cases / the TXT markdown renderer).
-  static const uint8_t* fontPtr(DisplayTarget target, FontStyle style);
-
-  // TXT markdown matrix lookup: font pointer for family x sizeIdx x variant.
-  static const uint8_t* txtFont(DisplayTarget target,
-                                uint8_t family, uint8_t sizeIdx, uint8_t variant);
+  // TXT.cpp markdown editor primitives over the txt[3][4][4] matrix.
+  // family / sizeIdx / variant use the Txt* enums; out-of-range indices clamp
+  // to the body entry.  These replace the legacy FontMap/pickFont/getFastChar*
+  // pipeline that duplicated the matrix inside TXT.cpp.
+  static void drawTextTxt(DisplayTarget target, int x, int y, const char* text,
+                          uint8_t family, uint8_t sizeIdx, uint8_t variant);
+  static void drawGlyphTxt(DisplayTarget target, int x, int y, uint16_t unicode,
+                           uint8_t family, uint8_t sizeIdx, uint8_t variant);
+  static int textWidthTxt(DisplayTarget target, const char* text,
+                          uint8_t family, uint8_t sizeIdx, uint8_t variant);
+  static int charWidthTxt(DisplayTarget target, uint16_t unicode,
+                          uint8_t family, uint8_t sizeIdx, uint8_t variant);
+  static int fontHeightTxt(uint8_t family, uint8_t sizeIdx, uint8_t variant);
 
 private:
   static const FontEntry& entry(FontStyle s);
+  static const FontEntry& txtEntry(uint8_t family, uint8_t sizeIdx, uint8_t variant);
+  static void applyEntry(DisplayTarget target, const FontEntry& e);
   static void applyFont(DisplayTarget target, FontStyle style);
+  static void encodeUtf8(uint16_t unicode, char* out);
 
   static const FontTable* table_;
 
@@ -179,5 +182,4 @@ private:
   static void buildMetrics(DisplayTarget target, FontStyle onStyle);
 };
 
-// Built-in English font table
 extern const FontTable kDefaultFontTable;

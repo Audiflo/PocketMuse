@@ -193,7 +193,7 @@ String renderWizMini(String folder, int8_t scrollDelta) {
         default:  u8g2.drawXBMP(FWZ_LARGE_ICON_X, FWZ_LARGE_ICON_Y, FWZ_LARGE_ICON_S, FWZ_LARGE_ICON_S, _LFileIcons[3]); break;
       }
       String dispName = f.name + f.extension;
-      FontEngine::drawText(DisplayTarget::OLED, FWZ_LARGE_NAME_X, FWZ_LARGE_NAME_Y, dispName, FontStyle::MonoBold);
+      FontEngine::drawText(DisplayTarget::OLED, FWZ_LARGE_NAME_X, FWZ_LARGE_NAME_Y, dispName, FontStyle::BodyBold);
     }
     else {
       int x = FWZ_SMALL_ICON_X0 + FWZ_SMALL_ICON_PITCH * (i - scroll - 1);

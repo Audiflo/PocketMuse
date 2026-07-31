@@ -77,7 +77,7 @@ void PocketmageEink::drawStatusBar(const String& input) {
   u8g2f.setBackgroundColor(GxEPD_WHITE);
   display_.fillRect(0, display_.height() - 26, display_.width(), 26, GxEPD_WHITE);
   display_.drawRect(0, display_.height() - 20, display_.width(), 20, GxEPD_BLACK);
-  FontEngine::drawText(DisplayTarget::EINK, 4, display_.height() - 6, input, FontStyle::MonoBold);
+  FontEngine::drawText(DisplayTarget::EINK, 4, display_.height() - 6, input, FontStyle::Body);
 }
 
 void PocketmageEink::resetDisplay(bool clearScreen, uint16_t color) {

@@ -1363,7 +1363,7 @@ void wr_oledText(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void
   switch (size) {
     case 1: oledStyle = FontStyle::Tiny;     break;
     case 2: oledStyle = FontStyle::MonoBold; break;
-    case 3: oledStyle = FontStyle::SansBold; break;
+    case 3: oledStyle = FontStyle::Heading3; break;
     default: oledStyle = FontStyle::Large;   break;
   }
 

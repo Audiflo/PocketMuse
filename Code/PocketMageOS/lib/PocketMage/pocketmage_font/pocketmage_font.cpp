@@ -17,6 +17,8 @@ const FontTable kDefaultFontTable = {
   { u8g2_font_ncenBI10_tf, u8g2_font_ncenBI10_tf, 14 },
   // medium
   { u8g2_font_ncenR12_tf,  u8g2_font_ncenR12_tf,  16 },
+  // small (ncenR08)
+  { u8g2_font_ncenR08_tf,  u8g2_font_ncenR08_tf,  10 },
   // mono
   { u8g2_font_courR10_tf, u8g2_font_courR10_tf, 14 },
   // monoBold
@@ -33,7 +35,7 @@ const FontTable kDefaultFontTable = {
   { u8g2_font_helvI10_tf, u8g2_font_helvI10_tf, 14 },
   // sansBoldItalic
   { u8g2_font_helvBI10_tf, u8g2_font_helvBI10_tf, 14 },
-  // smallHeading (ncenB08)
+  // caption (ncenB08)
   { u8g2_font_ncenB08_tf, u8g2_font_ncenB08_tf, 10 },
   // heading3 (ncenB12)
   { u8g2_font_ncenB12_tf, u8g2_font_ncenB12_tf, 16 },
@@ -43,14 +45,10 @@ const FontTable kDefaultFontTable = {
   { u8g2_font_ncenB24_tf, u8g2_font_ncenB24_tf, 30 },
   // large (lubR18)
   { u8g2_font_lubR18_tf,  u8g2_font_lubR18_tf,  22 },
-  // status (ncenB08)
-  { u8g2_font_ncenB08_tf, u8g2_font_ncenB08_tf, 10 },
   // oledWord cascade base (ncenB14)
   { u8g2_font_ncenB14_tf, u8g2_font_ncenB14_tf, 18 },
   // terminal (7x13B)
   { u8g2_font_7x13B_tf,   u8g2_font_7x13B_tf,   13 },
-  // micro (4x6)
-  { u8g2_font_4x6_tf,     u8g2_font_4x6_tf,     6 },
   // terminalBig (courB14)
   { u8g2_font_courB14_tf, u8g2_font_courB14_tf, 18 },
   // clockDigit (luBIS14, non-transparent)
@@ -150,7 +148,7 @@ FontEngine::Metrics FontEngine::metrics_[static_cast<int>(FontStyle::_StyleCount
 const FontEntry& FontEngine::entry(FontStyle s) {
   // Map the style enum to the FontEntry inside the active table.
   // The enum values MUST match the struct field order in FontTable.
-  static_assert(static_cast<int>(FontStyle::_StyleCount) == 25,
+  static_assert(static_cast<int>(FontStyle::_StyleCount) == 24,
                 "FontStyle enum count must match FontTable field count");
   const FontTable& t = *table_;
   switch (s) {
@@ -160,6 +158,7 @@ const FontEntry& FontEngine::entry(FontStyle s) {
     case FontStyle::BodyItalic:    return t.bodyItalic;
     case FontStyle::BodyBoldItalic:return t.bodyBoldItalic;
     case FontStyle::Medium:        return t.medium;
+    case FontStyle::Small:         return t.small;
     case FontStyle::Mono:          return t.mono;
     case FontStyle::MonoBold:      return t.monoBold;
     case FontStyle::MonoItalic:    return t.monoItalic;
@@ -168,23 +167,20 @@ const FontEntry& FontEngine::entry(FontStyle s) {
     case FontStyle::SansBold:      return t.sansBold;
     case FontStyle::SansItalic:    return t.sansItalic;
     case FontStyle::SansBoldItalic:return t.sansBoldItalic;
-    case FontStyle::SmallHeading:  return t.smallHeading;
+    case FontStyle::Caption:       return t.caption;
     case FontStyle::Heading3:      return t.heading3;
     case FontStyle::Heading2:      return t.heading2;
     case FontStyle::Heading1:      return t.heading1;
     case FontStyle::Large:         return t.large;
-    case FontStyle::Status:        return t.status;
     case FontStyle::OledWord:      return t.oledWord;
     case FontStyle::Terminal:      return t.terminal;
-    case FontStyle::Micro:         return t.micro;
     case FontStyle::TerminalBig:   return t.terminalBig;
     case FontStyle::ClockDigit:    return t.clockDigit;
     default:                       return t.body;
   }
 }
 
-void FontEngine::applyFont(DisplayTarget target, FontStyle style) {
-  const FontEntry& e = entry(style);
+void FontEngine::applyEntry(DisplayTarget target, const FontEntry& e) {
   if (target == DisplayTarget::OLED) {
     if (e.oled) {
       u8g2.setFont(e.oled);
@@ -195,6 +191,26 @@ void FontEngine::applyFont(DisplayTarget target, FontStyle style) {
       u8g2f.setFont(e.eink);
       u8g2f.setFontMode(1);
     }
+  }
+}
+
+void FontEngine::applyFont(DisplayTarget target, FontStyle style) {
+  applyEntry(target, entry(style));
+}
+
+void FontEngine::encodeUtf8(uint16_t unicode, char* out) {
+  if (unicode < 0x80) {
+    out[0] = static_cast<char>(unicode);
+    out[1] = 0;
+  } else if (unicode < 0x800) {
+    out[0] = static_cast<char>(0xC0 | (unicode >> 6));
+    out[1] = static_cast<char>(0x80 | (unicode & 0x3F));
+    out[2] = 0;
+  } else {
+    out[0] = static_cast<char>(0xE0 | (unicode >> 12));
+    out[1] = static_cast<char>(0x80 | ((unicode >> 6) & 0x3F));
+    out[2] = static_cast<char>(0x80 | (unicode & 0x3F));
+    out[3] = 0;
   }
 }
 
@@ -234,20 +250,13 @@ void FontEngine::buildMetrics(DisplayTarget target, FontStyle onStyle) {
 
 // Lifecycle
 void FontEngine::init(const FontTable* table) {
-  setFontTable(table ? table : &kDefaultFontTable);
+  table_ = table ? table : &kDefaultFontTable;
   // Reset width caches and metrics
   for (auto& c : widthCache_) c.valid = false;
   for (auto& row : metrics_) for (auto& m : row) m.valid = false;
   // Transparent background by default
   u8g2.setFontMode(1);
   u8g2f.setFontMode(1);
-}
-
-void FontEngine::setFontTable(const FontTable* table) {
-  table_ = table ? table : &kDefaultFontTable;
-  // Invalidate width caches and metrics so they rebuild with the new fonts
-  for (auto& c : widthCache_) c.valid = false;
-  for (auto& row : metrics_) for (auto& m : row) m.valid = false;
 }
 
 // ---- Unified API ----
@@ -289,6 +298,14 @@ int FontEngine::textWidth(DisplayTarget target, const String& text, FontStyle st
   return textWidth(target, text.c_str(), style);
 }
 
+FontStyle FontEngine::fitStyle(DisplayTarget target, const char* text, int maxWidth,
+                               const FontStyle* cascade, int count) {
+  for (int i = 0; i < count; i++) {
+    if (textWidth(target, text, cascade[i]) <= maxWidth) return cascade[i];
+  }
+  return cascade[count - 1];
+}
+
 int FontEngine::charWidth(DisplayTarget target, uint16_t unicode, FontStyle style) {
   if (target == DisplayTarget::OLED && unicode >= 32 && unicode < 256) {
     WidthCache& cache = widthCache_[static_cast<int>(style)];
@@ -298,16 +315,7 @@ int FontEngine::charWidth(DisplayTarget target, uint16_t unicode, FontStyle styl
 
   // Live measure: out-of-range codepoints on OLED, everything on E-Ink.
   char utf8[5] = {};
-  if (unicode < 0x80) {
-    utf8[0] = static_cast<char>(unicode);
-  } else if (unicode < 0x800) {
-    utf8[0] = static_cast<char>(0xC0 | (unicode >> 6));
-    utf8[1] = static_cast<char>(0x80 | (unicode & 0x3F));
-  } else {
-    utf8[0] = static_cast<char>(0xE0 | (unicode >> 12));
-    utf8[1] = static_cast<char>(0x80 | ((unicode >> 6) & 0x3F));
-    utf8[2] = static_cast<char>(0x80 | (unicode & 0x3F));
-  }
+  encodeUtf8(unicode, utf8);
   applyFont(target, style);
   if (target == DisplayTarget::OLED) {
     return u8g2.getUTF8Width(utf8);
@@ -339,68 +347,53 @@ void FontEngine::setTextColor(DisplayTarget target, uint16_t color) {
   }
 }
 
-void FontEngine::drawTextEditor(DisplayTarget target, int x, int y,
-                                const char* text, const FontStyle* styles, int len) {
-  // Walk the string and apply per-character styles.
-  int xpos = x;
-  for (int i = 0; i < len; i++) {
-    uint16_t unicode = static_cast<uint8_t>(text[i]);
-    drawGlyph(target, xpos, y, unicode, styles[i]);
-    xpos += charWidth(target, unicode, styles[i]);
+const FontEntry& FontEngine::txtEntry(uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  if (family > 2)  family = 0;
+  if (sizeIdx > 3) sizeIdx = 0;
+  if (variant > 3) variant = 0;
+  return table_->txt[family][sizeIdx][variant];
+}
+
+void FontEngine::drawTextTxt(DisplayTarget target, int x, int y, const char* text,
+                             uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  applyEntry(target, txtEntry(family, sizeIdx, variant));
+  if (target == DisplayTarget::OLED) {
+    u8g2.drawUTF8(x, y, text);
+  } else {
+    u8g2f.drawUTF8(x, y, text);
   }
 }
 
-FontStyle FontEngine::resolveStyle(uint8_t family, bool bold,
-                                    bool italic, uint8_t headingLevel) {
-  // headingLevel: 0=body, 1=H1, 2=H2, 3=H3, 4=code, 5=quote, 6=list
-  if (headingLevel == 4) {
-    if (bold && italic) return FontStyle::MonoBoldItalic;
-    if (bold)           return FontStyle::MonoBold;
-    if (italic)         return FontStyle::MonoItalic;
-    return FontStyle::Mono;
+void FontEngine::drawGlyphTxt(DisplayTarget target, int x, int y, uint16_t unicode,
+                              uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  applyEntry(target, txtEntry(family, sizeIdx, variant));
+  if (target == DisplayTarget::OLED) {
+    u8g2.drawGlyph(x, y, unicode);
+  } else {
+    u8g2f.drawGlyph(x, y, unicode);
   }
-
-  if (headingLevel == 1) {
-    if (family == 0) {
-      if (bold && italic) return FontStyle::BodyBoldItalic; // H1_BI
-      return FontStyle::Heading1;
-    }
-    if (family == 2) return FontStyle::Heading1;
-    return FontStyle::Heading1;
-  }
-  if (headingLevel == 2) {
-    return FontStyle::Heading2;
-  }
-  if (headingLevel == 3) {
-    return FontStyle::Heading3;
-  }
-
-  // Body text (headingLevel == 0) or quote/list
-  FontStyle base;
-  switch (family) {
-    case 1: base = FontStyle::Sans; break;
-    case 2: base = FontStyle::Mono; break;
-    default: base = FontStyle::Body; break;
-  }
-
-  if (bold && italic) {
-    base = static_cast<FontStyle>(static_cast<int>(base) + 3);
-  } else if (bold) {
-    base = static_cast<FontStyle>(static_cast<int>(base) + 1);
-  } else if (italic) {
-    base = static_cast<FontStyle>(static_cast<int>(base) + 2);
-  }
-  return base;
 }
 
-const uint8_t* FontEngine::fontPtr(DisplayTarget target, FontStyle style) {
-  const FontEntry& e = entry(style);
-  return (target == DisplayTarget::OLED) ? e.oled : e.eink;
+int FontEngine::textWidthTxt(DisplayTarget target, const char* text,
+                             uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  applyEntry(target, txtEntry(family, sizeIdx, variant));
+  if (target == DisplayTarget::OLED) {
+    return u8g2.getUTF8Width(text);
+  }
+  return u8g2f.getUTF8Width(text);
 }
 
-const uint8_t* FontEngine::txtFont(DisplayTarget target,
-                                   uint8_t family, uint8_t sizeIdx, uint8_t variant) {
-  if (family > 2 || sizeIdx > 3 || variant > 3) return nullptr;
-  const FontEntry& e = table_->txt[family][sizeIdx][variant];
-  return (target == DisplayTarget::OLED) ? e.oled : e.eink;
+int FontEngine::charWidthTxt(DisplayTarget target, uint16_t unicode,
+                             uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  char utf8[5] = {};
+  encodeUtf8(unicode, utf8);
+  applyEntry(target, txtEntry(family, sizeIdx, variant));
+  if (target == DisplayTarget::OLED) {
+    return u8g2.getUTF8Width(utf8);
+  }
+  return u8g2f.getUTF8Width(utf8);
+}
+
+int FontEngine::fontHeightTxt(uint8_t family, uint8_t sizeIdx, uint8_t variant) {
+  return txtEntry(family, sizeIdx, variant).height;
 }

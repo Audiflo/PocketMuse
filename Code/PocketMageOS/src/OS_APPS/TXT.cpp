@@ -48,80 +48,43 @@ inline uint16_t decodeUTF8(const char* str, uint16_t* index, uint16_t len) {
   return c; // Fallback
 }
 
-// Fast character width lookup via u8g2 bridge
-inline uint16_t getFastCharWidth(uint16_t unicode, const uint8_t* font) {
-  if (!font) return 6;
-  u8g2f.setFont(font);
-  u8g2f.setFontMode(1);
-  char tmp[5];
-  if (unicode < 0x80) {
-    tmp[0] = unicode; tmp[1] = 0;
-  } else if (unicode < 0x800) {
-    tmp[0] = 0xC0 | (unicode >> 6);
-    tmp[1] = 0x80 | (unicode & 0x3F);
-    tmp[2] = 0;
-  } else {
-    tmp[0] = 0xE0 | (unicode >> 12);
-    tmp[1] = 0x80 | ((unicode >> 6) & 0x3F);
-    tmp[2] = 0x80 | (unicode & 0x3F);
-    tmp[3] = 0;
-  }
-  return u8g2f.getUTF8Width(tmp);
-}
-
-// Fast line height lookup via u8g2 bridge
-inline uint16_t getFastCharHeight(const uint8_t* font) {
-  if (!font) return 8;
-  u8g2f.setFont(font);
-  u8g2f.setFontMode(1);
-  return u8g2f.getFontAscent() - u8g2f.getFontDescent();
-}
-
 // Font setup
 enum FontFamily { serif = 0, sans = 1, mono = 2 };
-volatile uint8_t fontStyle = sans;
-
-struct FontMap {
-  const uint8_t* normal;
-  const uint8_t* normal_B;
-  const uint8_t* normal_I;
-  const uint8_t* normal_BI;
-
-  const uint8_t* h1;
-  const uint8_t* h1_B;
-  const uint8_t* h1_I;
-  const uint8_t* h1_BI;
-
-  const uint8_t* h2;
-  const uint8_t* h2_B;
-  const uint8_t* h2_I;
-  const uint8_t* h2_BI;
-
-  const uint8_t* h3;
-  const uint8_t* h3_B;
-  const uint8_t* h3_I;
-  const uint8_t* h3_BI;
-
-  const uint8_t* code;
-  const uint8_t* code_B;
-  const uint8_t* code_I;
-  const uint8_t* code_BI;
-
-  const uint8_t* quote;
-  const uint8_t* quote_B;
-  const uint8_t* quote_I;
-  const uint8_t* quote_BI;
-
-  const uint8_t* list;
-  const uint8_t* list_B;
-  const uint8_t* list_I;
-  const uint8_t* list_BI;
-};
-
-FontMap fonts[3];
+volatile uint8_t txtFontFamily = sans;
 
 void setFontStyle(FontFamily f) {
-  fontStyle = f;
+  txtFontFamily = f;
+}
+
+// Resolved txt-matrix indices.  family/sizeIdx/variant match the FontEngine
+// txt[3][4][4] matrix (TxtFamily* / TxtSize* / TxtVariant*).
+struct TxtSpec {
+  uint8_t family;
+  uint8_t size;
+  uint8_t variant;
+};
+
+// Matrix variant index for a bold/italic emphasis state.
+inline uint8_t txtVariant(bool bold, bool italic) {
+  return bold && italic ? TxtVariantBI
+       : bold           ? TxtVariantB
+       : italic         ? TxtVariantI
+                        : TxtVariantN;
+}
+
+// Resolve a markdown line style to a txt-matrix cell.  Inline code always
+// renders in the mono family so it stays monospaced under any font family.
+TxtSpec fontSpec(char style, uint8_t variant) {
+  TxtSpec s;
+  s.family  = (style == 'C') ? TxtFamilyMono : txtFontFamily;
+  s.variant = variant;
+  switch (style) {
+    case '1': s.size = TxtSizeH1; break;
+    case '2': s.size = TxtSizeH2; break;
+    case '3': s.size = TxtSizeH3; break;
+    default:  s.size = TxtSizeBody; break;
+  }
+  return s;
 }
 
 // ------------------ Document Variables ------------------
@@ -192,58 +155,6 @@ void initDocMemory() {
 }
 
 #pragma region Editor Helpers
-// Helpers
-const uint8_t* pickFont(char style, bool bold, bool italic) {
-  FontMap& fm = fonts[fontStyle];  
-
-  switch (style) {
-    case '1':  // H1
-      if (bold && italic) return fm.h1_BI;
-      if (bold) return fm.h1_B;
-      if (italic) return fm.h1_I;
-      return fm.h1;
-
-    case '2':  // H2
-      if (bold && italic) return fm.h2_BI;
-      if (bold) return fm.h2_B;
-      if (italic) return fm.h2_I;
-      return fm.h2;
-
-    case '3':  // H3
-      if (bold && italic) return fm.h3_BI;
-      if (bold) return fm.h3_B;
-      if (italic) return fm.h3_I;
-      return fm.h3;
-
-    case '>':  // Quote
-      if (bold && italic) return fm.quote_BI;
-      if (bold) return fm.quote_B;
-      if (italic) return fm.quote_I;
-      return fm.quote;
-
-    case 'U':  // Unordered List
-    case 'u':  // Unordered List (Continuation)
-    case 'O':  // Ordered List
-    case 'o':  // Ordered List (Continuation)
-      if (bold && italic) return fm.list_BI;
-      if (bold) return fm.list_B;
-      if (italic) return fm.list_I;
-      return fm.list;
-
-    case 'C':  // Code
-      if (bold && italic) return fm.code_BI;
-      if (bold) return fm.code_B;
-      if (italic) return fm.code_I;
-      return fm.code;
-
-    default:  // Normal
-      if (bold && italic) return fm.normal_BI;
-      if (bold) return fm.normal_B;
-      if (italic) return fm.normal_I;
-      return fm.normal;
-  }
-}
-
 uint16_t getLineMaxHeight(Line& line) {
   bool boldExists = false;
   bool italicExists = false;
@@ -265,13 +176,12 @@ uint16_t getLineMaxHeight(Line& line) {
     }
   }
 
-  const uint8_t* font;
-  if (boldItalicExists) font = pickFont(line.type, true, true);
-  else if (boldExists) font = pickFont(line.type, true, false);
-  else if (italicExists) font = pickFont(line.type, false, true);
-  else font = pickFont(line.type, false, false);
-
-  return getFastCharHeight(font); 
+  uint8_t variant = boldItalicExists ? TxtVariantBI
+                  : boldExists       ? TxtVariantB
+                  : italicExists     ? TxtVariantI
+                                     : TxtVariantN;
+  TxtSpec spec = fontSpec(line.type, variant);
+  return FontEngine::fontHeightTxt(spec.family, spec.size, spec.variant);
 }
 
 int getCalculatedLineHeight(Line& line) {
@@ -364,13 +274,12 @@ int drawLineEink(Document& doc, ulong lineIndex, int startX, int startY, bool is
       continue;
     }
 
-    const uint8_t* font = inlineCode ? pickFont('C', bold, italic) : pickFont(style, bold, italic);
-    u8g2f.setFont(font);
-    u8g2f.setFontMode(1);
+    TxtSpec spec = fontSpec(inlineCode ? 'C' : style, txtVariant(bold, italic));
+    FontEngine::drawGlyphTxt(DisplayTarget::EINK, xpos, baselineY, unicode,
+                             spec.family, spec.size, spec.variant);
 
-    u8g2f.drawGlyph(xpos, baselineY, unicode);
-
-    xpos += getFastCharWidth(unicode, font);
+    xpos += FontEngine::charWidthTxt(DisplayTarget::EINK, unicode,
+                                     spec.family, spec.size, spec.variant);
   }
 
   // ---------- Post-Render Formatting ---------- //
@@ -410,13 +319,11 @@ int drawLineEink(Document& doc, ulong lineIndex, int startX, int startY, bool is
     }
 
     String numStr = String(listNum) + ".";
-    u8g2f.setFont(pickFont('O', false, false));
-    u8g2f.setFontMode(1);
-    
-    int nw = u8g2f.getUTF8Width(numStr.c_str());
-    
-    u8g2f.setCursor(startX - nw - 8, baselineY);
-    u8g2f.print(numStr);
+    TxtSpec spec = fontSpec('O', TxtVariantN);
+    int nw = FontEngine::textWidthTxt(DisplayTarget::EINK, numStr.c_str(),
+                                      spec.family, spec.size, spec.variant);
+    FontEngine::drawTextTxt(DisplayTarget::EINK, startX - nw - 8, baselineY,
+                            numStr.c_str(), spec.family, spec.size, spec.variant);
   }
 
   return hpx; 
@@ -489,10 +396,10 @@ int getLineEinkWidth(Line& line) {
       continue;
     }
 
-    // Determine active font and measure glyph width
-    const uint8_t* font = inlineCode ? pickFont('C', bold, italic) : pickFont(style, bold, italic);
-
-    width += getFastCharWidth(unicode, font);
+    // Resolve the active font and measure glyph width
+    TxtSpec spec = fontSpec(inlineCode ? 'C' : style, txtVariant(bold, italic));
+    width += FontEngine::charWidthTxt(DisplayTarget::EINK, unicode,
+                                      spec.family, spec.size, spec.variant);
   }
 
   // 3. Account for the structural right-side padding (Code blocks have right-side borders)
@@ -515,7 +422,6 @@ int findWrapIndex(const String& content, int startIndex, char style) {
   int lastSpaceIndex = -1;
 
   int maxLen = min((int)(content.length() - startIndex), (int)LINE_CAP);
-  const uint8_t* activeFont = pickFont(style, bold, italic);
 
   uint16_t i = 0;
   while (i < maxLen) {
@@ -534,17 +440,17 @@ int findWrapIndex(const String& content, int startIndex, char style) {
         case 2: bold = !bold; break;
         case 3: bold = !bold; italic = !italic; break;
       }
-      activeFont = inlineCode ? pickFont('C', bold, italic) : pickFont(style, bold, italic);
       continue; 
     }
 
     if (unicode == '`') {
       inlineCode = !inlineCode;
-      activeFont = inlineCode ? pickFont('C', bold, italic) : pickFont(style, bold, italic);
       continue;
     }
 
-    currentWidth += getFastCharWidth(unicode, activeFont);
+    TxtSpec spec = fontSpec(inlineCode ? 'C' : style, txtVariant(bold, italic));
+    currentWidth += FontEngine::charWidthTxt(DisplayTarget::EINK, unicode,
+                                             spec.family, spec.size, spec.variant);
 
     if (currentWidth > availableWidth) {
       if (lastSpaceIndex > 0) return lastSpaceIndex;
@@ -1024,14 +930,8 @@ void cycleParagraphStyle(ulong& currLine, uint16_t& cursor) {
   updateScreen = true;
 }
 
-void setFontOLED(char style, bool bold, bool italic) {
-  const uint8_t* font = pickFont(style, bold, italic);
-  u8g2.setFont(font);
-}
-
 void toolBar(Line& line, bool bold, bool italic) {
-  switch (KB().getKeyboardState()) {
-    case 1:
+  switch (KB().getKeyboardState()) {    case 1:
       FontEngine::drawText(DisplayTarget::OLED,
                    (u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, TR(STR_KB_SHIFT), FontStyle::Tiny)) / 2,
                    u8g2.getDisplayHeight(), TR(STR_KB_SHIFT), FontStyle::Tiny);
@@ -1048,10 +948,6 @@ void toolBar(Line& line, bool bold, bool italic) {
     default:
       break;
   }
-
-  // The two drawStr() calls below render in the active u8g2 font; pin it to
-  // Tiny so they match the toolbar labels even when no key modifier is held.
-  u8g2.setFont(FontEngine::fontPtr(DisplayTarget::OLED, FontStyle::Tiny));
 
   char currentDocLineType = line.type;
   String lineTypeLabel;
@@ -1074,7 +970,7 @@ void toolBar(Line& line, bool bold, bool italic) {
   }
 
   if (lineTypeLabel.length() > 0) {
-    u8g2.drawStr(0, u8g2.getDisplayHeight(), lineTypeLabel.c_str());
+    FontEngine::drawText(DisplayTarget::OLED, 0, u8g2.getDisplayHeight(), lineTypeLabel, FontStyle::Tiny);
   }
 
   uint16_t dw = u8g2.getDisplayWidth();
@@ -1086,9 +982,10 @@ void toolBar(Line& line, bool bold, bool italic) {
   else if (italic)    styleLabel = TR(STR_TXT_STYLE_ITALIC);
   else                styleLabel = TR(STR_TXT_STYLE_NORMAL);
 
-  String fontAndStyle = String(fontShortLabels[fontStyle]) + " " + styleLabel;
-  u8g2.drawStr(dw - u8g2.getStrWidth(fontAndStyle.c_str()), u8g2.getDisplayHeight(),
-               fontAndStyle.c_str());
+  String fontAndStyle = String(fontShortLabels[txtFontFamily]) + " " + styleLabel;
+  FontEngine::drawText(DisplayTarget::OLED,
+                       dw - FontEngine::textWidth(DisplayTarget::OLED, fontAndStyle, FontStyle::Tiny),
+                       u8g2.getDisplayHeight(), fontAndStyle, FontStyle::Tiny);
 }
 
 void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
@@ -1359,55 +1256,77 @@ bool loadMarkdownFile(const String& path) {
     initLine(document.lines[i]);
   }
 
+  bool inCodeFence = false;
+
   while (file.available() && document.lineCount < MAX_LINES) {
     String line = file.readStringUntil('\n');
-    line.trim();
+    // Strip only the trailing CR so code-block content keeps its indentation.
+    if (line.endsWith("\r")) line.remove(line.length() - 1);
+    String trimmed = line;
+    trimmed.trim();
     char style = 'T';
-    String content = line; 
+    String content = trimmed;
 
-    if (line.length() == 0) {
-      style = 'B'; 
-      content = "";
-    } else if (line.startsWith("### ")) {
-      style = '3'; 
-      content = line.substring(4);  
-    } else if (line.startsWith("## ")) {
-      style = '2'; 
-      content = line.substring(3);  
-    } else if (line.startsWith("# ")) {
-      style = '1'; 
-      content = line.substring(2);  
-    } else if (line.startsWith("> ")) {
-      style = '>'; 
-      content = line.substring(2);  
-    } else if (line.startsWith("- ")) {
-      style = 'U'; 
-      content = line.substring(2); 
-    } else if (line == "---") {
-      style = 'H'; 
-      content = "";  
-    } else if (line.startsWith("```") || (line.startsWith("`") && line.endsWith("`"))) {
-      if (line.startsWith("```") && line.endsWith("```") && line.length() >= 6) {
-        content = line.substring(3, line.length() - 3);
-      } else if (line.startsWith("```")) {
-        content = line.substring(3);
-      } else if (line.startsWith("`") && line.endsWith("`") && line.length() >= 2) {
-        content = line.substring(1, line.length() - 1);
+    if (inCodeFence) {
+      if (trimmed.startsWith("```")) {
+        // Closing fence.
+        inCodeFence = false;
+        style = 'B';
+        content = "";
       } else {
+        // Verbatim code content (leading indentation preserved).
+        style = 'C';
         content = line;
       }
+    } else if (trimmed.startsWith("```")) {
+      if (trimmed.endsWith("```") && trimmed.length() >= 6) {
+        // Single-line inline code (```code```).
+        content = trimmed.substring(3, trimmed.length() - 3);
+        style = 'C';
+      } else {
+        // Opening fence; any info string (```text) is ignored.
+        inCodeFence = true;
+        style = 'B';
+        content = "";
+      }
+    } else if (trimmed.length() == 0) {
+      style = 'B'; 
+      content = "";
+    } else if (trimmed.startsWith("### ")) {
+      style = '3'; 
+      content = trimmed.substring(4);  
+    } else if (trimmed.startsWith("## ")) {
+      style = '2'; 
+      content = trimmed.substring(3);  
+    } else if (trimmed.startsWith("# ")) {
+      style = '1'; 
+      content = trimmed.substring(2);  
+    } else if (trimmed.startsWith("> ")) {
+      style = '>'; 
+      content = trimmed.substring(2);  
+    } else if (trimmed.startsWith("- ")) {
+      style = 'U'; 
+      content = trimmed.substring(2); 
+    } else if (trimmed == "---") {
+      style = 'H'; 
+      content = "";  
+    } else if (trimmed.startsWith("`") && trimmed.endsWith("`") && trimmed.length() >= 2) {
+      content = trimmed.substring(1, trimmed.length() - 1);
       style = 'C'; 
-    } else if (line.length() > 2 && isDigit(line.charAt(0)) && line.charAt(1) == '.' && line.charAt(2) == ' ') {
+    } else if (trimmed.length() > 2 && isDigit(trimmed.charAt(0)) && trimmed.charAt(1) == '.' && trimmed.charAt(2) == ' ') {
       style = 'O'; 
-      content = line.substring(3); 
+      content = trimmed.substring(3); 
     }
 
+    bool hadContent = content.length() > 0;
     while (content.length() > 0 && document.lineCount < MAX_LINES) {
       int splitIndex = findWrapIndex(content, 0, style);
 
       String chunk = content.substring(0, splitIndex);
       content = content.substring(splitIndex);
-      content.trim(); 
+      // Code keeps its leading whitespace across wrap boundaries; other styles
+      // trim the leftover so continuation chunks start clean.
+      if (style != 'C') content.trim(); 
 
       Line& docLine = document.lines[document.lineCount];
       docLine.type = style;
@@ -1423,7 +1342,9 @@ bool loadMarkdownFile(const String& path) {
       }
     }
     
-    if (content.length() == 0 && (style == 'B' || style == 'H') && document.lineCount < MAX_LINES) {
+    // Placeholder line only when the source produced no content (blank line,
+    // hrule, fence, empty code line); a consumed code line was already added.
+    if (!hadContent && (style == 'B' || style == 'H' || style == 'C') && document.lineCount < MAX_LINES) {
         Line& docLine = document.lines[document.lineCount];
         docLine.type = style;
         docLine.text[0] = '\0';
@@ -1847,9 +1768,9 @@ void editor(char inchar) {
     // TAB (forward word nav) / FN+TAB (font selector)
     else if (inchar == 9) {
       if (KB().getKeyboardState() == FUNC) {
-        fontStyle = (fontStyle + 1) % 3;
+        txtFontFamily = (txtFontFamily + 1) % 3;
         const char* fontLabels[] = {TR(STR_TXT_FONT_SERIF), TR(STR_TXT_FONT_SANS), TR(STR_TXT_FONT_MONO)};
-        OLED().sysMessage(fontLabels[fontStyle], 1200);
+        OLED().sysMessage(fontLabels[txtFontFamily], 1200);
         reflowAllLines(currentLineNum, cursor_pos);
         updateScreen = true;
       } else {
@@ -1926,56 +1847,8 @@ void editor(char inchar) {
 
 
 #pragma region INIT
-void initFonts() {
-  // FontMap is a flat mirror of the FontEngine txt[3][4][4] markdown matrix
-  // ([family][sizeIdx][variant]); FontEngine::txtFont() is the single source
-  // of truth.  family/size/variant enum values match FontFamily 1:1.
-  for (uint8_t family = TxtFamilySerif; family <= TxtFamilyMono; family++) {
-    FontMap& fm = fonts[family];
-
-    fm.normal    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantN);
-    fm.normal_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantB);
-    fm.normal_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantI);
-    fm.normal_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantBI);
-
-    fm.h1    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantN);
-    fm.h1_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantB);
-    fm.h1_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantI);
-    fm.h1_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH1, TxtVariantBI);
-
-    fm.h2    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantN);
-    fm.h2_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantB);
-    fm.h2_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantI);
-    fm.h2_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH2, TxtVariantBI);
-
-    fm.h3    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantN);
-    fm.h3_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantB);
-    fm.h3_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantI);
-    fm.h3_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeH3, TxtVariantBI);
-
-    // Code blocks render in monospace regardless of the document family.
-    // Legacy quirk preserved: the markdown lexer never tags code spans
-    // bold/italic, so bold aliases to regular and bold-italic to italic.
-    fm.code   = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantN);
-    fm.code_B = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantN);
-    fm.code_I = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantI);
-    fm.code_BI = FontEngine::txtFont(DisplayTarget::EINK, TxtFamilyMono, TxtSizeBody, TxtVariantI);
-
-    fm.quote    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantN);
-    fm.quote_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantB);
-    fm.quote_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantI);
-    fm.quote_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantBI);
-
-    fm.list    = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantN);
-    fm.list_B  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantB);
-    fm.list_I  = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantI);
-    fm.list_BI = FontEngine::txtFont(DisplayTarget::EINK, family, TxtSizeBody, TxtVariantBI);
-  }
-}
-
 void TXT_INIT(String inPath) {
   initDocMemory();
-  initFonts();
   setFontStyle(serif);
   bool fileLoaded = loadMarkdownFile(inPath);
   if (fileLoaded) {
@@ -1999,7 +1872,6 @@ void TXT_INIT(String inPath) {
 
 void TXT_INIT_JournalMode() {
   initDocMemory();
-  initFonts();
 
   String outPath = getCurrentJournal();
   if (!outPath.startsWith("/")) outPath = "/" + outPath;
