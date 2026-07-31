@@ -25,6 +25,17 @@ uint8_t selectedTask = 0;
 
 static ulong taskScrollIndex = 0; // State for task list scrolling
 
+// Layout constants
+constexpr int TASKS_NAME_X      = 29;    // task name x
+constexpr int TASKS_DATE_X      = 231;   // due-date x
+constexpr int TASKS_ROW_Y0      = 54;    // first row baseline
+constexpr int TASKS_ROW_PITCH   = 17;    // row pitch
+constexpr int TASKS_NAME_W      = 180;   // task name truncation width
+constexpr int TASKS_SCROLL_X    = 311;   // scrollbar x
+constexpr int TASKS_SCROLL_Y    = 38;    // scrollbar y
+constexpr int TASKS_SCROLL_H    = 174;   // scrollbar height
+constexpr int TASKS_SCROLL_W    = 3;     // scrollbar width
+
 void TASKS_INIT() {
   CurrentAppState = TASKS;
   CurrentTasksState = TASKS0;
@@ -179,14 +190,14 @@ void tasksScrollPreview() {
     startLine = taskScrollIndex - 1;
   }
 
-  int y = 7; 
-  for (int i = startLine; i < startLine + 4; i++) {
+  int y = kOledPrevY0; 
+  for (int i = startLine; i < startLine + kOledPrevRows; i++) {
     if (i >= (int)tasks.size()) {
       break;
     }
 
     if (i == (int)taskScrollIndex) {
-      u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
+      u8g2.drawTriangle(0, y - 2 * kOledPrevTriH, 0, y, kOledPrevTriW, y - kOledPrevTriH);
     }
 
     String tName = tasks[i][0];
@@ -202,9 +213,9 @@ void tasksScrollPreview() {
        dispStr = tName + " " + tDate;
     }
     
-    FontEngine::drawText(DisplayTarget::OLED, 6, y, dispStr, FontStyle::Tiny);
+    FontEngine::drawText(DisplayTarget::OLED, kOledPrevX, y, dispStr, FontStyle::Tiny);
 
-    y += 8;
+    y += kOledPrevPitch;
   }
 
   u8g2.sendBuffer();
@@ -440,17 +451,17 @@ void einkHandler_TASKS() {
           int displayRow = 0;
 
           for (int i = startIdx; i < endIdx; i++) {
-            String tName = truncateWithEllipsis(tasks[i][0], 180, FontStyle::Body);
+            String tName = truncateWithEllipsis(tasks[i][0], TASKS_NAME_W, FontStyle::Body);
 
-            FontEngine::drawText(DisplayTarget::EINK, 29, 54 + (17 * displayRow), tName, FontStyle::Body);
+            FontEngine::drawText(DisplayTarget::EINK, TASKS_NAME_X, TASKS_ROW_Y0 + (TASKS_ROW_PITCH * displayRow), tName, FontStyle::Body);
             
             // PRINT TASK DUE DATE
-            FontEngine::drawText(DisplayTarget::EINK, 231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]), FontStyle::Body);
+            FontEngine::drawText(DisplayTarget::EINK, TASKS_DATE_X, TASKS_ROW_Y0 + (TASKS_ROW_PITCH * displayRow), convertDateFormat(tasks[i][1]), FontStyle::Body);
 
             displayRow++;
           }
 
-          drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, 311, 38, 174, 3);
+          drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, TASKS_SCROLL_X, TASKS_SCROLL_Y, TASKS_SCROLL_H, TASKS_SCROLL_W);
         }
         else EINK().drawStatusBar("No Tasks! Add New Task (N)");
 
@@ -477,17 +488,17 @@ void einkHandler_TASKS() {
           int displayRow = 0;
 
           for (int i = startIdx; i < endIdx; i++) {
-            String tName = truncateWithEllipsis(tasks[i][0], 180, FontStyle::Body);
+            String tName = truncateWithEllipsis(tasks[i][0], TASKS_NAME_W, FontStyle::Body);
 
-            FontEngine::drawText(DisplayTarget::EINK, 29, 54 + (17 * displayRow), tName, FontStyle::Body);
+            FontEngine::drawText(DisplayTarget::EINK, TASKS_NAME_X, TASKS_ROW_Y0 + (TASKS_ROW_PITCH * displayRow), tName, FontStyle::Body);
             
             // PRINT TASK DUE DATE
-            FontEngine::drawText(DisplayTarget::EINK, 231, 54 + (17 * displayRow), convertDateFormat(tasks[i][1]), FontStyle::Body);
+            FontEngine::drawText(DisplayTarget::EINK, TASKS_DATE_X, TASKS_ROW_Y0 + (TASKS_ROW_PITCH * displayRow), convertDateFormat(tasks[i][1]), FontStyle::Body);
 
             displayRow++;
           }
 
-          drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, 311, 38, 174, 3);
+          drawScrollbar(tasks.size(), MAX_FILES, taskScrollIndex, TASKS_SCROLL_X, TASKS_SCROLL_Y, TASKS_SCROLL_H, TASKS_SCROLL_W);
         }
         
         switch (newTaskState) {

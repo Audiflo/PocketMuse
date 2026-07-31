@@ -137,6 +137,16 @@ static ulong topVisibleLine = 0;
 
 #define LINE_CAP 64       
 
+// Layout constants
+constexpr int TXT_PREV_LEFT_W  = 74;    // left pane width (style bars)
+constexpr int TXT_PREV_SPLIT_X = 76;    // split vline x
+constexpr int TXT_PREV_TOP_W   = 72;    // style-bar max width
+constexpr int TXT_PREV_RULE_X  = 78;    // right-pane top rule x
+constexpr int TXT_PREV_RULE_Y  = 10;    // right-pane top rule y
+constexpr int TXT_PREV_TEXT_X  = 80;    // right-pane text x
+constexpr int TXT_PREV_LABEL_Y = 7;     // right-pane label baseline
+constexpr int TXT_PREV_PAD     = 8;     // list-style indentation
+
 struct Line {
   char type = ' ';          
   char text[LINE_CAP + 1];  
@@ -1087,14 +1097,14 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
 
   int startX = 0; 
   int cursorY = 0;
-  int specialPadding = 8; 
+  int specialPadding = TXT_PREV_PAD; 
   
   ulong displayTop = 0;
   if (activeCursorLine > 3) {
     displayTop = activeCursorLine - 3;
   }
 
-  u8g2.drawVLine(76, 0, u8g2.getDisplayHeight());
+  u8g2.drawVLine(TXT_PREV_SPLIT_X, 0, u8g2.getDisplayHeight());
 
   for (ulong i = displayTop; i < doc.lineCount; i++) {
     if (cursorY > u8g2.getDisplayHeight()) break; 
@@ -1120,7 +1130,7 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
         break;
       case 'H': 
         if (cursorY > 0) {
-          u8g2.drawHLine(startX, cursorY, 74);
+          u8g2.drawHLine(startX, cursorY, TXT_PREV_LEFT_W);
           cursorY += 3;
         }
         continue;
@@ -1132,7 +1142,7 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
         break;
     }
 
-    uint16_t boxWidth = map(line.len, 0, LINE_CAP, 0, 72 - padX);
+    uint16_t boxWidth = map(line.len, 0, LINE_CAP, 0, TXT_PREV_TOP_W - padX);
     if (boxWidth == 0 && line.len > 0) boxWidth = 2; 
 
     u8g2.drawBox(padX + 2, cursorY, boxWidth, max_hpx);
@@ -1150,7 +1160,7 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
          isLast = false; 
       }
       if (isLast && (cursorY + max_hpx + 1) < u8g2.getDisplayHeight()) {
-        u8g2.drawHLine(startX, cursorY + max_hpx + 1, 74);
+        u8g2.drawHLine(startX, cursorY + max_hpx + 1, TXT_PREV_LEFT_W);
       }
     } 
     else if (style == 'U') {
@@ -1163,7 +1173,7 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
 
     if (i == activeCursorLine) {
       u8g2.drawFrame(padX, cursorY - 1, boxWidth + 4, max_hpx + 2);
-      u8g2.drawTriangle(74, cursorY-3, 74, cursorY + 3, 70, cursorY); 
+      u8g2.drawTriangle(TXT_PREV_LEFT_W, cursorY - 3, TXT_PREV_LEFT_W, cursorY + 3, TXT_PREV_LEFT_W - 4, cursorY); 
     }
 
     cursorY += max_hpx + 2; 
@@ -1190,14 +1200,14 @@ void displayScrollPreviewOLED(Document& doc, ulong activeCursorLine) {
   }
 
   String lineStr = "L: " + String(activeCursorLine);
-  FontEngine::drawText(DisplayTarget::OLED, 80, 7, lineStr, FontStyle::Tiny);
+  FontEngine::drawText(DisplayTarget::OLED, TXT_PREV_TEXT_X, TXT_PREV_LABEL_Y, lineStr, FontStyle::Tiny);
   FontEngine::drawText(DisplayTarget::OLED,
                u8g2.getDisplayWidth() - FontEngine::textWidth(DisplayTarget::OLED, typeLabel, FontStyle::Tiny),
-               7, typeLabel, FontStyle::Tiny);
-  u8g2.drawHLine(78, 10, u8g2.getDisplayWidth()-78);
+               TXT_PREV_LABEL_Y, typeLabel, FontStyle::Tiny);
+  u8g2.drawHLine(TXT_PREV_RULE_X, TXT_PREV_RULE_Y, u8g2.getDisplayWidth() - TXT_PREV_RULE_X);
 
   if (activeLine.len > 0) {
-    int prevCursorX = 80;
+    int prevCursorX = TXT_PREV_TEXT_X;
     int rightEdge = u8g2.getDisplayWidth(); 
     
     uint16_t i = 0;

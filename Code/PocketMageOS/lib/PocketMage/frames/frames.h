@@ -4,7 +4,6 @@
 
 // ===================== FRAME CLASS =====================
 # define MAX_FRAMES 100
-# define X_OFFSET 4
 #pragma region textSource
 // bit flags for alignment or future options
 enum LineFlags : uint8_t { LF_NONE=0, LF_RIGHT= 1<<0, LF_CENTER= 1<<1 };

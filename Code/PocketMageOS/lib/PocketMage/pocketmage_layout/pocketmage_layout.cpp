@@ -1,12 +1,5 @@
 #include "pocketmage_layout.h"
-#include <pocketmage_font/pocketmage_font.h>
-#include <GxEPD2_BW.h>
 #include <vector>
-
-// Forward-declare the global E-Ink display (declared in pocketmage_eink.h)
-using PanelT   = GxEPD2_310_GDEQ031T10;
-using DisplayT = GxEPD2_BW<PanelT, PanelT::HEIGHT>;
-extern DisplayT display;
 
 size_t sliceThatFits(const char* s, size_t n, int maxTextWidth, FontStyle style) {
   if (!s || n == 0) return 0;

@@ -4,6 +4,46 @@
 #if !OTA_APP // POCKETMAGE_OS
 static constexpr const char* TAG = "CALENDAR"; // Tag for all calls to ESP_LOG
 
+// Layout constants
+constexpr int CAL_MONTH_GRID_X    = 7;    // month view: first cell x
+constexpr int CAL_MONTH_GRID_Y    = 49;   // month view: first cell row y
+constexpr int CAL_MONTH_CELL_W    = 44;   // month view: cell width
+constexpr int CAL_MONTH_CELL_H    = 27;   // month view: cell height
+constexpr int CAL_MONTH_DAY_PAD_X = 6;    // day-number x inset in a month cell
+constexpr int CAL_MONTH_DAY_Y     = 15;   // day-number baseline offset in a month cell
+constexpr int CAL_MONTH_EVNUM_X   = 32;   // event-count x inset in a month cell
+constexpr int CAL_MONTH_EVNUM_Y   = 16;   // event-count baseline offset in a month cell
+constexpr int CAL_MONTH_EVMARK_X  = 29;   // event-marker x inset in a month cell
+constexpr int CAL_MONTH_EVMARK_Y  = 8;    // event-marker y inset in a month cell
+constexpr int CAL_MONTH_BOXES     = 42;   // 7x6 grid
+
+constexpr int CAL_WEEK_X         = 9;     // week/day view: column x origin
+constexpr int CAL_WEEK_COL_W     = 44;    // week/day view: column width
+constexpr int CAL_WEEK_DATE_Y    = 62;    // week view: header date baseline
+constexpr int CAL_WEEK_TEXT_X    = 12;    // week view: event text x inset
+constexpr int CAL_WEEK_BLANK_Y   = 71;    // week view: blank-region y origin
+constexpr int CAL_WEEK_BLANK_W   = 39;    // week view: blank-region width (COL_W - 5)
+constexpr int CAL_WEEK_ROW_H     = 23;    // week view: event row pitch
+constexpr int CAL_WEEK_TIME_Y    = 80;    // week view: start-time baseline (row 0)
+constexpr int CAL_WEEK_NAME_Y    = 89;    // week view: event-name baseline (row 0)
+constexpr int CAL_WEEK_MAX_EV    = 6;     // week view: max event rows per column
+constexpr int CAL_WEEK_NAME_MAX  = 6;     // week view: event-name truncation length
+
+constexpr int CAL_DAY_LIST_X     = 12;    // day view: blank-region x
+constexpr int CAL_DAY_LIST_Y     = 66;    // day view: blank-region y origin
+constexpr int CAL_DAY_LIST_W     = 297;   // day view: blank-region width
+constexpr int CAL_DAY_MAX_EV     = 7;     // day view: max event rows
+constexpr int CAL_DAY_ROW_H      = 19;    // day view: event row pitch
+constexpr int CAL_DAY_TEXT_X     = 48;    // day view: event text x
+constexpr int CAL_DAY_NAME_Y     = 74;    // day view: event-name baseline (row 0)
+constexpr int CAL_DAY_INFO_Y     = 82;    // day view: event-info baseline (row 0)
+constexpr int CAL_DAY_TEXT_W     = CAL_DAY_LIST_X + CAL_DAY_LIST_W - CAL_DAY_TEXT_X;  // 261: event text width
+
+constexpr int CAL_EDIT_X        = 106;   // event editor/viewer: value column x
+constexpr int CAL_EDIT_Y0       = 68;    // event editor/viewer: first value baseline
+constexpr int CAL_EDIT_PITCH    = 22;    // event editor/viewer: value row pitch
+constexpr int CAL_EDIT_TEXT_W   = CAL_DAY_LIST_X + CAL_DAY_LIST_W - CAL_EDIT_X;  // 203: value text width
+
 enum CalendarState { WEEK, MONTH, NEW_EVENT, VIEW_EVENT, SUN, MON, TUE, WED, THU, FRI, SAT };
 CalendarState CurrentCalendarState = MONTH;
 
@@ -891,11 +931,6 @@ int checkEvents(String YYYYMMDD, bool countOnly = false) {
 }
 
 void drawCalendarMonth(int monthOffset) {
-  int GRID_X =  7;     // X offset of first cell
-  int GRID_Y = 49;     // Y offset of first row
-  int CELL_W = 44;     // Width of each cell
-  int CELL_H = 27;     // Height of each cell
-
   DateTime now = CLOCK().nowDT();
 
   // Step 1: Calculate target month/year
@@ -923,20 +958,20 @@ void drawCalendarMonth(int monthOffset) {
 
   // Step 4: Blank out leading days
   for (int i = 0; i < startDay; ++i) {
-    int x = GRID_X + i * CELL_W;
-    int y = GRID_Y;
-    display.fillRect(x, y, CELL_W, CELL_H, GxEPD_WHITE);
+    int x = CAL_MONTH_GRID_X + i * CAL_MONTH_CELL_W;
+    int y = CAL_MONTH_GRID_Y;
+    display.fillRect(x, y, CAL_MONTH_CELL_W, CAL_MONTH_CELL_H, GxEPD_WHITE);
   }
 
   // Step 5: Blank out trailing days
-  int totalBoxes = 42;  // 7x6 grid
+  int totalBoxes = CAL_MONTH_BOXES;  // 7x6 grid
   int trailingStart = startDay + daysInMonth;
   for (int i = trailingStart; i < totalBoxes; ++i) {
     int row = i / 7;
     int col = i % 7;
-    int x = GRID_X + col * CELL_W;
-    int y = GRID_Y + row * CELL_H;
-    display.fillRect(x, y, CELL_W, CELL_H, GxEPD_WHITE);
+    int x = CAL_MONTH_GRID_X + col * CAL_MONTH_CELL_W;
+    int y = CAL_MONTH_GRID_Y + row * CAL_MONTH_CELL_H;
+    display.fillRect(x, y, CAL_MONTH_CELL_W, CAL_MONTH_CELL_H, GxEPD_WHITE);
   }
   // Step 6: Draw day numbers and events
   for (int i = 0; i < daysInMonth; ++i) {
@@ -944,18 +979,18 @@ void drawCalendarMonth(int monthOffset) {
     int row = dayIndex / 7;
     int col = dayIndex % 7;
 
-    int x = GRID_X + col * CELL_W;
-    int y = GRID_Y + row * CELL_H;
+    int x = CAL_MONTH_GRID_X + col * CAL_MONTH_CELL_W;
+    int y = CAL_MONTH_GRID_Y + row * CAL_MONTH_CELL_H;
 
     int dayNum = i + 1;  // 1-based day number
 
     if (dayNum == now.day() && monthOffset == 0) {
       u8g2f.setForegroundColor(GxEPD_BLACK);
-      FontEngine::drawText(DisplayTarget::EINK, x + 6, y + 15, String(dayNum), FontStyle::BodyBold);
+      FontEngine::drawText(DisplayTarget::EINK, x + CAL_MONTH_DAY_PAD_X, y + CAL_MONTH_DAY_Y, String(dayNum), FontStyle::BodyBold);
     }
     else {
       u8g2f.setForegroundColor(GxEPD_BLACK);
-      FontEngine::drawText(DisplayTarget::EINK, x + 6, y + 15, String(dayNum), FontStyle::Body);
+      FontEngine::drawText(DisplayTarget::EINK, x + CAL_MONTH_DAY_PAD_X, y + CAL_MONTH_DAY_Y, String(dayNum), FontStyle::Body);
     }
 
     String YYYYMMDD = intToYYYYMMDD(year, month, dayNum);
@@ -963,13 +998,13 @@ void drawCalendarMonth(int monthOffset) {
     int numEvents = checkEvents(YYYYMMDD, true);
 
     if (numEvents > 2) {
-      FontEngine::drawText(DisplayTarget::EINK, x + 32, y + 16, String(numEvents), FontStyle::Tiny);
+      FontEngine::drawText(DisplayTarget::EINK, x + CAL_MONTH_EVNUM_X, y + CAL_MONTH_EVNUM_Y, String(numEvents), FontStyle::Tiny);
     }
     else if (numEvents > 1) {
-      display.drawBitmap(x + 29, y + 8, _eventMarker1, 10, 10, GxEPD_BLACK);
+      display.drawBitmap(x + CAL_MONTH_EVMARK_X, y + CAL_MONTH_EVMARK_Y, _eventMarker1, 10, 10, GxEPD_BLACK);
     }
     else if (numEvents > 0) {
-      display.drawBitmap(x + 29, y + 8, _eventMarker0, 10, 10, GxEPD_BLACK);
+      display.drawBitmap(x + CAL_MONTH_EVMARK_X, y + CAL_MONTH_EVMARK_Y, _eventMarker0, 10, 10, GxEPD_BLACK);
     }
   }
 }
@@ -1020,21 +1055,21 @@ void drawCalendarWeek(int weekOffset) {
 
     u8g2f.setForegroundColor(GxEPD_BLACK);
     String dateStr = String(m) + "/" + String(d);
-    FontEngine::drawText(DisplayTarget::EINK, 9 + (i * 44), 62, dateStr, FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_X + (i * CAL_WEEK_COL_W), CAL_WEEK_DATE_Y, dateStr, FontStyle::Body);
 
     int eventCount = checkEvents(YYYYMMDD, false);
-    if (eventCount > 6) eventCount = 6;
+    if (eventCount > CAL_WEEK_MAX_EV) eventCount = CAL_WEEK_MAX_EV;
 
-    display.fillRect(9 + (i * 44), 71 + (eventCount * 23), 39, ((6 - eventCount) * 23), GxEPD_WHITE);
+    display.fillRect(CAL_WEEK_X + (i * CAL_WEEK_COL_W), CAL_WEEK_BLANK_Y + (eventCount * CAL_WEEK_ROW_H), CAL_WEEK_BLANK_W, ((CAL_WEEK_MAX_EV - eventCount) * CAL_WEEK_ROW_H), GxEPD_WHITE);
 
     for (int j = 0; j < eventCount; j++) {
       String startTime = dayEvents[j][2];
       if (dayEvents[j][4] != "NO") startTime = ":: " + startTime;
-      String eventName = dayEvents[j][0].substring(0, 6);
+      String eventName = dayEvents[j][0].substring(0, CAL_WEEK_NAME_MAX);
 
       u8g2f.setForegroundColor(GxEPD_BLACK);
-      FontEngine::drawText(DisplayTarget::EINK, 12 + (i * 44), 80 + (j * 23), startTime, FontStyle::Micro);
-      FontEngine::drawText(DisplayTarget::EINK, 12 + (i * 44), 89 + (j * 23), eventName, FontStyle::Tiny);
+      FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_TEXT_X + (i * CAL_WEEK_COL_W), CAL_WEEK_TIME_Y + (j * CAL_WEEK_ROW_H), startTime, FontStyle::Micro);
+      FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_TEXT_X + (i * CAL_WEEK_COL_W), CAL_WEEK_NAME_Y + (j * CAL_WEEK_ROW_H), eventName, FontStyle::Tiny);
     }
   }
 }
@@ -1437,12 +1472,12 @@ void einkHandler_CALENDAR() {
 
         display.drawBitmap(0, 0, calendar_allArray[2], 320, 218, GxEPD_BLACK);
 
-        FontEngine::drawText(DisplayTarget::EINK, 106, 68, newEventName, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 90, formatDateDisplay(newEventStartDate), FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 112, newEventStartTime, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 134, newEventDuration, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 156, newEventRepeat, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 178, newEventNote, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (0 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventName, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (1 * CAL_EDIT_PITCH), formatDateDisplay(newEventStartDate), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (2 * CAL_EDIT_PITCH), newEventStartTime, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (3 * CAL_EDIT_PITCH), newEventDuration, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (4 * CAL_EDIT_PITCH), newEventRepeat, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
 
         switch (newEventState) {
           case 0: EINK().drawStatusBar("Enter Event Name on OLED"); break;
@@ -1468,12 +1503,12 @@ void einkHandler_CALENDAR() {
         EINK().drawStatusBar("Type 1-6,(D)el, or (S)ave");
         display.drawBitmap(0, 0, calendar_allArray[3], 320, 218, GxEPD_BLACK);
 
-        FontEngine::drawText(DisplayTarget::EINK, 106, 68, newEventName, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 90, formatDateDisplay(newEventStartDate), FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 112, newEventStartTime, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 134, newEventDuration, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 156, newEventRepeat, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, 106, 178, newEventNote, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (0 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventName, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (1 * CAL_EDIT_PITCH), formatDateDisplay(newEventStartDate), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (2 * CAL_EDIT_PITCH), newEventStartTime, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (3 * CAL_EDIT_PITCH), newEventDuration, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (4 * CAL_EDIT_PITCH), newEventRepeat, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
 
         #if POCKETMAGE_HW_VERSION != 2
           EINK().forceSlowFullUpdate(true);
@@ -1497,20 +1532,20 @@ void einkHandler_CALENDAR() {
         display.drawBitmap(0, 0, calendar_allArray[CurrentCalendarState], 320, 218, GxEPD_BLACK);
 
         u8g2f.setForegroundColor(GxEPD_BLACK);
-        FontEngine::drawText(DisplayTarget::EINK, 9 + (44*(CurrentCalendarState - 4)), 59, String(currentMonth) + "/" + String(currentDate), FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, CAL_WEEK_X + (CAL_WEEK_COL_W * (CurrentCalendarState - 4)), 59, String(currentMonth) + "/" + String(currentDate), FontStyle::Body);
 
         String YYYYMMDD = intToYYYYMMDD(currentYear, currentMonth, currentDate);
         int eventCount = checkEvents(YYYYMMDD, false);
-        if (eventCount > 7) eventCount = 7;
+        if (eventCount > CAL_DAY_MAX_EV) eventCount = CAL_DAY_MAX_EV;
 
-        display.fillRect(12, 66 + (eventCount * 19), 297, ((7 - eventCount) * 19), GxEPD_WHITE);
+        display.fillRect(CAL_DAY_LIST_X, CAL_DAY_LIST_Y + (eventCount * CAL_DAY_ROW_H), CAL_DAY_LIST_W, ((CAL_DAY_MAX_EV - eventCount) * CAL_DAY_ROW_H), GxEPD_WHITE);
         
         for (int j = 0; j < eventCount; j++) {
-          String name       = dayEvents[j][0];
-          String bottomInfo = "Starts: " + dayEvents[j][2] + ", Dur: " + dayEvents[j][3] + ", Rep: " + dayEvents[j][4];
+          String name       = truncateWithEllipsis(dayEvents[j][0], CAL_DAY_TEXT_W, FontStyle::Tiny);
+          String bottomInfo = truncateWithEllipsis("Starts: " + dayEvents[j][2] + ", Dur: " + dayEvents[j][3] + ", Rep: " + dayEvents[j][4], CAL_DAY_TEXT_W, FontStyle::Tiny);
 
-          FontEngine::drawText(DisplayTarget::EINK, 48, 74 + (j * 19), name, FontStyle::Tiny);
-          FontEngine::drawText(DisplayTarget::EINK, 48, 82 + (j * 19), bottomInfo, FontStyle::Tiny);
+          FontEngine::drawText(DisplayTarget::EINK, CAL_DAY_TEXT_X, CAL_DAY_NAME_Y + (j * CAL_DAY_ROW_H), name, FontStyle::Tiny);
+          FontEngine::drawText(DisplayTarget::EINK, CAL_DAY_TEXT_X, CAL_DAY_INFO_Y + (j * CAL_DAY_ROW_H), bottomInfo, FontStyle::Tiny);
         }
 
         #if POCKETMAGE_HW_VERSION != 2

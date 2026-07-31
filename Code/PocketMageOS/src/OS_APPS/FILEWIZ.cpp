@@ -19,6 +19,24 @@ bool refreshFiles = false;
 
 #define MAX_CACHED_FILES 200 
 
+// Layout constants
+constexpr int FWZ_LARGE_ICON_X    = 1;    // OLED: large icon x
+constexpr int FWZ_LARGE_ICON_Y    = 1;    // OLED: large icon y
+constexpr int FWZ_LARGE_ICON_S    = 30;   // OLED: large icon size
+constexpr int FWZ_LARGE_NAME_X    = 34;   // OLED: selected file name x
+constexpr int FWZ_LARGE_NAME_Y    = 29;   // OLED: selected file name baseline
+constexpr int FWZ_SMALL_ICON_X0   = 34;   // OLED: first small icon x
+constexpr int FWZ_SMALL_ICON_Y    = 1;    // OLED: small icon y
+constexpr int FWZ_SMALL_ICON_S    = 15;   // OLED: small icon size
+constexpr int FWZ_SMALL_ICON_PITCH = 18;  // OLED: small icon pitch
+constexpr int FWZ_MAX_DISPLAY     = 14;   // OLED: max icons on screen
+constexpr int FWZ_KB_LABEL_H      = 8;    // OLED: keyboard-state label height
+constexpr int FWZ_LIST_X          = 30;   // E-ink: recent-files x
+constexpr int FWZ_LIST_Y0         = 54;   // E-ink: first recent-file baseline
+constexpr int FWZ_LIST_PITCH      = 17;   // E-ink: recent-file row pitch
+constexpr int FWZ_LIST_ROWS       = 10;   // E-ink: recent-file rows
+constexpr int FWZ_LIST_W          = 260;  // E-ink: recent-file text width
+
 std::vector<String> excludedPaths = {
   "/sys",
   "/System Volume Information",
@@ -162,28 +180,28 @@ String renderWizMini(String folder, int8_t scrollDelta) {
 
   // Display Icons
   u8g2.clearBuffer();
-  const int maxDisplay = 14;
+  const int maxDisplay = FWZ_MAX_DISPLAY;
   for (size_t i = scroll; i < cachedFiles.size() && i < scroll + maxDisplay; i++) {
     FileObject &f = cachedFiles[i];
 
     // Big icon for first visible
     if (i == scroll) {
       switch (f.type) {
-        case 'T': u8g2.drawXBMP(1, 1, 30, 30, _LFileIcons[0]); break;
-        case 'F': u8g2.drawXBMP(1, 1, 30, 30, _LFileIcons[1]); break;
-        case 'A': u8g2.drawXBMP(1, 1, 30, 30, _LFileIcons[2]); break;
-        default:  u8g2.drawXBMP(1, 1, 30, 30, _LFileIcons[3]); break;
+        case 'T': u8g2.drawXBMP(FWZ_LARGE_ICON_X, FWZ_LARGE_ICON_Y, FWZ_LARGE_ICON_S, FWZ_LARGE_ICON_S, _LFileIcons[0]); break;
+        case 'F': u8g2.drawXBMP(FWZ_LARGE_ICON_X, FWZ_LARGE_ICON_Y, FWZ_LARGE_ICON_S, FWZ_LARGE_ICON_S, _LFileIcons[1]); break;
+        case 'A': u8g2.drawXBMP(FWZ_LARGE_ICON_X, FWZ_LARGE_ICON_Y, FWZ_LARGE_ICON_S, FWZ_LARGE_ICON_S, _LFileIcons[2]); break;
+        default:  u8g2.drawXBMP(FWZ_LARGE_ICON_X, FWZ_LARGE_ICON_Y, FWZ_LARGE_ICON_S, FWZ_LARGE_ICON_S, _LFileIcons[3]); break;
       }
       String dispName = f.name + f.extension;
-      FontEngine::drawText(DisplayTarget::OLED, 34, 29, dispName, FontStyle::MonoBold);
+      FontEngine::drawText(DisplayTarget::OLED, FWZ_LARGE_NAME_X, FWZ_LARGE_NAME_Y, dispName, FontStyle::MonoBold);
     }
     else {
-      int x = 34 + 18 * (i - scroll - 1);
+      int x = FWZ_SMALL_ICON_X0 + FWZ_SMALL_ICON_PITCH * (i - scroll - 1);
       switch (f.type) {
-        case 'T': u8g2.drawXBMP(x, 1, 15, 15, _SFileIcons[0]); break;
-        case 'F': u8g2.drawXBMP(x, 1, 15, 15, _SFileIcons[1]); break;
-        case 'A': u8g2.drawXBMP(x, 1, 15, 15, _SFileIcons[2]); break;
-        default:  u8g2.drawXBMP(x, 1, 15, 15, _SFileIcons[3]); break;
+        case 'T': u8g2.drawXBMP(x, FWZ_SMALL_ICON_Y, FWZ_SMALL_ICON_S, FWZ_SMALL_ICON_S, _SFileIcons[0]); break;
+        case 'F': u8g2.drawXBMP(x, FWZ_SMALL_ICON_Y, FWZ_SMALL_ICON_S, FWZ_SMALL_ICON_S, _SFileIcons[1]); break;
+        case 'A': u8g2.drawXBMP(x, FWZ_SMALL_ICON_Y, FWZ_SMALL_ICON_S, FWZ_SMALL_ICON_S, _SFileIcons[2]); break;
+        default:  u8g2.drawXBMP(x, FWZ_SMALL_ICON_Y, FWZ_SMALL_ICON_S, FWZ_SMALL_ICON_S, _SFileIcons[3]); break;
       }
     }
   }
@@ -199,7 +217,7 @@ String renderWizMini(String folder, int8_t scrollDelta) {
     if (label) {
       int tw = FontEngine::textWidth(DisplayTarget::OLED, label, FontStyle::Tiny);
       u8g2.setDrawColor(0);
-      u8g2.drawBox(u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), tw, -8);
+      u8g2.drawBox(u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), tw, -FWZ_KB_LABEL_H);
       u8g2.setDrawColor(1);
       FontEngine::drawText(DisplayTarget::OLED, u8g2.getDisplayWidth() - tw, u8g2.getDisplayHeight(), label, FontStyle::Tiny);
     }
@@ -527,16 +545,11 @@ void einkHandler_FILEWIZ() {
         updateRecentFilesList();
 
         // Draw the file list
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < FWZ_LIST_ROWS; i++) {
           String dispPath = PM_SDAUTO().getFilesListIndex(i);
           
           if (dispPath != "-") {
-            // Truncate long paths for the UI
-            if (dispPath.length() > 30) {
-               dispPath = "..." + dispPath.substring(dispPath.length() - 27);
-            }
-            
-            FontEngine::drawText(DisplayTarget::EINK, 30, 54 + (17 * i), dispPath, FontStyle::Body);
+            FontEngine::drawText(DisplayTarget::EINK, FWZ_LIST_X, FWZ_LIST_Y0 + (FWZ_LIST_PITCH * i), truncateWithEllipsis(dispPath, FWZ_LIST_W, FontStyle::Body), FontStyle::Body);
           }
         }
 

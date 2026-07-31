@@ -45,14 +45,35 @@ static void printUTF8ToEink(const String& s, int maxChars = 9999) {
 enum TERMINAL_functions { PROMPT, POTION };
 TERMINAL_functions CurrentTERMfunc = PROMPT;
 
+// Potion
+static const int POTION_ROW_TOP     = 10;
+static const int POTION_ROW_PITCH   = 16;
+static const int POTION_PAGE_LINES  = 15;  // rows that fit on screen
+static const int POTION_BACK_OFFSET = 11;  // page - ahead - 1
+static const int POTION_AHEAD_LINES = 3;
+static const int POTION_LINE_X      = 5;
+
+// Terminal output geometry (e-ink terminal scroll view)
+static const int TERM_X             = POTION_LINE_X;  // output text x
+static const int TERM_LARGE_Y0      = 14;   // first baseline, large font (MonoBold)
+static const int TERM_LARGE_STEP    = 16;   // row pitch, large font
+static const int TERM_LARGE_LINES   = 14;   // lines per page, large font
+static const int TERM_LARGE_LINELEN = 28;   // max line length, large font
+static const int TERM_SMALL_Y0      = 10;   // first baseline, small font (Terminal)
+static const int TERM_SMALL_STEP    = 14;   // row pitch, small font
+static const int TERM_SMALL_LINES   = 17;   // lines per page, small font
+static const int TERM_SMALL_LINELEN = 52;   // max line length, small font
+static const int TERM_SCROLL_MARGIN = 4;    // scrollbar right margin
+static const int TERM_LINE_NUM_GAP  = 4;    // line-number to code gap (potion editor)
+
 // Terminal
 static std::vector<String> terminalOutputs;
 static String currentDir = "/";
 static String terminalCommand = "";
 static ulong termScrollIndex = 0;
 static bool termLargeFont = true;
-static int termLinesPerPage = 14;
-static int termMaxLineLen = 28;
+static int termLinesPerPage = TERM_LARGE_LINES;
+static int termMaxLineLen = TERM_LARGE_LINELEN;
 static bool termDarkTheme = true;
 
 // Potion
@@ -60,13 +81,6 @@ static String editFile = "";
 static ulong currentPotionLine = 0;
 static std::vector<String> potionLines;
 static long lastInput = millis();
-
-static const int POTION_ROW_TOP     = 10;
-static const int POTION_ROW_PITCH   = 16;
-static const int POTION_PAGE_LINES  = 15;  // rows that fit on screen
-static const int POTION_BACK_OFFSET = 11;  // page - ahead - 1
-static const int POTION_AHEAD_LINES = 3;
-static const int POTION_LINE_X      = 5;
 
 // Command Links
 static std::vector<String> potLinkAliases;
@@ -133,21 +147,21 @@ void terminalScrollPreview() {
     startLine = termScrollIndex - 1;
   }
 
-  int y = 7; 
-  for (int i = startLine; i < startLine + 4; i++) {
+  int y = kOledPrevY0;
+  for (int i = startLine; i < startLine + kOledPrevRows; i++) {
     if (i >= (int)terminalOutputs.size()) {
       break;
     }
 
     if (i == (int)termScrollIndex) {
-      u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
+      u8g2.drawTriangle(0, y - 2 * kOledPrevTriH, 0, y, kOledPrevTriW, y - kOledPrevTriH);
     }
 
     String dispStr = terminalOutputs[i];
     if (dispStr.length() > 21) dispStr = dispStr.substring(0, 21);
-    FontEngine::drawText(DisplayTarget::OLED, 6, y, dispStr, FontStyle::Tiny);
+    FontEngine::drawText(DisplayTarget::OLED, kOledPrevX, y, dispStr, FontStyle::Tiny);
 
-    y += 8;
+    y += kOledPrevPitch;
   }
 
   u8g2.sendBuffer();
@@ -163,9 +177,9 @@ void potionScrollPreview() {
     startLine = currentPotionLine - 1;
   }
 
-  int y = 7; // Baseline for the first row of text
+  int y = kOledPrevY0; // Baseline for the first row of text
   
-  for (int i = startLine; i < startLine + 4; i++) {
+  for (int i = startLine; i < startLine + kOledPrevRows; i++) {
     if (i >= (int)potionLines.size()) {
       break;
     }
@@ -178,13 +192,13 @@ void potionScrollPreview() {
 
     if (i == currentPotionLine) {
       // Draw left-aligned right-pointing triangle
-      u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
+      u8g2.drawTriangle(0, y - 2 * kOledPrevTriH, 0, y, kOledPrevTriW, y - kOledPrevTriH);
     }
 
-    FontEngine::drawText(DisplayTarget::OLED, 6, y, lineNum, FontStyle::Tiny);
+    FontEngine::drawText(DisplayTarget::OLED, kOledPrevX, y, lineNum, FontStyle::Tiny);
     FontEngine::drawText(DisplayTarget::OLED, 30, y, potionLines[i], FontStyle::Tiny);
 
-    y += 8;
+    y += kOledPrevPitch;
   }
 
   u8g2.sendBuffer();
@@ -317,8 +331,8 @@ void updateTerminalDisp() {
   
   if (termScrollIndex > (ulong)maxScroll) termScrollIndex = maxScroll;
 
-  int y = termLargeFont ? 14 : 10;
-  int yStep = termLargeFont ? 16 : 14;
+  int y = termLargeFont ? TERM_LARGE_Y0 : TERM_SMALL_Y0;
+  int yStep = termLargeFont ? TERM_LARGE_STEP : TERM_SMALL_STEP;
   int startIdx = (int)termScrollIndex;
   int endIdx = startIdx + termLinesPerPage;
   if (endIdx > (int)terminalOutputs.size()) endIdx = (int)terminalOutputs.size();
@@ -327,12 +341,12 @@ void updateTerminalDisp() {
   for (int i = startIdx; i < endIdx; i++) {
     const String& s = terminalOutputs[i];
     u8g2f.setForegroundColor(fgColor);
-    FontEngine::drawText(DisplayTarget::EINK, 5, y, s, termStyle);
+    FontEngine::drawText(DisplayTarget::EINK, TERM_X, y, s, termStyle);
     y += yStep;
   }
 
   drawScrollbar(terminalOutputs.size(), termLinesPerPage, termScrollIndex,
-                display.width() - 4, 0, -1, 3, false, fgColor, bgColor);
+                kEinkWidth - TERM_SCROLL_MARGIN, 0, -1, 3, false, fgColor, bgColor);
 
   u8g2f.setForegroundColor(GxEPD_BLACK);
   EINK().refresh();
@@ -1015,13 +1029,13 @@ void funcSelect(String command) {
     arg.trim();
     if (arg == "l") {
       termLargeFont = true;
-      termLinesPerPage = 14;
-      termMaxLineLen = 28;
+      termLinesPerPage = TERM_LARGE_LINES;
+      termMaxLineLen = TERM_LARGE_LINELEN;
       returnText = "Font set to Large";
     } else if (arg == "s") {
       termLargeFont = false;
-      termLinesPerPage = 17; 
-      termMaxLineLen = 52;
+      termLinesPerPage = TERM_SMALL_LINES; 
+      termMaxLineLen = TERM_SMALL_LINELEN;
       returnText = "Font set to Small";
     } else {
       returnText = "Usage: setfont <l/s>";
@@ -1544,11 +1558,11 @@ void TERMINAL_INIT() {
   prefs.end();
 
   if (termLargeFont) {
-    termLinesPerPage = 14;
-    termMaxLineLen = 28;
+    termLinesPerPage = TERM_LARGE_LINES;
+    termMaxLineLen = TERM_LARGE_LINELEN;
   } else {
-    termLinesPerPage = 17;
-    termMaxLineLen = 52;
+    termLinesPerPage = TERM_SMALL_LINES;
+    termMaxLineLen = TERM_SMALL_LINELEN;
   }
   
   if (terminalOutputs.size() > termLinesPerPage) {
@@ -1878,7 +1892,7 @@ void einkHandler_TERMINAL() {
           widestNum = "0" + widestNum;
         }
         String widestLineNum = "[" + widestNum + "]";
-        int codeX = POTION_LINE_X + FontEngine::textWidth(DisplayTarget::EINK, widestLineNum, FontStyle::Mono) + 4;
+        int codeX = POTION_LINE_X + FontEngine::textWidth(DisplayTarget::EINK, widestLineNum, FontStyle::Mono) + TERM_LINE_NUM_GAP;
 
         if (potionLines.size() <= POTION_PAGE_LINES) {
           int y = POTION_ROW_TOP;

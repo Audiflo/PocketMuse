@@ -234,7 +234,7 @@ void einkFramesDynamic(std::vector<Frame*> &frames, bool doFull_) {
 
         continue;
       }
-      const int lineStride = FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body) + EINK().getLineSpacing();
+      const int lineStride = einkRowPitch(FontStyle::Body);
 
       frame->maxLines = (lineStride > 1) ? (frameH / lineStride) - 1 : 0;
       if (frame->maxLines <= 0) continue;
@@ -336,11 +336,11 @@ void drawLineInFrame(String &srcLine, int lineIndex, Frame &frame, int usableY, 
     if (rightAlign || centerAlign) line.remove(0, 3);
     uint16_t lineWidth = FontEngine::textWidth(DisplayTarget::EINK, line, FontStyle::Body);
     int cursorX = computeCursorX(frame, rightAlign, centerAlign, 0, lineWidth);
-    int yRaw = frame.top + lineIndex * (FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body) + EINK().getLineSpacing());
+    int yRaw = frame.top + lineIndex * einkRowPitch(FontStyle::Body);
     int yDraw = yRaw + FontEngine::fontAscent(DisplayTarget::EINK, FontStyle::Body);
     if (clearLine) {
         int yClear = alignDown8(yRaw);
-        int clearHeight = alignUp8(FontEngine::fontHeight(DisplayTarget::EINK, FontStyle::Body) + EINK().getLineSpacing());
+        int clearHeight = alignUp8(einkRowPitch(FontStyle::Body));
         display.fillRect(frame.left, yClear,
                          display.width() - frame.left - frame.right,
                          clearHeight,
@@ -428,7 +428,7 @@ void oledScrollFrame() {
   // CLEAR DISPLAY
   u8g2.clearBuffer();
   // draw background
-  if (CurrentFrameState->choice == -1) u8g2.drawXBMP(0, 0, 128, 32, scrolloled0);
+  if (CurrentFrameState->choice == -1) u8g2.drawXBMP(0, 0, kOledScrollPreviewW, kOledHeight, scrolloled0);
 
   // draw lines preview
   long int count = CurrentFrameState->source->size();
@@ -438,8 +438,8 @@ void oledScrollFrame() {
   // decide how many preview lines to show
   long previewTop    = startIndex;
   long previewBottom = endIndex - 1;
-  const int rowStep  = 4;
-  const int baseY    = 28;
+  const int rowStep  = kOledScrollRowPitch;
+  const int baseY    = kOledScrollBaseY;
 
   for (long int i = previewBottom; i >= previewTop && i >= 0; --i) {
     if (i < 0 || i >= count) continue;
@@ -448,22 +448,22 @@ void oledScrollFrame() {
     String line = String(lv.ptr).substring(0, lv.len);
 
     if (line.startsWith("    ")) {
-      int lineWidth = map(FontEngine::textWidth(DisplayTarget::EINK, line.substring(4), FontStyle::Body), 0, 320, 0, 49);
-      lineWidth = constrain(lineWidth, 0, 49);
+      int lineWidth = map(FontEngine::textWidth(DisplayTarget::EINK, line.substring(4), FontStyle::Body), 0, kEinkWidth, 0, kOledScrollTabMaxW);
+      lineWidth = constrain(lineWidth, 0, kOledScrollTabMaxW);
 
       long posFromBottom = previewBottom - i;
       int boxY = baseY - (rowStep * posFromBottom);
       if (boxY >= 0) {
-        // u8g2.drawBox(68, boxY, lineWidth, 2);
+        // u8g2.drawBox(kOledScrollTabX, boxY, lineWidth, 2);
       }
     } else {
-      int lineWidth = map(FontEngine::textWidth(DisplayTarget::EINK, line, FontStyle::Body), 0, 320, 0, 56);
-      lineWidth = constrain(lineWidth, 0, 56);
+      int lineWidth = map(FontEngine::textWidth(DisplayTarget::EINK, line, FontStyle::Body), 0, kEinkWidth, 0, kOledScrollNormMaxW);
+      lineWidth = constrain(lineWidth, 0, kOledScrollNormMaxW);
 
       long posFromBottom = previewBottom - i;
       int boxY = baseY - (rowStep * posFromBottom);
       if (boxY >= 0 && CurrentFrameState->choice == -1) {
-        u8g2.drawBox(61, boxY, lineWidth, 2);
+        u8g2.drawBox(kOledScrollNormX, boxY, lineWidth, 2);
       }
     }
   }
@@ -477,13 +477,13 @@ void oledScrollFrame() {
 
       if (pLine.length() > 0) {
         if (pLine.startsWith("~C~") || pLine.startsWith("~R~")) pLine.remove(0, 3);
-        FontEngine::drawText(DisplayTarget::OLED, (u8g2.getWidth() - FontEngine::textWidth(DisplayTarget::OLED, pLine, FontStyle::BodyBold)) / 2, 24, pLine, FontStyle::BodyBold);
+        FontEngine::drawText(DisplayTarget::OLED, (u8g2.getWidth() - FontEngine::textWidth(DisplayTarget::OLED, pLine, FontStyle::BodyBold)) / 2, kOledScrollValueY, pLine, FontStyle::BodyBold);
       }
     }
   } else {
     String lineNumStr = String(count - CurrentFrameState->scroll) + "/" + String(count);
-    FontEngine::drawText(DisplayTarget::OLED, 0, 12, "Lines:", FontStyle::Status);
-    FontEngine::drawText(DisplayTarget::OLED, 0, 24, lineNumStr, FontStyle::Status);
+    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollLabelY, "Lines:", FontStyle::Status);
+    FontEngine::drawText(DisplayTarget::OLED, 0, kOledScrollValueY, lineNumStr, FontStyle::Status);
   }
   // send buffer
   u8g2.sendBuffer();
@@ -505,7 +505,7 @@ void getVisibleRange(Frame *f, long totalLines, long &startLine, long &endLine) 
 // COMPUTE X POS IN FRAME !!
 int computeCursorX(Frame &frame, bool rightAlign, bool centerAlign, int16_t x1, uint16_t lineWidth) {
   // right padding to avoid overlaps with frame  
-  const int padding = 16;
+  const int padding = kFrameCursorPad;
   int usableWidth = display.width() - frame.left - frame.right;
   int base;
   // draw lines with alignment
@@ -519,5 +519,5 @@ int computeCursorX(Frame &frame, bool rightAlign, bool centerAlign, int16_t x1, 
       base = frame.left;
   }
   // base - left margin + offset
-  return base - x1 + X_OFFSET;
+  return base - x1 + kFrameTextPadX;
 }

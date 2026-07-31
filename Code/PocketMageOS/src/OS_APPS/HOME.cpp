@@ -17,6 +17,13 @@ static int prevTime = 0;
 long lastInput = 0;
 static int cursor_pos = 0;
 
+// Layout constants
+constexpr int HOME_TASKS_X      = 151;   // task list x
+constexpr int HOME_TASKS_Y0     = 68;    // first task baseline
+constexpr int HOME_TASKS_PITCH  = 25;    // task row pitch
+constexpr int HOME_TASKS_MAX    = 7;     // max task rows
+constexpr int HOME_TASKS_W      = kEinkWidth - HOME_TASKS_X - 10;  // 159: task text width
+
 void HOME_INIT() {
   u8g2f.setForegroundColor(GxEPD_BLACK);
   display.setRotation(1);
@@ -208,24 +215,23 @@ String commandSelect(String command) {
 void drawHome() {
   EINK().resetDisplay();
 
-  uint8_t appsPerRow = 5; // Number of apps per row
-  uint8_t spacingX = 60;  // Horizontal spacing
-  uint8_t spacingY = 60;  // Vertical spacing
-  uint8_t iconSize = 40;  // Icon width and height
-  uint8_t startX = 20;    // Initial X position
-  uint8_t startY = 20;    // Initial Y position
+  constexpr uint8_t appsPerRow = 5;   // Number of apps per row
+  constexpr uint8_t gridPitch  = 60;  // Horizontal/vertical spacing
+  constexpr uint8_t startX     = 20;  // Initial X position
+  constexpr uint8_t startY     = 20;  // Initial Y position
+  constexpr uint8_t row2Shift  = 10;  // extra Y shift for the third row
 
   for (int i = 0; i < sizeof(appIcons) / sizeof(appIcons[0]); i++) {
     int row = i / appsPerRow;
     int col = i % appsPerRow;
     
-    int xPos = startX + (spacingX * col);
-    int yPos = startY + (spacingY * row);
-    if (row == 2) yPos += 10;
+    int xPos = startX + (gridPitch * col);
+    int yPos = startY + (gridPitch * row);
+    if (row == 2) yPos += row2Shift;
 
-    display.drawBitmap(xPos, yPos, appIcons[i], iconSize, iconSize, GxEPD_BLACK);
+    display.drawBitmap(xPos, yPos, appIcons[i], kIconCellSize, kIconCellSize, GxEPD_BLACK);
     int w = FontEngine::textWidth(DisplayTarget::EINK, appStateNames[i], FontStyle::Body);
-    FontEngine::drawText(DisplayTarget::EINK, xPos + (iconSize / 2) - (w / 2), yPos + iconSize + 13, appStateNames[i], FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, xPos + (kIconCellSize / 2) - (w / 2), yPos + kIconCellSize + kIconNameGap, appStateNames[i], FontStyle::Body);
   }
 
   // Draw sideload app rounded rect
@@ -446,9 +452,9 @@ void einkHandler_HOME() {
         if (!tasks.empty()) {
           ESP_LOGV("CALENDAR", "Printing Tasks\n");
 
-          int loopCount = std::min((int)tasks.size(), 7);
+          int loopCount = std::min((int)tasks.size(), HOME_TASKS_MAX);
           for (int i = 0; i < loopCount; i++) {
-            FontEngine::drawText(DisplayTarget::EINK, 151, 68 + (25 * i), tasks[i][0], FontStyle::Body);
+            FontEngine::drawText(DisplayTarget::EINK, HOME_TASKS_X, HOME_TASKS_Y0 + (HOME_TASKS_PITCH * i), truncateWithEllipsis(tasks[i][0], HOME_TASKS_W, FontStyle::Body), FontStyle::Body);
           }
         }
 

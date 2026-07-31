@@ -16,6 +16,36 @@ static constexpr const char* TAG = "COMM";
 #define MAX_CHAT_MSGS 50
 #define MAX_VISIBLE_LINES 10
 
+// Layout constants
+constexpr int COMM_BAR_H         = 20;    // top bar height
+constexpr int COMM_BAR_SEP_Y     = 21;    // top-bar separator line y
+constexpr int COMM_BAR_TEXT_Y    = 16;    // top bar text baseline
+constexpr int COMM_BAR_LEFT_X    = 4;     // top bar left column x
+constexpr int COMM_BAR_MID_X     = 164;   // top bar middle column x
+constexpr int COMM_BAR_RIGHT_X   = 290;   // top bar right column x
+constexpr int COMM_CURSOR_X      = 4;     // selection arrow x
+constexpr int COMM_LIST_X        = 20;    // peer list label x
+constexpr int COMM_LIST_Y0       = 36;    // first peer row baseline
+constexpr int COMM_LIST_PITCH    = 20;    // peer row pitch
+constexpr int COMM_SB_Y          = 26;    // list scrollbar track y
+constexpr int COMM_SB_W          = 4;     // list scrollbar thumb width
+constexpr int COMM_SB_MARGIN     = 7;     // list scrollbar right margin
+constexpr int COMM_CHAT_Y        = 26;    // message area y origin
+constexpr int COMM_CHAT_H        = kEinkContentH;  // 214: message area height
+constexpr int COMM_BARW          = 3;     // chat scrollbar width
+constexpr int COMM_EDGE_MARGIN   = 6;     // chat right margin
+constexpr int COMM_WRAP_RESERVE  = 55;    // bubble text wrap inset (bubble padding + scrollbar + margins)
+constexpr int COMM_BUBBLE_PAD_X  = 8;     // bubble text x inset
+constexpr int COMM_BUBBLE_PAD    = 16;    // bubble horizontal padding
+constexpr int COMM_BUBBLE_R      = 10;    // bubble corner radius
+constexpr int COMM_BUBBLE_GAP    = 4;     // vertical gap between bubbles
+constexpr int COMM_BUBBLE_HEAD   = 21;    // bubble height above the message block
+constexpr int COMM_LINE_SPACE    = 2;     // extra per-line spacing
+constexpr int COMM_META_GAP      = 10;    // name-to-time gap
+constexpr int COMM_NAME_PAD      = 8;     // name baseline offset from bubble top
+constexpr int COMM_MSG_OFFSET    = 7;     // message baseline offset from name baseline
+constexpr int COMM_BUBBLE_AVG_H  = 64;    // average bubble height (scrollbar ratio)
+
 // Pick a message-bubble font based on content length.
 static FontStyle msgFont(int textLen) {
   if (textLen <= 30) return FontStyle::MonoBold;
@@ -75,7 +105,7 @@ static String displayName(const char* mac) {
 }
 
 static std::vector<String> wrapTextPx(const String& text, FontStyle style) {
-  return wordWrap(text, display.width() - 55, style);
+  return wordWrap(text, kEinkWidth - COMM_WRAP_RESERVE, style);
 }
 
 // SD LOGGING
@@ -205,14 +235,14 @@ void chatScrollPreview() {
   u8g2.setDrawColor(1);
   int startLine = 0;
   if (chatScrollIndex >= 1) startLine = chatScrollIndex - 1;
-  int y = 7;
-  for (int i = startLine; i < startLine + 4; i++) {
+  int y = kOledPrevY0;
+  for (int i = startLine; i < startLine + kOledPrevRows; i++) {
     if (i >= msgCount) break;
-    if (i == (int)chatScrollIndex) u8g2.drawTriangle(0, y - 6, 0, y, 4, y - 3);
+    if (i == (int)chatScrollIndex) u8g2.drawTriangle(0, y - 2 * kOledPrevTriH, 0, y, kOledPrevTriW, y - kOledPrevTriH);
     String dispStr = String(msgs[i].sender) + ": " + String(msgs[i].content);
     if (dispStr.length() > 38) dispStr = dispStr.substring(0, 38) + "..";
-    FontEngine::drawText(DisplayTarget::OLED, 6, y, dispStr, FontStyle::Tiny);
-    y += 8;
+    FontEngine::drawText(DisplayTarget::OLED, kOledPrevX, y, dispStr, FontStyle::Tiny);
+    y += kOledPrevPitch;
   }
   u8g2.sendBuffer();
 }
@@ -407,19 +437,19 @@ void einkHandler_COMM() {
       newState = true; 
     } else {
       // Safely perform native partial window update without blanking the rest of the screen
-      display.fillRect(0, 28, 16, 218, GxEPD_WHITE);
+      display.fillRect(0, 28, 16, kEinkContentH, GxEPD_WHITE);
       FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_BLACK);
       
       for (int i = 0; i < vis; i++) {
         int idx = scrollTop + i;
         if (idx == selPeer) {
-          int yPos = 36 + i * 20;
-          FontEngine::drawText(DisplayTarget::EINK, 4, yPos, ">", FontStyle::Body);
+          int yPos = COMM_LIST_Y0 + i * COMM_LIST_PITCH;
+          FontEngine::drawText(DisplayTarget::EINK, COMM_CURSOR_X, yPos, ">", FontStyle::Body);
         }
       }
       
       // Push only this rectangle to the display
-      display.displayWindow(0, 28, 16, 218); 
+      display.displayWindow(0, 28, 16, kEinkContentH); 
       return;
     }
   }
@@ -431,18 +461,18 @@ void einkHandler_COMM() {
   display.fillScreen(GxEPD_WHITE);
 
   // Top bar
-  display.fillRect(0, 0, display.width(), 20, GxEPD_BLACK);
+  display.fillRect(0, 0, kEinkWidth, COMM_BAR_H, GxEPD_BLACK);
   FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_WHITE);
 
   if (currentState == PEER_LIST) {
-    FontEngine::drawText(DisplayTarget::EINK, 4, 16, "Select Room", FontStyle::Body);
-    FontEngine::drawText(DisplayTarget::EINK, 164, 16, "Me " + String(myMacStr), FontStyle::SmallHeading);
-    FontEngine::drawText(DisplayTarget::EINK, 290, 16, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "Select Room", FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, "Me " + String(myMacStr), FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
 
     int totalRooms = 1 + mesh_now_get_peer_count();
     mesh_peer_t* allPeers = mesh_now_get_peers();
     
-    int listY = 36;
+    int listY = COMM_LIST_Y0;
     int vis = min(totalRooms, MAX_VISIBLE_LINES);
     int scrollTop = max(selPeer - vis / 2, 0);
     if (scrollTop + vis > totalRooms) scrollTop = max(totalRooms - vis, 0);
@@ -452,8 +482,8 @@ void einkHandler_COMM() {
     for (int i = 0; i < vis; i++) {
       int idx = scrollTop + i;
       if (idx >= totalRooms) break;
-      int yPos = listY + i * 20;
-      if (yPos > 238) break; 
+      int yPos = listY + i * COMM_LIST_PITCH;
+      if (yPos > kEinkHeight - 2) break; 
       
       bool selected = (idx == selPeer);
       String label;
@@ -472,38 +502,37 @@ void einkHandler_COMM() {
       }
       
       if (selected) {
-        FontEngine::drawText(DisplayTarget::EINK, 4, yPos, ">", FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, COMM_CURSOR_X, yPos, ">", FontStyle::Body);
       }
-      FontEngine::drawText(DisplayTarget::EINK, 20, yPos, label, FontStyle::Body);
+      FontEngine::drawText(DisplayTarget::EINK, COMM_LIST_X, yPos, label, FontStyle::Body);
     }
     
     // Scrollbar (Extended to bottom)
     if (totalRooms > vis) {
-      int sbY = 26;
-      int sbH = 240 - 26; 
+      int sbY = COMM_SB_Y;
+      int sbH = kEinkHeight - COMM_SB_Y;
       float step = (float)sbH / totalRooms;
       int thumbY = sbY + (int)(selPeer * step);
       int thumbH = max((int)(vis * step), 8);
-      display.fillRect(display.width() - 7, thumbY, 4, thumbH, GxEPD_BLACK);
+      display.fillRect(kEinkWidth - COMM_SB_MARGIN, thumbY, COMM_SB_W, thumbH, GxEPD_BLACK);
     }
   } else {
     if (chatMode == LOCAL_CHAT) {
-      FontEngine::drawText(DisplayTarget::EINK, 4, 16, "Local Chat", FontStyle::Body);
+      FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "Local Chat", FontStyle::Body);
     } else {
       String name = displayName(peerMacStr);
-      FontEngine::drawText(DisplayTarget::EINK, 4, 16, "> " + name, FontStyle::Body);
+      FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_LEFT_X, COMM_BAR_TEXT_Y, "> " + name, FontStyle::Body);
     }
-    FontEngine::drawText(DisplayTarget::EINK, 164, 16, chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct", FontStyle::SmallHeading);
-    FontEngine::drawText(DisplayTarget::EINK, 290, 16, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_MID_X, COMM_BAR_TEXT_Y, chatMode == LOCAL_CHAT ? "ESP-NOW" : "Direct", FontStyle::SmallHeading);
+    FontEngine::drawText(DisplayTarget::EINK, COMM_BAR_RIGHT_X, COMM_BAR_TEXT_Y, "P: " + String(mesh_now_get_peer_count()), FontStyle::SmallHeading);
   }
 
   // Separator line
-  display.drawFastHLine(0, 21, display.width(), GxEPD_BLACK);
+  display.drawFastHLine(0, COMM_BAR_SEP_Y, kEinkWidth, GxEPD_BLACK);
 
   // Message area (CHAT_VIEW only)
   if (currentState == CHAT_VIEW) {
-    int y = 26;
-    int barWidth = 3;
+    int y = COMM_CHAT_Y;
 
     int maxScrollIndex = 0;
     if (msgCount > 0) {
@@ -512,10 +541,10 @@ void einkHandler_COMM() {
         while (top >= 0) {
             FontStyle mf = msgFont(strlen(msgs[top].content));
             int lineH = FontEngine::fontHeight(DisplayTarget::EINK, mf);
-            int lineSpacing = lineH + 2;
+            int lineSpacing = lineH + COMM_LINE_SPACE;
             std::vector<String> lines = wrapTextPx(msgs[top].content, mf);
-            int bH = (lines.size() * lineSpacing) + lineH + 21;
-            if (totalH + bH > 214) { top++; break; }
+            int bH = (lines.size() * lineSpacing) + lineH + COMM_BUBBLE_HEAD;
+            if (totalH + bH > COMM_CHAT_H) { top++; break; }
             totalH += bH;
             if (top == 0) break;
             top--;
@@ -526,12 +555,12 @@ void einkHandler_COMM() {
     if (autoScroll) chatScrollIndex = maxScrollIndex;
     if (chatScrollIndex > (ulong)maxScrollIndex) chatScrollIndex = maxScrollIndex;
 
-    for (int i = chatScrollIndex; i < msgCount && y < 240; i++) {
+    for (int i = chatScrollIndex; i < msgCount && y < kEinkHeight; i++) {
       ChatMsg* m = &msgs[i];
       FontStyle mf = msgFont(strlen(m->content));
       int ascent = FontEngine::fontAscent(DisplayTarget::EINK, mf);
       int lineH = FontEngine::fontHeight(DisplayTarget::EINK, mf);
-      int lineSpacing = lineH + 2;
+      int lineSpacing = lineH + COMM_LINE_SPACE;
 
       std::vector<String> lines = wrapTextPx(m->content, mf);
 
@@ -540,7 +569,7 @@ void einkHandler_COMM() {
 
       int nameW = FontEngine::textWidth(DisplayTarget::EINK, nameText, mf);
       int timeW = FontEngine::textWidth(DisplayTarget::EINK, timeText, FontStyle::SmallHeading);
-      int metaW = nameW + timeW + 10;
+      int metaW = nameW + timeW + COMM_META_GAP;
 
       int textW = 0;
       for (const String& l : lines) {
@@ -548,42 +577,42 @@ void einkHandler_COMM() {
         if (lw > textW) textW = lw;
       }
 
-      int bubbleW = max(textW, metaW) + 16;
-      int bubbleH = (lines.size() * lineSpacing) + lineH + 21;
+      int bubbleW = max(textW, metaW) + COMM_BUBBLE_PAD;
+      int bubbleH = (lines.size() * lineSpacing) + lineH + COMM_BUBBLE_HEAD;
 
-      int x = m->sentByLocal ? (display.width() - bubbleW - 6 - (barWidth + 2)) : 6;
+      int x = m->sentByLocal ? (kEinkWidth - bubbleW - COMM_EDGE_MARGIN - (COMM_BARW + 2)) : COMM_EDGE_MARGIN;
 
       if (m->sentByLocal) {
-          display.fillRoundRect(x, y, bubbleW, bubbleH, 10, GxEPD_BLACK);
+          display.fillRoundRect(x, y, bubbleW, bubbleH, COMM_BUBBLE_R, GxEPD_BLACK);
           FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_WHITE);
       } else {
-          display.drawRoundRect(x, y, bubbleW, bubbleH, 10, GxEPD_BLACK);
+          display.drawRoundRect(x, y, bubbleW, bubbleH, COMM_BUBBLE_R, GxEPD_BLACK);
           FontEngine::setTextColor(DisplayTarget::EINK, GxEPD_BLACK);
       }
 
-      int nameY = y + 8 + ascent;
-      FontEngine::drawText(DisplayTarget::EINK, x + 8, nameY, nameText, mf);
-      FontEngine::drawText(DisplayTarget::EINK, x + bubbleW - 8 - timeW, nameY, timeText, FontStyle::SmallHeading);
+      int nameY = y + COMM_NAME_PAD + ascent;
+      FontEngine::drawText(DisplayTarget::EINK, x + COMM_BUBBLE_PAD_X, nameY, nameText, mf);
+      FontEngine::drawText(DisplayTarget::EINK, x + bubbleW - COMM_BUBBLE_PAD_X - timeW, nameY, timeText, FontStyle::SmallHeading);
 
-      display.drawFastHLine(x + 8, nameY + 2, bubbleW - 16, m->sentByLocal ? GxEPD_WHITE : GxEPD_BLACK);
+      display.drawFastHLine(x + COMM_BUBBLE_PAD_X, nameY + 2, bubbleW - COMM_BUBBLE_PAD, m->sentByLocal ? GxEPD_WHITE : GxEPD_BLACK);
 
-      int msgY = nameY + 2 + 1 + 4 + ascent;
+      int msgY = nameY + COMM_MSG_OFFSET + ascent;
       for (size_t l = 0; l < lines.size(); l++) {
-          FontEngine::drawText(DisplayTarget::EINK, x + 8, msgY + l * lineSpacing, lines[l], mf);
+          FontEngine::drawText(DisplayTarget::EINK, x + COMM_BUBBLE_PAD_X, msgY + l * lineSpacing, lines[l], mf);
       }
 
-      y += bubbleH + 4;
+      y += bubbleH + COMM_BUBBLE_GAP;
     }
 
     if (maxScrollIndex > 0) {
-      float avgBubbleH = 64;
-      float visibleRatio = 214.0 / ((maxScrollIndex + 1) * avgBubbleH);
+      float avgBubbleH = COMM_BUBBLE_AVG_H;
+      float visibleRatio = (float)COMM_CHAT_H / ((maxScrollIndex + 1) * avgBubbleH);
       if (visibleRatio > 1.0) visibleRatio = 1.0;
-      int handleHeight = max((int)(214 * visibleRatio), 15);
+      int handleHeight = max((int)(COMM_CHAT_H * visibleRatio), 15);
       float scrollFraction = (float)chatScrollIndex / maxScrollIndex;
-      int handleY = 26 + scrollFraction * (214 - handleHeight);
+      int handleY = COMM_CHAT_Y + scrollFraction * (COMM_CHAT_H - handleHeight);
 
-      display.fillRect(display.width() - barWidth - 1, handleY, barWidth, handleHeight, GxEPD_BLACK);
+      display.fillRect(kEinkWidth - COMM_BARW - 1, handleY, COMM_BARW, handleHeight, GxEPD_BLACK);
     }
   }
 

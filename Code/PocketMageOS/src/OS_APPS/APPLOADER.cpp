@@ -170,6 +170,10 @@ static String pathJoin(const String &a, const String &b) {
 // ---------- Saving/Loading appInfo ----------
 #define APP_ICON_BYTES 200  // 40x40 monochrome = 200 bytes
 
+// Layout constants, app icon geometry
+constexpr int APPLOADER_ICON_S   = kIconCellSize;  // app icon cell size
+constexpr int APPLOADER_NAME_GAP = kIconNameGap;   // icon-to-name baseline gap
+
 struct AppInfo {
   char name[32];       // App name
   char tarPath[64];    // Path to .tar file
@@ -203,7 +207,7 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameCh
   }
 
   bool iconLoaded = false;
-  uint8_t buf[40 * 5]; // 40x40 1-bit = 200 bytes
+  uint8_t buf[APPLOADER_ICON_S * 5]; // 40x40 1-bit = 200 bytes
 
   if (global_fs->exists(app.iconPath)) {
     File f = global_fs->open(app.iconPath, "r");
@@ -215,12 +219,12 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameCh
     }
   }
 
-  display.fillRect(x, y, 40, 40, GxEPD_WHITE);
+  display.fillRect(x, y, APPLOADER_ICON_S, APPLOADER_ICON_S, GxEPD_WHITE);
 
   if (iconLoaded) {
-    display.drawBitmap(x, y, buf, 40, 40, GxEPD_BLACK);
+    display.drawBitmap(x, y, buf, APPLOADER_ICON_S, APPLOADER_ICON_S, GxEPD_BLACK);
   } else {
-    display.drawBitmap(x, y, noIcon, 40, 40, GxEPD_BLACK);
+    display.drawBitmap(x, y, noIcon, APPLOADER_ICON_S, APPLOADER_ICON_S, GxEPD_BLACK);
   }
 
   if (showName) {
@@ -234,8 +238,8 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameCh
 
     int w = FontEngine::textWidth(DisplayTarget::EINK, appNameStr, FontStyle::Body);
 
-    int tx = x + (40 - w) / 2;
-    int ty = y + 40 + 13;
+    int tx = x + (APPLOADER_ICON_S - w) / 2;
+    int ty = y + APPLOADER_ICON_S + APPLOADER_NAME_GAP;
 
     FontEngine::drawText(DisplayTarget::EINK, tx, ty, appNameStr, FontStyle::Body);
   }

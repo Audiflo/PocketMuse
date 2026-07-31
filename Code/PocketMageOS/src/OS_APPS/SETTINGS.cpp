@@ -7,6 +7,17 @@
 enum SettingsState { SETTINGS_MAIN };
 SettingsState CurrentSettingsState = SETTINGS_MAIN;
 
+// Layout constants
+constexpr int SETTINGS_VAL_X      = 8;    // value column x
+constexpr int SETTINGS_VAL_Y0     = 42;   // first scalar value baseline
+constexpr int SETTINGS_VAL_Y1     = 65;   // second scalar value baseline
+constexpr int SETTINGS_VAL2_X     = 163;  // second column x
+constexpr int SETTINGS_TOG_X      = 8;    // toggle switch x
+constexpr int SETTINGS_TOG_Y0     = 75;   // first toggle row y
+constexpr int SETTINGS_TOG_PITCH  = 23;   // toggle row pitch
+constexpr int SETTINGS_TOG_W      = 26;   // toggle bitmap width
+constexpr int SETTINGS_TOG_H      = 11;   // toggle bitmap height
+
 void SETTINGS_INIT() {
   // OPEN SETTINGS
   CurrentAppState = SETTINGS;
@@ -273,29 +284,29 @@ void einkHandler_SETTINGS() {
 
     // First column of settings
     // OLED_BRIGHTNESS
-    FontEngine::drawText(DisplayTarget::EINK, 8, 42, String(OLED_BRIGHTNESS), FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, SETTINGS_VAL_X, SETTINGS_VAL_Y0, String(OLED_BRIGHTNESS), FontStyle::Body);
     // TIMEOUT
-    FontEngine::drawText(DisplayTarget::EINK, 8, 65, String(TIMEOUT), FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, SETTINGS_VAL_X, SETTINGS_VAL_Y1, String(TIMEOUT), FontStyle::Body);
     // SYSTEM_CLOCK
-    if (SYSTEM_CLOCK) display.drawBitmap(8, 75, _toggleON, 26, 11, GxEPD_BLACK);
-    else display.drawBitmap(8, 75, _toggleOFF, 26, 11, GxEPD_BLACK);
+    if (SYSTEM_CLOCK) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (0 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (0 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // SHOW_YEAR
-    if (SHOW_YEAR) display.drawBitmap(8, 98, _toggleON, 26, 11, GxEPD_BLACK);
-    else display.drawBitmap(8, 98, _toggleOFF, 26, 11, GxEPD_BLACK);
+    if (SHOW_YEAR) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (1 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (1 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // SAVE_POWER
-    if (SAVE_POWER) display.drawBitmap(8, 121, _toggleON, 26, 11, GxEPD_BLACK);
-    else display.drawBitmap(8, 121, _toggleOFF, 26, 11, GxEPD_BLACK);
+    if (SAVE_POWER) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (2 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (2 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // DEBUG_VERBOSE
-    if (DEBUG_VERBOSE) display.drawBitmap(8, 144, _toggleON, 26, 11, GxEPD_BLACK);
-    else display.drawBitmap(8, 144, _toggleOFF, 26, 11, GxEPD_BLACK);
+    if (DEBUG_VERBOSE) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (3 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (3 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // HOME_ON_BOOT
-    if (HOME_ON_BOOT) display.drawBitmap(8, 167, _toggleON, 26, 11, GxEPD_BLACK);
-    else display.drawBitmap(8, 167, _toggleOFF, 26, 11, GxEPD_BLACK);
+    if (HOME_ON_BOOT) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (4 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (4 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // ALLOW_NO_MICROSD
-    if (ALLOW_NO_MICROSD) display.drawBitmap(8, 190, _toggleON, 26, 11, GxEPD_BLACK);
-    else display.drawBitmap(8, 190, _toggleOFF, 26, 11, GxEPD_BLACK);
+    if (ALLOW_NO_MICROSD) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (5 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (5 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // OLED_MAX_FPS
-    FontEngine::drawText(DisplayTarget::EINK, 163, 42, String(OLED_MAX_FPS), FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, SETTINGS_VAL2_X, SETTINGS_VAL_Y0, String(OLED_MAX_FPS), FontStyle::Body);
 
     endEinkScreen("Type a Command:");
   }

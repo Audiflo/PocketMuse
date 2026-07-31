@@ -326,8 +326,12 @@ void processKB_LEXICON() {
   }
 }
 
-#define LEX_MARGIN 8
-#define LEX_LINE_HEIGHT 20
+// Layout constants
+constexpr int LEX_MARGIN        = 8;    // left/right margin
+constexpr int LEX_WORD_X        = 12;   // word x
+constexpr int LEX_WORD_Y        = 50;   // word baseline
+constexpr int LEX_DEF_Y0        = 87;   // first definition-line baseline
+constexpr int LEX_LINE_HEIGHT   = 20;   // definition line pitch
 
 void einkHandler_LEXICON() {
   switch (CurrentLexState) {
@@ -351,13 +355,13 @@ void einkHandler_LEXICON() {
         u8g2f.setForegroundColor(GxEPD_BLACK);
 
         // Draw Word
-        FontEngine::drawText(DisplayTarget::EINK, 12, 50, defList[definitionIndex].first, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, LEX_WORD_X, LEX_WORD_Y, defList[definitionIndex].first, FontStyle::Body);
 
         // Draw Definition with Word Wrap
         
         String defText = defList[definitionIndex].second;
-        int maxW = display.width() - (2 * LEX_MARGIN);
-        int cursorY = 87;
+        int maxW = kEinkWidth - (2 * LEX_MARGIN);
+        int cursorY = LEX_DEF_Y0;
 
         auto wrappedLines = wordWrap(defText, maxW, FontStyle::Body);
         for (const auto& line : wrappedLines) {

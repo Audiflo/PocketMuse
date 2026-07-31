@@ -7,6 +7,14 @@ JournalState CurrentJournalState = J_MENU;
 
 static String currentJournal = "";
 
+// Layout constants
+constexpr int JOURNAL_GRID_X = 91;   // first day-column x
+constexpr int JOURNAL_GRID_Y = 50;   // January row y
+constexpr int JOURNAL_CELL_W = 7;    // day-column pitch
+constexpr int JOURNAL_CELL_H = 9;    // month-row pitch
+constexpr int JOURNAL_DOT_W  = 4;    // entry dot width
+constexpr int JOURNAL_DOT_H  = 4;    // entry dot height
+
 void JOURNAL_INIT() {
   CurrentAppState = JOURNAL;
   CurrentJournalState = J_MENU;
@@ -80,10 +88,8 @@ void drawJMENU() {
     dir.close();
   }
 
-  // Pre-calculated Y offsets for each month row
-  int yOffsets[12] = {50, 59, 68, 77, 86, 95, 104, 113, 122, 131, 140, 149};
   int daysInMonths[12] = {
-    31, isLeapYear(now.year()) ? 29 : 28, 31, 30, 31, 30, 
+    31, isLeapYear(now.year()) ? 29 : 28, 31, 30, 31, 30,
     31, 31, 30, 31, 30, 31
   };
 
@@ -91,7 +97,7 @@ void drawJMENU() {
   for (int m = 1; m <= 12; m++) {
     for (int d = 1; d <= daysInMonths[m - 1]; d++) {
       if (hasJournal[m][d]) {
-        display.fillRect(91 + (7 * (d - 1)), yOffsets[m - 1], 4, 4, GxEPD_BLACK);
+        display.fillRect(JOURNAL_GRID_X + (JOURNAL_CELL_W * (d - 1)), JOURNAL_GRID_Y + (JOURNAL_CELL_H * (m - 1)), JOURNAL_DOT_W, JOURNAL_DOT_H, GxEPD_BLACK);
       }
     }
   }
