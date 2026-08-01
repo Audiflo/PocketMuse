@@ -58,7 +58,7 @@ void printDebug();
 void checkTimeout();
 void loadState(bool changeState = true);
 void updateBattState();
-String textPrompt(String promptText = "", String prefix = "");
+String textPrompt(String promptText = "", String prefix = "", bool mask = false);
 int boolPrompt(String promptText = "Are you sure?");
 void waitForKeypress(String message = "Press any button to continue...");
 void checkCrashState();
@@ -142,9 +142,27 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName = true, int ma
 void TERMINAL_INIT();
 void processKB_TERMINAL();
 void einkHandler_TERMINAL();
+void termPrint(const String& line);
+void termReturnToPrompt();
 // Wrench
 const char* readCFile(const String& path);
 void compileWrench(const char* wrenchCode);
+
+// Terminal/SSH shared layout (small font page). Owned by TERMINAL.cpp and
+// SSH.cpp; SSH uses these to size the VT100 screen buffer.
+constexpr int TERM_X             = 5;    // output text x
+constexpr int TERM_SMALL_Y0      = 10;   // first baseline, small font (Terminal)
+constexpr int TERM_SMALL_STEP    = 14;   // row pitch, small font
+constexpr int TERM_SMALL_LINES   = 17;   // lines per page, small font
+
+// <SSH.cpp>
+void sshStartSession(const String& host, const String& user, int port);
+bool sshBusy();
+const char* sshLastMessage();
+void sshRequestDisconnect();
+void sshProcessKB();
+void sshEinkHandler();
+bool sshCommand(const String& command);
 
 // <COMM.cpp>
 void COMM_INIT();

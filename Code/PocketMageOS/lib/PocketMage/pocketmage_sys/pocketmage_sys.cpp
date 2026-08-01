@@ -16,6 +16,7 @@
 #include <config.h>
 #include <esp_log.h>
 #include <globals.h>
+#include <pocketmage_wifi/pocketmage_wifi.h>
 
 #include "esp_ota_ops.h"
 #include "esp_partition.h"
@@ -59,6 +60,12 @@ bool rebootToPocketMage() {
 
 namespace pocketmage {
 void setCpuSpeed(int newFreq) {
+  // WiFi stalls below 240MHz on the S3, so ignore any power-save drop while
+  // the radio is active. Runs before the frequency check so a redundant drop
+  // attempt still gets blocked.
+  if (newFreq < WIFI_CPU_FREQ_MHZ && P_WIFI.getState() != WifiRadioState::Off)
+    return;
+
   // Return early if the frequency is already set
   if (getCpuFrequencyMhz() == newFreq)
     return;
@@ -400,6 +407,11 @@ void PocketMage_INIT() {
   ESP_LOGD(TAG, "setup buzzer");
   if (!seamlessReboot)
     BZ().playJingle(Jingles::Startup);
+
+  // WiFi task (radio stays off until a wifi* or ssh command enables it)
+  #if !OTA_APP
+    P_WIFI.begin();
+  #endif
 
   // Clear any excess keystrokes
   keypad.flush();

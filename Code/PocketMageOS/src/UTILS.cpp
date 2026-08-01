@@ -347,7 +347,7 @@ void updateBattState() {
 #pragma region Basic Inputs
 // Prompt the user for text input, return the text
 #if !OTA_APP // PocketMage OS Only
-String textPrompt(String promptText, String prefix) {
+String textPrompt(String promptText, String prefix, bool mask) {
   String currentLine = "";
   int cursor_pos = 0;
   long lastInput = CLOCK().getPrevTimeMillis(); // Sync to system idle
@@ -516,8 +516,13 @@ String textPrompt(String promptText, String prefix) {
         OLEDFPSMillis = currentMillis;
         redraw = false;
         
-        if (prefix != "") OLED().oledLine(prefix + currentLine, cursor_pos+prefix.length(), false, promptText);
-        else OLED().oledLine(currentLine, cursor_pos, false, promptText);
+        // Mask password input without losing cursor position
+        String displayLine = currentLine;
+        if (mask) {
+          for (int i = 0; i < displayLine.length(); i++) displayLine[i] = '*';
+        }
+        if (prefix != "") OLED().oledLine(prefix + displayLine, cursor_pos + prefix.length(), false, promptText);
+        else OLED().oledLine(displayLine, cursor_pos, false, promptText);
       }
     }
 

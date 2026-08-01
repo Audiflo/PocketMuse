@@ -42,7 +42,7 @@ static void printUTF8ToEink(const String& s, int maxChars = 9999) {
 }
 
 // General
-enum TERMINAL_functions { PROMPT, POTION };
+enum TERMINAL_functions { PROMPT, POTION, SSH };
 TERMINAL_functions CurrentTERMfunc = PROMPT;
 
 // Potion
@@ -53,15 +53,13 @@ static const int POTION_BACK_OFFSET = 11;  // page - ahead - 1
 static const int POTION_AHEAD_LINES = 3;
 static const int POTION_LINE_X      = 5;
 
-// Terminal output geometry (e-ink terminal scroll view)
-static const int TERM_X             = POTION_LINE_X;  // output text x
+// Terminal output geometry (e-ink terminal scroll view).
+// TERM_X and the TERM_SMALL_* page constants are shared with the SSH VT100
+// screen and live in globals.h.
 static const int TERM_LARGE_Y0      = 14;   // first baseline, large font (MonoBold)
 static const int TERM_LARGE_STEP    = 16;   // row pitch, large font
 static const int TERM_LARGE_LINES   = 14;   // lines per page, large font
 static const int TERM_LARGE_LINELEN = 28;   // max line length, large font
-static const int TERM_SMALL_Y0      = 10;   // first baseline, small font (Terminal)
-static const int TERM_SMALL_STEP    = 14;   // row pitch, small font
-static const int TERM_SMALL_LINES   = 17;   // lines per page, small font
 static const int TERM_SMALL_LINELEN = 52;   // max line length, small font
 static const int TERM_SCROLL_MARGIN = 4;    // scrollbar right margin
 static const int TERM_LINE_NUM_GAP  = 4;    // line-number to code gap (potion editor)
@@ -317,6 +315,21 @@ bool openFileInPotion(const String& arg, String& message) {
 }
 
 #pragma region TERMINAL
+// Append a line to the terminal scrollback and jump the scroll to the newest
+// line. Shared with SSH.cpp for diagnostic output before/after a session.
+void termPrint(const String& line) {
+  terminalOutputs.push_back(line);
+  termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+  newState = true;
+}
+
+// Leave the SSH full-screen mode back to the command prompt.
+void termReturnToPrompt() {
+  CurrentTERMfunc = PROMPT;
+  terminalCommand = "";
+  newState = true;
+}
+
 void updateTerminalDisp() {
   newState = false;
   uint16_t bgColor = termDarkTheme ? GxEPD_BLACK : GxEPD_WHITE;
@@ -1147,6 +1160,25 @@ void funcSelect(String command) {
     return;
   }
 
+  // WiFi helpers (scan/connect/status) are printed to the terminal scrollback.
+  // sshCommand() owns the wifi* verbs; it stays in PROMPT mode.
+  else if (verb == "wifi" || verb == "wifi-scan" || verb == "wifi-list" ||
+           verb == "wifi-status" || verb == "wifi-disconnect") {
+    sshCommand(command);
+    return;
+  }
+
+  // SSH client (enters full-screen session on success)
+  else if (verb == "ssh") {
+    if (sshCommand(command)) {
+      CurrentTERMfunc = SSH;
+      terminalCommand = "";
+      KB().setKeyboardState(NORMAL);
+      newState = true;
+    }
+    return;
+  }
+
   // Check whether command is a home/settings command
   returnText = commandSelect(command);
   if (returnText != "") {
@@ -1171,8 +1203,7 @@ void wr_print(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void* u
 
   const char* s = argv[0].asString(buf, 1024);
 
-  terminalOutputs.push_back(s);
-  termScrollIndex = terminalOutputs.size() > termLinesPerPage ? terminalOutputs.size() - termLinesPerPage : 0;
+  termPrint(s);
 }
 
 void wr_prompt(WRContext* c, const WRValue* argv, int argn, WRValue& ret, void* usr) {
@@ -1691,6 +1722,7 @@ void processKB_TERMINAL() {
     }
 
     case POTION:
+    {
       String left = "";
       String right = "";
 
@@ -1891,6 +1923,11 @@ void processKB_TERMINAL() {
       }
 
       break;
+    }
+
+    case SSH:
+      sshProcessKB();
+      break;
   }
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
 }
@@ -1989,6 +2026,10 @@ void einkHandler_TERMINAL() {
         u8g2f.setForegroundColor(GxEPD_BLACK);
       }
 
+      break;
+
+    case SSH:
+      sshEinkHandler();
       break;
   }
 }

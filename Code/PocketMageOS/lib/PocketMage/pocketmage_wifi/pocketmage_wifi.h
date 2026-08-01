@@ -24,6 +24,10 @@ enum class WifiRadioState {
   TurningOff   // Radio is shutting down
 };
 
+// The S3 radio stalls below 240MHz (scan/connect never complete), so the CPU
+// must be held at this speed whenever the radio is active.
+static constexpr int WIFI_CPU_FREQ_MHZ = 240;
+
 // Scanned AP record (simplified)
 struct WifiApInfo {
   char ssid[33];

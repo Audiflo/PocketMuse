@@ -55,9 +55,21 @@ PocketMageWifi::~PocketMageWifi() {
 void PocketMageWifi::begin() {
   if (_initialized)
     return;
+  // Raw esp_wifi_* calls post events to the default ESP event loop, which
+  // Arduino only creates lazily when its own WiFi lib is used. Without it,
+  // scan/connect succeed but WIFI_EVENT_* never arrive, so create it here.
+  esp_err_t err = esp_event_loop_create_default();
+  if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+    ESP_LOGE(TAG, "begin(): esp_event_loop_create_default -> %s", esp_err_to_name(err));
+  err = esp_netif_init();
+  if (err != ESP_OK && err != ESP_ERR_INVALID_STATE)
+    ESP_LOGE(TAG, "begin(): esp_netif_init -> %s", esp_err_to_name(err));
+  
   _commandQueue = xQueueCreate(8, sizeof(Command));
-  xTaskCreatePinnedToCore(wifiTaskFunc, "pmwifi", 4096, this, 2, &_taskHandle, 0);  // Pin to core 0
+  // Stack must cover esp_wifi_init (needs ~7KB) plus esp_wifi_scan_start.
+  xTaskCreatePinnedToCore(wifiTaskFunc, "pmwifi", 10240, this, 2, &_taskHandle, 0);  // Pin to core 0
   _initialized = true;
+  ESP_LOGI(TAG, "begin(): pmwifi task created");
 }
 
 void PocketMageWifi::stop() {
@@ -382,6 +394,7 @@ void PocketMageWifi::handleWifiEvent(int32_t id, void* data) {
       {
         uint16_t num = 0;
         esp_wifi_scan_get_ap_num(&num);
+        ESP_LOGI(TAG, "WIFI_EVENT_SCAN_DONE: %u APs found", (unsigned)num);
         xSemaphoreTakeRecursive(_mutex, portMAX_DELAY);
         if (_scanResults) {
           free(_scanResults);
@@ -410,6 +423,7 @@ void PocketMageWifi::handleIpEvent(int32_t id, void* data) {
   if (id == IP_EVENT_STA_GOT_IP) {
     ip_event_got_ip_t* event = (ip_event_got_ip_t*)data;
     snprintf(_ipAddress, sizeof(_ipAddress), "%d.%d.%d.%d", IP2STR(&event->ip_info.ip));
+    ESP_LOGI(TAG, "IP_EVENT_STA_GOT_IP: %s", _ipAddress);
     setStatus(TR(STR_WIFI_GOT_IP));
     _state = WifiRadioState::Connected;
     publishEvent();
@@ -417,6 +431,10 @@ void PocketMageWifi::handleIpEvent(int32_t id, void* data) {
 }
 
 void PocketMageWifi::doEnable() {
+  ESP_LOGI(TAG, "doEnable(): state=%d", (int)_state);
+  // Radio must run at 240MHz; raise the CPU before touching esp_wifi.
+  if (getCpuFrequencyMhz() != WIFI_CPU_FREQ_MHZ)
+    setCpuFrequencyMhz(WIFI_CPU_FREQ_MHZ);
   if (_state == WifiRadioState::Off || _state == WifiRadioState::TurningOff) {
     _state = WifiRadioState::TurningOn;
     setStatus(TR(STR_WIFI_ENABLING));
@@ -425,25 +443,37 @@ void PocketMageWifi::doEnable() {
     _staNetif = esp_netif_create_default_wifi_sta();
     if (!_staNetif) {
       setStatus(TR(STR_WIFI_CREATE_NETIF_FAILED));
+      ESP_LOGE(TAG, "doEnable(): esp_netif_create_default_wifi_sta failed");
       _state = WifiRadioState::Off;
       return;
     }
+    ESP_LOGI(TAG, "doEnable(): netif created");
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
-    if (esp_wifi_init(&cfg) != ESP_OK) {
+    esp_err_t err = esp_wifi_init(&cfg);
+    ESP_LOGI(TAG, "doEnable(): esp_wifi_init -> %s", esp_err_to_name(err));
+    if (err != ESP_OK) {
       setStatus(TR(STR_WIFI_INIT_FAILED));
       _state = WifiRadioState::Off;
       return;
     }
-    esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
+    esp_err_t regErr = esp_event_handler_instance_register(WIFI_EVENT, ESP_EVENT_ANY_ID,
                                         &PocketMageWifi::espEventHandler, this, &_wifiEventHandler);
-    esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
+    if (regErr != ESP_OK)
+      ESP_LOGE(TAG, "doEnable(): register WIFI_EVENT -> %s", esp_err_to_name(regErr));
+    regErr = esp_event_handler_instance_register(IP_EVENT, IP_EVENT_STA_GOT_IP,
                                         &PocketMageWifi::espEventHandler, this, &_ipEventHandler);
-    if (esp_wifi_set_mode(WIFI_MODE_STA) != ESP_OK) {
+    if (regErr != ESP_OK)
+      ESP_LOGE(TAG, "doEnable(): register IP_EVENT -> %s", esp_err_to_name(regErr));
+    err = esp_wifi_set_mode(WIFI_MODE_STA);
+    ESP_LOGI(TAG, "doEnable(): esp_wifi_set_mode -> %s", esp_err_to_name(err));
+    if (err != ESP_OK) {
       setStatus(TR(STR_WIFI_SET_MODE_FAILED));
       _state = WifiRadioState::Off;
       return;
     }
-    if (esp_wifi_start() != ESP_OK) {
+    err = esp_wifi_start();
+    ESP_LOGI(TAG, "doEnable(): esp_wifi_start -> %s", esp_err_to_name(err));
+    if (err != ESP_OK) {
       setStatus(TR(STR_WIFI_START_FAILED));
       _state = WifiRadioState::Off;
       return;
@@ -452,6 +482,7 @@ void PocketMageWifi::doEnable() {
     setStatus(TR(STR_WIFI_ENABLED));
     publishEvent();
   }
+  ESP_LOGI(TAG, "doEnable(): done, state=%d", (int)_state);
 }
 
 void PocketMageWifi::doDisable() {
@@ -471,6 +502,7 @@ void PocketMageWifi::doDisable() {
 }
 
 void PocketMageWifi::doScan() {
+  ESP_LOGI(TAG, "doScan(): state=%d", (int)_state);
   if (_state == WifiRadioState::On) {
     _state = WifiRadioState::Scanning;
     setStatus(TR(STR_WIFI_SCANNING));
@@ -479,12 +511,14 @@ void PocketMageWifi::doScan() {
     scanConf.bssid = nullptr;
     scanConf.channel = 0;
     scanConf.show_hidden = true;
-    esp_wifi_scan_start(&scanConf, false);
+    esp_err_t err = esp_wifi_scan_start(&scanConf, false);
+    ESP_LOGI(TAG, "doScan(): esp_wifi_scan_start -> %s", esp_err_to_name(err));
     publishEvent();
   }
 }
 
 void PocketMageWifi::doConnect() {
+  ESP_LOGI(TAG, "doConnect(): entered");
   char ssid[33] = {0};
   char password[65] = {0};
   bool save = false;
@@ -508,8 +542,10 @@ void PocketMageWifi::doConnect() {
   config.sta.password[sizeof(config.sta.password) - 1] = 0;
   config.sta.threshold.authmode = (password[0] != 0) ? WIFI_AUTH_WPA2_PSK : WIFI_AUTH_OPEN;
   config.sta.pmf_cfg.capable = true;
-  esp_wifi_set_config(WIFI_IF_STA, &config);
-  esp_wifi_connect();
+  esp_err_t err = esp_wifi_set_config(WIFI_IF_STA, &config);
+  ESP_LOGI(TAG, "doConnect(): esp_wifi_set_config(%s) -> %s", ssid, esp_err_to_name(err));
+  err = esp_wifi_connect();
+  ESP_LOGI(TAG, "doConnect(): esp_wifi_connect -> %s", esp_err_to_name(err));
   if (save)
     saveCredentials(ssid, password);
   _state = WifiRadioState::Connecting;
