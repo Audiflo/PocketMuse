@@ -526,7 +526,7 @@ void einkHandler_TASKS() {
         EINK().resetDisplay();
 
         // DRAW APP
-        EINK().drawStatusBar("T:" + tasks[selectedTask][0]);
+        EINK().drawStatusBar(TR(STR_TASKS_T_PREFIX) + tasks[selectedTask][0]);
         display.drawBitmap(0, 0, tasksApp1, 320, 218, GxEPD_BLACK);
 
         EINK().refresh();

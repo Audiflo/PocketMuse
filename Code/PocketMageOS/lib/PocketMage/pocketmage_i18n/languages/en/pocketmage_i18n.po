@@ -1256,3 +1256,159 @@ msgctxt "STR_TOUCHPAD_FAILED"
 msgid "Touchpad Failed"
 msgstr "Touchpad Failed"
 
+msgctxt "STR_SSH_NO_MEM"
+msgid "Out of memory creating SSH session."
+msgstr "Out of memory creating SSH session."
+
+msgctxt "STR_SSH_CONNECTING_PREFIX"
+msgid "Connecting to "
+msgstr "Connecting to "
+
+msgctxt "STR_SSH_CONNECT_FAILED_PREFIX"
+msgid "Connection failed: "
+msgstr "Connection failed: "
+
+msgctxt "STR_SSH_DISCONNECTED"
+msgid "Disconnected."
+msgstr "Disconnected."
+
+msgctxt "STR_SSH_SESSION_CLOSED"
+msgid "SSH session closed."
+msgstr "SSH session closed."
+
+msgctxt "STR_SSH_FINGERPRINT"
+msgid "Host key SHA256 fingerprint:"
+msgstr "Host key SHA256 fingerprint:"
+
+msgctxt "STR_SSH_FIRST_CONNECTION"
+msgid "First connection to this host."
+msgstr "First connection to this host."
+
+msgctxt "STR_SSH_TRUST_HOST_KEY"
+msgid "Trust this host key?"
+msgstr "Trust this host key?"
+
+msgctxt "STR_SSH_HOST_KEY_NOT_TRUSTED"
+msgid "Host key not trusted; connection aborted."
+msgstr "Host key not trusted; connection aborted."
+
+msgctxt "STR_SSH_HOST_KEY_CHANGED"
+msgid "WARNING: HOST KEY HAS CHANGED!"
+msgstr "WARNING: HOST KEY HAS CHANGED!"
+
+msgctxt "STR_SSH_HOST_KEY_MITM"
+msgid "Possible man-in-the-middle attack; connection aborted."
+msgstr "Possible man-in-the-middle attack; connection aborted."
+
+msgctxt "STR_SSH_HOST_KEY_FAIL"
+msgid "Could not retrieve host key."
+msgstr "Could not retrieve host key."
+
+msgctxt "STR_SSH_HOST_KEY_VERIFY_FAIL"
+msgid "Host key verification failed."
+msgstr "Host key verification failed."
+
+msgctxt "STR_SSH_LOGIN_AS"
+msgid "Login as:"
+msgstr "Login as:"
+
+msgctxt "STR_SSH_LOGIN_CANCELLED"
+msgid "Login cancelled."
+msgstr "Login cancelled."
+
+msgctxt "STR_SSH_PASSWORD_FOR_PREFIX"
+msgid "Password for "
+msgstr "Password for "
+
+msgctxt "STR_SSH_AUTHENTICATING"
+msgid "Authenticating..."
+msgstr "Authenticating..."
+
+msgctxt "STR_SSH_AUTH_FAILED_PREFIX"
+msgid "Authentication failed: "
+msgstr "Authentication failed: "
+
+msgctxt "STR_SSH_CHANNEL_FAIL"
+msgid "Could not open channel."
+msgstr "Could not open channel."
+
+msgctxt "STR_SSH_SHELL_FAIL_PREFIX"
+msgid "Could not start shell: "
+msgstr "Could not start shell: "
+
+msgctxt "STR_SSH_DISCONNECTED_TAG"
+msgid "[disconnected]"
+msgstr "[disconnected]"
+
+msgctxt "STR_SSH_USAGE_WIFI"
+msgid "Usage: wifi <ssid>"
+msgstr "Usage: wifi <ssid>"
+
+msgctxt "STR_SSH_USAGE_WIFI_SUB"
+msgid "       wifi-scan / wifi-list / wifi-status / wifi-disconnect"
+msgstr "       wifi-scan / wifi-list / wifi-status / wifi-disconnect"
+
+msgctxt "STR_SSH_CONNECTING_SAVED_PREFIX"
+msgid "Connecting to saved network "
+msgstr "Connecting to saved network "
+
+msgctxt "STR_SSH_WIFI_CONNECT_CANCELLED"
+msgid "Wifi connect cancelled."
+msgstr "Wifi connect cancelled."
+
+msgctxt "STR_SSH_SCANNING_NETWORKS"
+msgid "Scanning for networks..."
+msgstr "Scanning for networks..."
+
+msgctxt "STR_SSH_SCAN_HINT"
+msgid "Run 'wifi-list' when the scan finishes."
+msgstr "Run 'wifi-list' when the scan finishes."
+
+msgctxt "STR_SSH_NO_SCAN_RESULTS"
+msgid "No scan results. Run 'wifi-scan' first."
+msgstr "No scan results. Run 'wifi-scan' first."
+
+msgctxt "STR_SSH_NETWORKS_FOUND_SUFFIX"
+msgid " networks found:"
+msgstr " networks found:"
+
+msgctxt "STR_SSH_WIFI_STATE_PREFIX"
+msgid "WiFi state: "
+msgstr "WiFi state: "
+
+msgctxt "STR_SSH_SSID_PREFIX"
+msgid "SSID: "
+msgstr "SSID: "
+
+msgctxt "STR_SSH_IP_PREFIX"
+msgid "IP:   "
+msgstr "IP:   "
+
+msgctxt "STR_SSH_WIFI_DISCONNECTED"
+msgid "WiFi disconnected."
+msgstr "WiFi disconnected."
+
+msgctxt "STR_SSH_INVALID_PORT"
+msgid "Invalid port."
+msgstr "Invalid port."
+
+msgctxt "STR_SSH_USAGE_SSH"
+msgid "Usage: ssh [user@]host[:port]"
+msgstr "Usage: ssh [user@]host[:port]"
+
+msgctxt "STR_SSH_USAGE_SSH_P"
+msgid "       ssh -p <port> [user@]host"
+msgstr "       ssh -p <port> [user@]host"
+
+msgctxt "STR_SSH_NO_WIFI"
+msgid "No WiFi connection."
+msgstr "No WiFi connection."
+
+msgctxt "STR_SSH_JOIN_NETWORK"
+msgid "Join a network first:  wifi <ssid>"
+msgstr "Join a network first:  wifi <ssid>"
+
+msgctxt "STR_SSH_NO_HOST"
+msgid "No host specified."
+msgstr "No host specified."
+

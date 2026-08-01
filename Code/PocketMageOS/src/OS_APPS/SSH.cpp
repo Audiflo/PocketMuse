@@ -9,6 +9,7 @@
 
 #include <libssh_esp32.h>
 #include <libssh/libssh.h>
+#include <libssh/channels.h>
 
 #include <pocketmage_wifi/pocketmage_wifi.h>
 
@@ -552,11 +553,11 @@ static bool sshHostKeyAccept(const unsigned char* hash, size_t hlen) {
   char hex[80];
   hashToHex(hash, hlen, hex, sizeof(hex));
   int half = strlen(hex) / 2;
-  sshFeedLine("Host key SHA256 fingerprint:");
+  sshFeedLine(TR(STR_SSH_FINGERPRINT));
   sshFeedLine(String(hex).substring(0, half).c_str());
   sshFeedLine(String(hex).substring(half).c_str());
   char answer[8] = {0};
-  if (!sshAskPrompt(SSH_PROMPT_HOSTKEY, "Trust this host key?", answer, sizeof(answer))) return false;
+  if (!sshAskPrompt(SSH_PROMPT_HOSTKEY, TR(STR_SSH_TRUST_HOST_KEY), answer, sizeof(answer))) return false;
   return answer[0] == 'y' || answer[0] == 'Y';
 }
 
@@ -567,16 +568,16 @@ static int sshVerifyKnownHost(const String& hostPort, ssh_key serverKey) {
 
   int state = knownHostCheck(hostPort, hash, hlen);
   if (state == KH_NEW) {
-    sshFeedLine("First connection to this host.");
+    sshFeedLine(TR(STR_SSH_FIRST_CONNECTION));
     if (sshHostKeyAccept(hash, hlen)) {
       if (!knownHostSave(hostPort, hash, hlen)) state = KH_ERROR;
     } else {
-      sshFeedLine("Host key not trusted; connection aborted.");
+      sshFeedLine(TR(STR_SSH_HOST_KEY_NOT_TRUSTED));
       state = KH_ERROR;
     }
   } else if (state == KH_CHANGED) {
-    sshFeedLine("WARNING: HOST KEY HAS CHANGED!");
-    sshFeedLine("Possible man-in-the-middle attack; connection aborted.");
+    sshFeedLine(TR(STR_SSH_HOST_KEY_CHANGED));
+    sshFeedLine(TR(STR_SSH_HOST_KEY_MITM));
   }
   ssh_clean_pubkey_hash(&hash);
   return state;
@@ -634,7 +635,7 @@ static void sshTask(void* p) {
 
   sshSession = ssh_new();
   if (!sshSession) {
-    sshExitMsg = "Out of memory creating SSH session.";
+    sshExitMsg = TR(STR_SSH_NO_MEM);
     sshBusyFlag = false;
     vTaskDelete(NULL);
     return;
@@ -649,10 +650,10 @@ static void sshTask(void* p) {
   ssh_options_set(sshSession, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
   ssh_options_set(sshSession, SSH_OPTIONS_TIMEOUT, &timeout);
 
-  sshFeedLine(("Connecting to " + sshHost + ":" + String(sshPort) + "...").c_str());
+  sshFeedLine((String(TR(STR_SSH_CONNECTING_PREFIX)) + sshHost + ":" + String(sshPort) + "...").c_str());
 
   if (ssh_connect(sshSession) != SSH_OK) {
-    sshExitMsg = "Connection failed: " + String(ssh_get_error(sshSession));
+    sshExitMsg = String(TR(STR_SSH_CONNECT_FAILED_PREFIX)) + String(ssh_get_error(sshSession));
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -663,7 +664,7 @@ static void sshTask(void* p) {
   ESP_LOGI(kSshTag, "connected to %s:%d", sshHost.c_str(), sshPort);
 
   if (sshDisconnectReq) {
-    sshExitMsg = "Disconnected.";
+    sshExitMsg = TR(STR_SSH_DISCONNECTED);
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -675,7 +676,7 @@ static void sshTask(void* p) {
   // Host key verification (TOFU).
   ssh_key serverKey = NULL;
   if (ssh_get_server_publickey(sshSession, &serverKey) < 0) {
-    sshExitMsg = "Could not retrieve host key.";
+    sshExitMsg = TR(STR_SSH_HOST_KEY_FAIL);
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -687,7 +688,7 @@ static void sshTask(void* p) {
   int kh = sshVerifyKnownHost(hostPort, serverKey);
   ssh_key_free(serverKey);
   if (kh != KH_OK) {
-    if (sshExitMsg.length() == 0) sshExitMsg = "Host key verification failed.";
+    if (sshExitMsg.length() == 0) sshExitMsg = TR(STR_SSH_HOST_KEY_VERIFY_FAIL);
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -697,7 +698,7 @@ static void sshTask(void* p) {
   }
 
   if (sshDisconnectReq) {
-    sshExitMsg = "Disconnected.";
+    sshExitMsg = TR(STR_SSH_DISCONNECTED);
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -709,9 +710,9 @@ static void sshTask(void* p) {
   // Username prompt if not given on the command line.
   if (sshUser.length() == 0) {
     char uname[64] = {0};
-    sshFeedLine("Login as: ");
-    if (!sshAskPrompt(SSH_PROMPT_USERNAME, "Login as:", uname, sizeof(uname)) || strlen(uname) == 0) {
-      sshExitMsg = "Login cancelled.";
+    sshFeedLine((String(TR(STR_SSH_LOGIN_AS)) + " ").c_str());
+    if (!sshAskPrompt(SSH_PROMPT_USERNAME, TR(STR_SSH_LOGIN_AS), uname, sizeof(uname)) || strlen(uname) == 0) {
+      sshExitMsg = TR(STR_SSH_LOGIN_CANCELLED);
       ssh_disconnect(sshSession);
       ssh_free(sshSession);
       sshSession = nullptr;
@@ -725,8 +726,8 @@ static void sshTask(void* p) {
 
   // Password.
   char password[65] = {0};
-  if (!sshAskPrompt(SSH_PROMPT_PASSWORD, ("Password for " + sshUser + "@" + sshHost).c_str(), password, sizeof(password))) {
-    sshExitMsg = "Login cancelled.";
+  if (!sshAskPrompt(SSH_PROMPT_PASSWORD, (String(TR(STR_SSH_PASSWORD_FOR_PREFIX)) + sshUser + "@" + sshHost).c_str(), password, sizeof(password))) {
+    sshExitMsg = TR(STR_SSH_LOGIN_CANCELLED);
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -735,9 +736,9 @@ static void sshTask(void* p) {
     return;
   }
 
-  sshFeedLine("Authenticating...");
+  sshFeedLine(TR(STR_SSH_AUTHENTICATING));
   if (!sshAuthenticate(password, sshUser.c_str())) {
-    sshExitMsg = "Authentication failed: " + String(ssh_get_error(sshSession));
+    sshExitMsg = String(TR(STR_SSH_AUTH_FAILED_PREFIX)) + String(ssh_get_error(sshSession));
     memset(password, 0, sizeof(password));
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
@@ -751,7 +752,7 @@ static void sshTask(void* p) {
 
   sshChannel = ssh_channel_new(sshSession);
   if (!sshChannel) {
-    sshExitMsg = "Could not open channel.";
+    sshExitMsg = TR(STR_SSH_CHANNEL_FAIL);
     ssh_disconnect(sshSession);
     ssh_free(sshSession);
     sshSession = nullptr;
@@ -762,7 +763,7 @@ static void sshTask(void* p) {
   if (ssh_channel_open_session(sshChannel) != SSH_OK ||
       ssh_channel_request_pty_size(sshChannel, "xterm", vt->cols, vt->rows) != SSH_OK ||
       ssh_channel_request_shell(sshChannel) != SSH_OK) {
-    sshExitMsg = "Could not start shell: " + String(ssh_get_error(sshSession));
+    sshExitMsg = String(TR(STR_SSH_SHELL_FAIL_PREFIX)) + String(ssh_get_error(sshSession));
     ssh_channel_close(sshChannel);
     ssh_channel_free(sshChannel);
     sshChannel = nullptr;
@@ -782,9 +783,17 @@ static void sshTask(void* p) {
   char rxBuf[256];
   int lastFedBatch = 0;
   while (!sshDisconnectReq) {
-    // Drain the keyboard queue into the channel.
+    // Drain the keyboard queue into the channel.  Peek before committing so a
+    // write only happens when the channel can take it right away.  A burst of
+    // keys must never block here: libssh's ssh_channel_write waits up to its
+    // 30s default timeout when the remote window is exhausted, and the worker
+    // owns screen updates, so a stuck write freezes the terminal.
     char b;
-    while (xQueueReceive(sshTxQueue, &b, 0) == pdTRUE) {
+    while (xQueuePeek(sshTxQueue, &b, 0) == pdTRUE) {
+      if (sshDisconnectReq) break;
+      if (!sshChannel || !ssh_channel_is_open(sshChannel)) { sshDisconnectReq = true; break; }
+      if (sshChannel->remote_window == 0) break;   // backpressure: leave queued, retry next tick
+      xQueueReceive(sshTxQueue, &b, 0);
       if (ssh_channel_write(sshChannel, &b, 1) <= 0) { sshDisconnectReq = true; break; }
     }
     if (sshDisconnectReq) break;
@@ -820,9 +829,9 @@ static void sshTask(void* p) {
   }
 
   // Teardown
-  sshFeedLine("[disconnected]");
+  sshFeedLine(TR(STR_SSH_DISCONNECTED_TAG));
   sshScreenDirty = true;
-  sshExitMsg = "SSH session closed.";
+  sshExitMsg = TR(STR_SSH_SESSION_CLOSED);
 
   if (sshChannel) {
     ssh_channel_send_eof(sshChannel);
@@ -1062,8 +1071,8 @@ bool sshCommand(const String& command) {
     String args = command.substring(5);
     args.trim();
     if (args.length() == 0) {
-      termPrint("Usage: wifi <ssid>");
-      termPrint("       wifi-scan / wifi-list / wifi-status / wifi-disconnect");
+      termPrint(TR(STR_SSH_USAGE_WIFI));
+      termPrint(TR(STR_SSH_USAGE_WIFI_SUB));
       return false;
     }
     P_WIFI.begin();
@@ -1072,16 +1081,16 @@ bool sshCommand(const String& command) {
       P_WIFI.loadSavedCredentials(args.c_str(), savedPass, sizeof(savedPass));
       P_WIFI.enable();
       P_WIFI.connect(args.c_str(), savedPass, false);
-      termPrint("Connecting to saved network " + args + "...");
+      termPrint(String(TR(STR_SSH_CONNECTING_SAVED_PREFIX)) + args + "...");
     } else {
       P_WIFI.enable();
-      String pass = textPrompt("Password for " + args, "", true);
+      String pass = textPrompt(String(TR(STR_SSH_PASSWORD_FOR_PREFIX)) + args, "", true);
       if (pass == "_EXIT_" || pass == "_CENTER_" || pass == "_RETURN_") {
-        termPrint("Wifi connect cancelled.");
+        termPrint(TR(STR_SSH_WIFI_CONNECT_CANCELLED));
         return false;
       }
       P_WIFI.connect(args.c_str(), pass.c_str(), true);
-      termPrint("Connecting to " + args + "...");
+      termPrint(String(TR(STR_SSH_CONNECTING_PREFIX)) + args + "...");
     }
     return false;
   }
@@ -1089,17 +1098,17 @@ bool sshCommand(const String& command) {
     P_WIFI.begin();
     P_WIFI.enable();
     P_WIFI.scan();
-    termPrint("Scanning for networks...");
-    termPrint("Run 'wifi-list' when the scan finishes.");
+    termPrint(TR(STR_SSH_SCANNING_NETWORKS));
+    termPrint(TR(STR_SSH_SCAN_HINT));
     return false;
   }
   if (verb == "wifi-list") {
     uint16_t count = P_WIFI.getScanResultCount();
     if (count == 0) {
-      termPrint("No scan results. Run 'wifi-scan' first.");
+      termPrint(TR(STR_SSH_NO_SCAN_RESULTS));
       return false;
     }
-    termPrint(String(count) + " networks found:");
+    termPrint(String(count) + TR(STR_SSH_NETWORKS_FOUND_SUFFIX));
     WifiApInfo ap;
     for (uint16_t i = 0; i < count && i < 8; i++) {
       if (P_WIFI.getScanResult(i, ap)) {
@@ -1110,16 +1119,16 @@ bool sshCommand(const String& command) {
     return false;
   }
   if (verb == "wifi-status") {
-    termPrint("WiFi state: " + P_WIFI.getStatusMessage());
+    termPrint(String(TR(STR_SSH_WIFI_STATE_PREFIX)) + P_WIFI.getStatusMessage());
     if (P_WIFI.isConnected()) {
-      termPrint("SSID: " + P_WIFI.getConnectedSSID());
-      termPrint("IP:   " + P_WIFI.getIpAddress());
+      termPrint(String(TR(STR_SSH_SSID_PREFIX)) + P_WIFI.getConnectedSSID());
+      termPrint(String(TR(STR_SSH_IP_PREFIX)) + P_WIFI.getIpAddress());
     }
     return false;
   }
   if (verb == "wifi-disconnect") {
     P_WIFI.disconnect();
-    termPrint("WiFi disconnected.");
+    termPrint(TR(STR_SSH_WIFI_DISCONNECTED));
     return false;
   }
 
@@ -1132,22 +1141,22 @@ bool sshCommand(const String& command) {
       String portStr = (sp < 0) ? args.substring(3) : args.substring(3, sp);
       port = portStr.toInt();
       if (port <= 0 || port > 65535) {
-        termPrint("Invalid port.");
+        termPrint(TR(STR_SSH_INVALID_PORT));
         return false;
       }
       args = (sp < 0) ? "" : args.substring(sp + 1);
       args.trim();
     }
     if (args.length() == 0) {
-      termPrint("Usage: ssh [user@]host[:port]");
-      termPrint("       ssh -p <port> [user@]host");
+      termPrint(TR(STR_SSH_USAGE_SSH));
+      termPrint(TR(STR_SSH_USAGE_SSH_P));
       return false;
     }
 
     P_WIFI.begin();
     if (P_WIFI.getState() != WifiRadioState::Connected) {
-      termPrint("No WiFi connection.");
-      termPrint("Join a network first:  wifi <ssid>");
+      termPrint(TR(STR_SSH_NO_WIFI));
+      termPrint(TR(STR_SSH_JOIN_NETWORK));
       return false;
     }
 
@@ -1165,7 +1174,7 @@ bool sshCommand(const String& command) {
       host = host.substring(0, colon);
     }
     if (host.length() == 0) {
-      termPrint("No host specified.");
+      termPrint(TR(STR_SSH_NO_HOST));
       return false;
     }
 

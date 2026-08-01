@@ -1256,3 +1256,159 @@ msgctxt "STR_TOUCHPAD_FAILED"
 msgid "Touchpad Failed"
 msgstr "Error del panel táctil"
 
+msgctxt "STR_SSH_NO_MEM"
+msgid "Out of memory creating SSH session."
+msgstr "Memoria insuficiente para crear la sesión SSH."
+
+msgctxt "STR_SSH_CONNECTING_PREFIX"
+msgid "Connecting to "
+msgstr "Conectando a "
+
+msgctxt "STR_SSH_CONNECT_FAILED_PREFIX"
+msgid "Connection failed: "
+msgstr "Error de conexión: "
+
+msgctxt "STR_SSH_DISCONNECTED"
+msgid "Disconnected."
+msgstr "Desconectado."
+
+msgctxt "STR_SSH_SESSION_CLOSED"
+msgid "SSH session closed."
+msgstr "Sesión SSH cerrada."
+
+msgctxt "STR_SSH_FINGERPRINT"
+msgid "Host key SHA256 fingerprint:"
+msgstr "Huella SHA256 de la clave del host:"
+
+msgctxt "STR_SSH_FIRST_CONNECTION"
+msgid "First connection to this host."
+msgstr "Primera conexión a este host."
+
+msgctxt "STR_SSH_TRUST_HOST_KEY"
+msgid "Trust this host key?"
+msgstr "¿Confiar en esta clave de host?"
+
+msgctxt "STR_SSH_HOST_KEY_NOT_TRUSTED"
+msgid "Host key not trusted; connection aborted."
+msgstr "Clave de host no confiable; conexión abortada."
+
+msgctxt "STR_SSH_HOST_KEY_CHANGED"
+msgid "WARNING: HOST KEY HAS CHANGED!"
+msgstr "ADVERTENCIA: ¡LA CLAVE DEL HOST HA CAMBIADO!"
+
+msgctxt "STR_SSH_HOST_KEY_MITM"
+msgid "Possible man-in-the-middle attack; connection aborted."
+msgstr "Posible ataque de intermediario; conexión abortada."
+
+msgctxt "STR_SSH_HOST_KEY_FAIL"
+msgid "Could not retrieve host key."
+msgstr "No se pudo recuperar la clave del host."
+
+msgctxt "STR_SSH_HOST_KEY_VERIFY_FAIL"
+msgid "Host key verification failed."
+msgstr "Falló la verificación de la clave del host."
+
+msgctxt "STR_SSH_LOGIN_AS"
+msgid "Login as:"
+msgstr "Usuario:"
+
+msgctxt "STR_SSH_LOGIN_CANCELLED"
+msgid "Login cancelled."
+msgstr "Conexión cancelada."
+
+msgctxt "STR_SSH_PASSWORD_FOR_PREFIX"
+msgid "Password for "
+msgstr "Contraseña para "
+
+msgctxt "STR_SSH_AUTHENTICATING"
+msgid "Authenticating..."
+msgstr "Autenticando..."
+
+msgctxt "STR_SSH_AUTH_FAILED_PREFIX"
+msgid "Authentication failed: "
+msgstr "Falló la autenticación: "
+
+msgctxt "STR_SSH_CHANNEL_FAIL"
+msgid "Could not open channel."
+msgstr "No se pudo abrir el canal."
+
+msgctxt "STR_SSH_SHELL_FAIL_PREFIX"
+msgid "Could not start shell: "
+msgstr "No se pudo iniciar el shell: "
+
+msgctxt "STR_SSH_DISCONNECTED_TAG"
+msgid "[disconnected]"
+msgstr "[desconectado]"
+
+msgctxt "STR_SSH_USAGE_WIFI"
+msgid "Usage: wifi <ssid>"
+msgstr "Uso: wifi <ssid>"
+
+msgctxt "STR_SSH_USAGE_WIFI_SUB"
+msgid "       wifi-scan / wifi-list / wifi-status / wifi-disconnect"
+msgstr "       wifi-scan / wifi-list / wifi-status / wifi-disconnect"
+
+msgctxt "STR_SSH_CONNECTING_SAVED_PREFIX"
+msgid "Connecting to saved network "
+msgstr "Conectando a la red guardada "
+
+msgctxt "STR_SSH_WIFI_CONNECT_CANCELLED"
+msgid "Wifi connect cancelled."
+msgstr "Conexión WiFi cancelada."
+
+msgctxt "STR_SSH_SCANNING_NETWORKS"
+msgid "Scanning for networks..."
+msgstr "Buscando redes..."
+
+msgctxt "STR_SSH_SCAN_HINT"
+msgid "Run 'wifi-list' when the scan finishes."
+msgstr "Ejecuta 'wifi-list' cuando termine el escaneo."
+
+msgctxt "STR_SSH_NO_SCAN_RESULTS"
+msgid "No scan results. Run 'wifi-scan' first."
+msgstr "Sin resultados de escaneo. Ejecuta 'wifi-scan' primero."
+
+msgctxt "STR_SSH_NETWORKS_FOUND_SUFFIX"
+msgid " networks found:"
+msgstr " redes encontradas:"
+
+msgctxt "STR_SSH_WIFI_STATE_PREFIX"
+msgid "WiFi state: "
+msgstr "Estado del WiFi: "
+
+msgctxt "STR_SSH_SSID_PREFIX"
+msgid "SSID: "
+msgstr "SSID: "
+
+msgctxt "STR_SSH_IP_PREFIX"
+msgid "IP:   "
+msgstr "IP:   "
+
+msgctxt "STR_SSH_WIFI_DISCONNECTED"
+msgid "WiFi disconnected."
+msgstr "WiFi desconectado."
+
+msgctxt "STR_SSH_INVALID_PORT"
+msgid "Invalid port."
+msgstr "Puerto inválido."
+
+msgctxt "STR_SSH_USAGE_SSH"
+msgid "Usage: ssh [user@]host[:port]"
+msgstr "Uso: ssh [usuario@]host[:puerto]"
+
+msgctxt "STR_SSH_USAGE_SSH_P"
+msgid "       ssh -p <port> [user@]host"
+msgstr "       ssh -p <puerto> [usuario@]host"
+
+msgctxt "STR_SSH_NO_WIFI"
+msgid "No WiFi connection."
+msgstr "Sin conexión WiFi."
+
+msgctxt "STR_SSH_JOIN_NETWORK"
+msgid "Join a network first:  wifi <ssid>"
+msgstr "Únete primero a una red:  wifi <ssid>"
+
+msgctxt "STR_SSH_NO_HOST"
+msgid "No host specified."
+msgstr "No se especificó el host."
+
