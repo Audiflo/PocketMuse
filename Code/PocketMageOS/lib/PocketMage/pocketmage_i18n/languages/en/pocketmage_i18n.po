@@ -1,5 +1,5 @@
 # PocketMage OS English Translations
-# Languages: en fr es
+# Languages: en fr es de
 msgid ""
 msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"

@@ -1,4 +1,4 @@
-# PocketMage OS Spanish Translations
+# PocketMage OS German Translations
 # Languages: en fr es de
 msgid ""
 msgstr ""
@@ -18,7 +18,7 @@ msgstr "FN+SHIFT"
 
 msgctxt "STR_KB_INIT_FAILED"
 msgid "Keyboard INIT Failed"
-msgstr "Error de inicialización del teclado"
+msgstr "Tastatur-Init fehlgeschlagen"
 
 msgctxt "STR_KB_SPECIAL"
 msgid "SPECIAL"
@@ -26,11 +26,11 @@ msgstr "SPECIAL"
 
 msgctxt "STR_KB_USB_CLOSE"
 msgid "Please close USB connection"
-msgstr "Cierra la conexión USB"
+msgstr "Bitte USB-Verbindung trennen"
 
 msgctxt "STR_KB_APP_CANCEL"
 msgid "cancel"
-msgstr "cancelar"
+msgstr "abbrechen"
 
 msgctxt "STR_KB_APP_TXT"
 msgid "txt"
@@ -38,7 +38,7 @@ msgstr "txt"
 
 msgctxt "STR_KB_APP_FILEWIZ"
 msgid "filewiz"
-msgstr "archivos"
+msgstr "filewiz"
 
 msgctxt "STR_KB_APP_USB"
 msgid "USB"
@@ -46,27 +46,27 @@ msgstr "USB"
 
 msgctxt "STR_KB_APP_CHAT"
 msgid "chat"
-msgstr "charla"
+msgstr "chat"
 
 msgctxt "STR_KB_APP_SETTINGS"
 msgid "settings"
-msgstr "ajustes"
+msgstr "einstellungen"
 
 msgctxt "STR_KB_APP_TASKS"
 msgid "tasks"
-msgstr "tareas"
+msgstr "aufgaben"
 
 msgctxt "STR_KB_APP_CALENDAR"
 msgid "calendar"
-msgstr "calendario"
+msgstr "kalender"
 
 msgctxt "STR_KB_APP_JOURNAL"
 msgid "journal"
-msgstr "diario"
+msgstr "tagebuch"
 
 msgctxt "STR_KB_APP_LEXICON"
 msgid "lexicon"
-msgstr "diccionario"
+msgstr "lexikon"
 
 msgctxt "STR_KB_APP_TERMINAL"
 msgid "terminal"
@@ -74,7 +74,7 @@ msgstr "terminal"
 
 msgctxt "STR_KB_APP_LOADER"
 msgid "app loader"
-msgstr "cargador"
+msgstr "lader"
 
 msgctxt "STR_GRID_TXT"
 msgid "txt"
@@ -82,7 +82,7 @@ msgstr "txt"
 
 msgctxt "STR_GRID_FILEWIZ"
 msgid "filewiz"
-msgstr "archivos"
+msgstr "filewiz"
 
 msgctxt "STR_GRID_USB"
 msgid "usb"
@@ -90,27 +90,27 @@ msgstr "usb"
 
 msgctxt "STR_GRID_CHAT"
 msgid "chat"
-msgstr "charla"
+msgstr "chat"
 
 msgctxt "STR_GRID_SETTINGS"
 msgid "settings"
-msgstr "ajustes"
+msgstr "einstellungen"
 
 msgctxt "STR_GRID_TASKS"
 msgid "tasks"
-msgstr "tareas"
+msgstr "aufgaben"
 
 msgctxt "STR_GRID_CALENDAR"
 msgid "calendar"
-msgstr "calendario"
+msgstr "kalender"
 
 msgctxt "STR_GRID_JOURNAL"
 msgid "journal"
-msgstr "diario"
+msgstr "tagebuch"
 
 msgctxt "STR_GRID_LEXICON"
 msgid "lexicon"
-msgstr "diccionario"
+msgstr "lexikon"
 
 msgctxt "STR_GRID_TERMINAL"
 msgid "terminal"
@@ -118,7 +118,7 @@ msgstr "terminal"
 
 msgctxt "STR_GRID_LOADER"
 msgid "loader"
-msgstr "cargador"
+msgstr "lader"
 
 msgctxt "STR_INFO_USB"
 msgid "USB"
@@ -134,43 +134,43 @@ msgstr "SD"
 
 msgctxt "STR_OLED_LINE"
 msgid "Line:"
-msgstr "Línea:"
+msgstr "Zeile:"
 
 msgctxt "STR_FRAMES_LINES"
 msgid "Lines:"
-msgstr "Líneas:"
+msgstr "Zeilen:"
 
 msgctxt "STR_DAY_SUNDAY"
 msgid "Sunday"
-msgstr "Domingo"
+msgstr "Sonntag"
 
 msgctxt "STR_DAY_MONDAY"
 msgid "Monday"
-msgstr "Lunes"
+msgstr "Montag"
 
 msgctxt "STR_DAY_TUESDAY"
 msgid "Tuesday"
-msgstr "Martes"
+msgstr "Dienstag"
 
 msgctxt "STR_DAY_WEDNESDAY"
 msgid "Wednesday"
-msgstr "Miércoles"
+msgstr "Mittwoch"
 
 msgctxt "STR_DAY_THURSDAY"
 msgid "Thursday"
-msgstr "Jueves"
+msgstr "Donnerstag"
 
 msgctxt "STR_DAY_FRIDAY"
 msgid "Friday"
-msgstr "Viernes"
+msgstr "Freitag"
 
 msgctxt "STR_DAY_SATURDAY"
 msgid "Saturday"
-msgstr "Sábado"
+msgstr "Samstag"
 
 msgctxt "STR_MONTH_JAN"
 msgid "Jan"
-msgstr "Ene"
+msgstr "Jan"
 
 msgctxt "STR_MONTH_FEB"
 msgid "Feb"
@@ -178,15 +178,15 @@ msgstr "Feb"
 
 msgctxt "STR_MONTH_MAR"
 msgid "Mar"
-msgstr "Mar"
+msgstr "Mär"
 
 msgctxt "STR_MONTH_APR"
 msgid "Apr"
-msgstr "Abr"
+msgstr "Apr"
 
 msgctxt "STR_MONTH_MAY"
 msgid "May"
-msgstr "May"
+msgstr "Mai"
 
 msgctxt "STR_MONTH_JUN"
 msgid "Jun"
@@ -198,7 +198,7 @@ msgstr "Jul"
 
 msgctxt "STR_MONTH_AUG"
 msgid "Aug"
-msgstr "Ago"
+msgstr "Aug"
 
 msgctxt "STR_MONTH_SEP"
 msgid "Sep"
@@ -206,7 +206,7 @@ msgstr "Sep"
 
 msgctxt "STR_MONTH_OCT"
 msgid "Oct"
-msgstr "Oct"
+msgstr "Okt"
 
 msgctxt "STR_MONTH_NOV"
 msgid "Nov"
@@ -214,7 +214,7 @@ msgstr "Nov"
 
 msgctxt "STR_MONTH_DEC"
 msgid "Dec"
-msgstr "Dic"
+msgstr "Dez"
 
 msgctxt "STR_MONTH_ERR"
 msgid "ERR"
@@ -222,19 +222,19 @@ msgstr "ERR"
 
 msgctxt "STR_INVALID"
 msgid "Invalid"
-msgstr "Inválido"
+msgstr "Ungültig"
 
 msgctxt "STR_SAVE_FAILED"
 msgid "SAVE FAILED!"
-msgstr "¡ERROR AL GUARDAR!"
+msgstr "SPEICHERN FEHLGESCHLAGEN!"
 
 msgctxt "STR_GOOD_SAVE"
 msgid "Good Save!"
-msgstr "¡Guardado!"
+msgstr "Erfolgreich gespeichert!"
 
 msgctxt "STR_SAVED_PREFIX"
 msgid "Saved: "
-msgstr "Guardado: "
+msgstr "Gespeichert: "
 
 msgctxt "STR_ARROW"
 msgid " -> "
@@ -242,11 +242,11 @@ msgstr " -> "
 
 msgctxt "STR_GOTO_LINE"
 msgid "GOTO LINE:"
-msgstr "IR A LÍNEA:"
+msgstr "ZEILE SPRINGEN:"
 
 msgctxt "STR_SD_NOT_DETECTED"
 msgid "SD Not Detected! ["
-msgstr "¡SD no detectada! ["
+msgstr "SD nicht erkannt! ["
 
 msgctxt "STR_SD_BRACKET_CLOSE"
 msgid "]"
@@ -254,167 +254,167 @@ msgstr "]"
 
 msgctxt "STR_SD_NOT_DETECTED_START_FAIL"
 msgid "SD Not Detected! [START_FAIL]"
-msgstr "¡SD no detectada! [START_FAIL]"
+msgstr "SD nicht erkannt! [START_FAIL]"
 
 msgctxt "STR_SD_COMPAT_MODE"
 msgid "Entering Compatibility Mode"
-msgstr "Entrando en modo compatibilidad"
+msgstr "Kompatibilitätsmodus wird gestartet"
 
 msgctxt "STR_SD_ALL_WORK_LOST"
 msgid "All Work Will Be Lost!"
-msgstr "¡Se perderá todo el trabajo!"
+msgstr "Alle Daten gehen verloren!"
 
 msgctxt "STR_SD_INSERT_REBOOT"
 msgid "Insert SD Card and Reboot!"
-msgstr "¡Inserta la SD y reinicia!"
+msgstr "SD-Karte einlegen und neu starten!"
 
 msgctxt "STR_SD_SPI_NOT_DETECTED"
 msgid "SPI SD Not Detected!"
-msgstr "¡SD SPI no detectada!"
+msgstr "SPI-SD nicht erkannt!"
 
 msgctxt "STR_SD_COMPAT_FAILED"
 msgid "Compatibility Mode Failed. Retrying..."
-msgstr "Error en modo compatibilidad. Reintentando..."
+msgstr "Kompatibilitätsmodus fehlgeschlagen. Neuer Versuch..."
 
 msgctxt "STR_SD_COMPAT_STARTED"
 msgid "SD Started In Compatibility Mode"
-msgstr "SD iniciada en modo compatibilidad"
+msgstr "SD im Kompatibilitätsmodus gestartet"
 
 msgctxt "STR_SD_SAVE_FAILED"
 msgid "SAVE FAILED - No SD!"
-msgstr "ERROR AL GUARDAR - ¡Sin SD!"
+msgstr "SPEICHERN FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_SD_META_WRITE_ERR"
 msgid "META WRITE ERR"
-msgstr "ERROR ESCRITURA META"
+msgstr "META-SCHREIBFEHLER"
 
 msgctxt "STR_SD_LOAD_FAILED"
 msgid "LOAD FAILED - No SD!"
-msgstr "ERROR DE CARGA - ¡Sin SD!"
+msgstr "LADEN FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_SD_LOADING_FILE"
 msgid "Loading File"
-msgstr "Cargando archivo"
+msgstr "Datei wird geladen"
 
 msgctxt "STR_SD_FILE_LOADED"
 msgid "File Loaded"
-msgstr "Archivo cargado"
+msgstr "Datei geladen"
 
 msgctxt "STR_SD_DELETE_FAILED"
 msgid "DELETE FAILED - No SD!"
-msgstr "ERROR AL BORRAR - ¡Sin SD!"
+msgstr "LÖSCHEN FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_SD_RENAME_FAILED"
 msgid "RENAME FAILED - No SD!"
-msgstr "ERROR AL RENOMBRAR - ¡Sin SD!"
+msgstr "UMBENENNEN FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_SD_COPY_FAILED"
 msgid "COPY FAILED - No SD!"
-msgstr "ERROR AL COPIAR - ¡Sin SD!"
+msgstr "KOPIEREN FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_SD_OP_FAILED"
 msgid "OP FAILED - No SD!"
-msgstr "ERROR DE OP. - ¡Sin SD!"
+msgstr "VORGANG FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_SD_LOAD_FAILED_SHORT"
 msgid "Load Failed"
-msgstr "Error de carga"
+msgstr "Laden fehlgeschlagen"
 
 msgctxt "STR_SYS_REBOOT_WARNING"
 msgid "WARNING: Rebooting to PocketMage OS!"
-msgstr "¡AVISO: Reiniciando PocketMage OS!"
+msgstr "WARNUNG: Neustart zu PocketMage OS!"
 
 msgctxt "STR_SYS_PROCESS_INTERRUPTED"
 msgid "Process Interrupted"
-msgstr "Proceso interrumpido"
+msgstr "Vorgang unterbrochen"
 
 msgctxt "STR_WIFI_IDLE"
 msgid "WiFi idle"
-msgstr "WiFi inactivo"
+msgstr "WiFi inaktiv"
 
 msgctxt "STR_WIFI_STARTED"
 msgid "WiFi started"
-msgstr "WiFi iniciado"
+msgstr "WiFi gestartet"
 
 msgctxt "STR_WIFI_CONNECTED"
 msgid "WiFi connected"
-msgstr "WiFi conectado"
+msgstr "WiFi verbunden"
 
 msgctxt "STR_WIFI_AUTH_FAILED"
 msgid "Authentication failed"
-msgstr "Error de autenticación"
+msgstr "Authentifizierung fehlgeschlagen"
 
 msgctxt "STR_WIFI_NETWORK_NOT_FOUND"
 msgid "Network not found"
-msgstr "Red no encontrada"
+msgstr "Netzwerk nicht gefunden"
 
 msgctxt "STR_WIFI_RECONNECTING"
 msgid "Reconnecting in %lums..."
-msgstr "Reconectando en %lums..."
+msgstr "Verbindung in %lums..."
 
 msgctxt "STR_WIFI_MAX_RETRIES"
 msgid "Max retries reached"
-msgstr "Máximo de reintentos alcanzado"
+msgstr "Maximale Versuche erreicht"
 
 msgctxt "STR_WIFI_CONN_FAILED"
 msgid "Connection failed"
-msgstr "Error de conexión"
+msgstr "Verbindung fehlgeschlagen"
 
 msgctxt "STR_WIFI_SCAN_DONE"
 msgid "Scan done"
-msgstr "Escaneo completado"
+msgstr "Scan abgeschlossen"
 
 msgctxt "STR_WIFI_GOT_IP"
 msgid "Got IP"
-msgstr "IP obtenida"
+msgstr "IP erhalten"
 
 msgctxt "STR_WIFI_ENABLING"
 msgid "Enabling WiFi..."
-msgstr "Activando WiFi..."
+msgstr "WiFi wird aktiviert..."
 
 msgctxt "STR_WIFI_CREATE_NETIF_FAILED"
 msgid "Failed to create netif"
-msgstr "Error al crear netif"
+msgstr "Netzwerk-Interface konnte nicht erstellt werden"
 
 msgctxt "STR_WIFI_INIT_FAILED"
 msgid "Failed to init WiFi"
-msgstr "Error al iniciar WiFi"
+msgstr "WiFi-Init fehlgeschlagen"
 
 msgctxt "STR_WIFI_SET_MODE_FAILED"
 msgid "Failed to set mode"
-msgstr "Error al configurar el modo"
+msgstr "Modus konnte nicht gesetzt werden"
 
 msgctxt "STR_WIFI_START_FAILED"
 msgid "Failed to start WiFi"
-msgstr "Error al iniciar WiFi"
+msgstr "WiFi-Start fehlgeschlagen"
 
 msgctxt "STR_WIFI_ENABLED"
 msgid "WiFi enabled"
-msgstr "WiFi activado"
+msgstr "WiFi aktiviert"
 
 msgctxt "STR_WIFI_DISABLING"
 msgid "Disabling WiFi..."
-msgstr "Desactivando WiFi..."
+msgstr "WiFi wird deaktiviert..."
 
 msgctxt "STR_WIFI_DISABLED"
 msgid "WiFi disabled"
-msgstr "WiFi desactivado"
+msgstr "WiFi deaktiviert"
 
 msgctxt "STR_WIFI_SCANNING"
 msgid "Scanning..."
-msgstr "Escaneando..."
+msgstr "Suche läuft..."
 
 msgctxt "STR_WIFI_NO_SSID"
 msgid "No SSID"
-msgstr "Sin SSID"
+msgstr "Keine SSID"
 
 msgctxt "STR_WIFI_CONNECTING"
 msgid "Connecting..."
-msgstr "Conectando..."
+msgstr "Verbinde..."
 
 msgctxt "STR_WIFI_DISCONNECTING"
 msgid "Disconnecting..."
-msgstr "Desconectando..."
+msgstr "Trenne Verbindung..."
 
 msgctxt "STR_FRAME_CURSOR"
 msgid "<"
@@ -422,71 +422,71 @@ msgstr "<"
 
 msgctxt "STR_FRAME_TEST_1"
 msgid "This is the first line."
-msgstr "Esta es la primera línea."
+msgstr "Das ist die erste Zeile."
 
 msgctxt "STR_FRAME_TEST_2"
 msgid "This is a test frame."
-msgstr "Este es un marco de prueba."
+msgstr "Das ist ein Testrahmen."
 
 msgctxt "STR_FRAME_TEST_3"
 msgid "It supports multiple lines of text."
-msgstr "Soporta varias líneas de texto."
+msgstr "Er unterstützt mehrere Textzeilen."
 
 msgctxt "STR_FRAME_TEST_4"
 msgid "You can add as many lines as you want."
-msgstr "Puedes añadir las líneas que quieras."
+msgstr "Sie können beliebig viele Zeilen hinzufügen."
 
 msgctxt "STR_FRAME_TEST_5"
 msgid "Frames can also have boxes and cursors."
-msgstr "Los marcos también tienen cajas y cursores."
+msgstr "Rahmen können auch Kästen und Cursor haben."
 
 msgctxt "STR_FRAME_TEST_6"
 msgid "This is the last line."
-msgstr "Esta es la última línea."
+msgstr "Das ist die letzte Zeile."
 
 msgctxt "STR_UTILS_SLEEP"
 msgid "  Going to sleep!  "
-msgstr "  ¡A dormir!  "
+msgstr "  Schlafmodus!  "
 
 msgctxt "STR_UTILS_BATT_CRITICAL"
 msgid "Battery Critical!"
-msgstr "¡Batería crítica!"
+msgstr "Akku kritisch!"
 
 msgctxt "STR_UTILS_YN_SUFFIX"
 msgid " (y/n)"
-msgstr " (s/n)"
+msgstr " (y/n)"
 
 msgctxt "STR_UTILS_PRESS_KEY"
 msgid "Press any key to continue..."
-msgstr "Pulsa una tecla para continuar..."
+msgstr "Beliebige Taste drücken..."
 
 msgctxt "STR_UTILS_CRASH_PREFIX"
 msgid "Crash: "
-msgstr "Bloqueo: "
+msgstr "Absturz: "
 
 msgctxt "STR_UTILS_CRASH_PANIC"
 msgid "Panic/Exception"
-msgstr "Pánico/Excepción"
+msgstr "Panik/Ausnahme"
 
 msgctxt "STR_UTILS_CRASH_WDT"
 msgid "Watchdog"
-msgstr "Perro guardián"
+msgstr "Watchdog"
 
 msgctxt "STR_UTILS_CRASH_TASK_WDT"
 msgid "Task WDT"
-msgstr "WDT de tarea"
+msgstr "Task-WDT"
 
 msgctxt "STR_UTILS_CRASH_INT_WDT"
 msgid "Interrupt WDT"
-msgstr "WDT de interrupción"
+msgstr "Interrupt-WDT"
 
 msgctxt "STR_UTILS_CRASH_UNKNOWN"
 msgid "Unknown"
-msgstr "Desconocido"
+msgstr "Unbekannt"
 
 msgctxt "STR_UTILS_CRASH_CODE_OPEN"
 msgid " (Code "
-msgstr " (Código "
+msgstr " (Code "
 
 msgctxt "STR_UTILS_CRASH_CODE_CLOSE"
 msgid ")"
@@ -494,31 +494,31 @@ msgstr ")"
 
 msgctxt "STR_UTILS_POWER_LOST"
 msgid "Power lost, set clock?"
-msgstr "Se perdió la hora, ¿ajustar reloj?"
+msgstr "Strom verloren, Uhr stellen?"
 
 msgctxt "STR_UTILS_TIME_SET"
 msgid "Time Set"
-msgstr "Hora ajustada"
+msgstr "Uhrzeit gesetzt"
 
 msgctxt "STR_UTILS_SAVING_WORK"
 msgid "Saving Work"
-msgstr "Guardando trabajo"
+msgstr "Daten werden gespeichert"
 
 msgctxt "STR_HOME_INVALID_NUMBER"
 msgid "Invalid Number"
-msgstr "Número inválido"
+msgstr "Ungültige Zahl"
 
 msgctxt "STR_HOME_D1_SILLY"
 msgid "D1: you rolled a 1, duh!"
-msgstr "D1: sacaste un 1, ¡obvio!"
+msgstr "D1: Du hast eine 1 gewürfelt, logisch!"
 
 msgctxt "STR_HOME_SD_COMPAT_OFF"
 msgid "SD compatibility mode disabled"
-msgstr "Modo compatibilidad SD desactivado"
+msgstr "SD-Kompatibilitätsmodus deaktiviert"
 
 msgctxt "STR_HOME_WELCOME"
 msgid "You're home, silly!"
-msgstr "¡Estás en casa, tonto!"
+msgstr "Du bist zu Hause, Närrchen!"
 
 msgctxt "STR_HOME_PMOS_PREFIX"
 msgid "PMOS: "
@@ -526,315 +526,315 @@ msgstr "PMOS: "
 
 msgctxt "STR_HOME_SMELLS"
 msgid "That smells"
-msgstr "Eso apesta"
+msgstr "Das stinkt"
 
 msgctxt "STR_HOME_YUCK"
 msgid "Yuck"
-msgstr "Puaj"
+msgstr "Igitt"
 
 msgctxt "STR_HOME_HEY"
 msgid "Hey, you!"
-msgstr "¡Eh, tú!"
+msgstr "Hey, du!"
 
 msgctxt "STR_HOME_WHATS_UP"
 msgid "What's up?"
-msgstr "¿Qué pasa?"
+msgstr "Was gibt's?"
 
 msgctxt "STR_HOME_LOVE"
 msgid "luv u 2 <3"
-msgstr "tq 2 <3"
+msgstr "lieb dich auch <3"
 
 msgctxt "STR_HOME_IDK"
 msgid "idk man"
-msgstr "ns amigo"
+msgstr "kein Plan"
 
 msgctxt "STR_HOME_CRASHING"
 msgid "Crashing CPU..."
-msgstr "Bloqueando CPU..."
+msgstr "CPU crasht..."
 
 msgctxt "STR_HOME_TYPE_CMD"
 msgid "Type a Command:"
-msgstr "Escribe un comando:"
+msgstr "Befehl eingeben:"
 
 msgctxt "STR_APPLOADER_EXTRACTING"
 msgid "Extracting"
-msgstr "Extrayendo"
+msgstr "Wird entpackt"
 
 msgctxt "STR_APPLOADER_INSTALLING"
 msgid "Installing"
-msgstr "Instalando"
+msgstr "Wird installiert"
 
 msgctxt "STR_APPLOADER_CHOOSE_SLOT"
 msgid "Choose slot: (A)(B)(C)(D)"
-msgstr "Elige ranura: (A)(B)(C)(D)"
+msgstr "Slot wählen: (A)(B)(C)(D)"
 
 msgctxt "STR_APPLOADER_APP_REMOVED"
 msgid "App removed"
-msgstr "App eliminada"
+msgstr "App entfernt"
 
 msgctxt "STR_APPLOADER_SWAP_DELETE"
 msgid "(S)wap app or (D)elete app"
-msgstr "(S)wap app o (D)elete app"
+msgstr "(S)wap-App oder (D)el-App"
 
 msgctxt "STR_APPLOADER_MACOS_META"
 msgid "Cannot install MacOS metadata files!"
-msgstr "¡No se pueden instalar archivos de macOS!"
+msgstr "MacOS-Metadateien können nicht installiert werden!"
 
 msgctxt "STR_APPLOADER_NOT_TAR"
 msgid "Not a .tar file!"
-msgstr "¡No es un archivo .tar!"
+msgstr "Keine .tar-Datei!"
 
 msgctxt "STR_APPLOADER_INSTALL_FAILED"
 msgid "Install Failed!"
-msgstr "¡Error de instalación!"
+msgstr "Installation fehlgeschlagen!"
 
 msgctxt "STR_APPLOADER_INSTALL_COMPLETE"
 msgid "Install Complete!"
-msgstr "¡Instalación completada!"
+msgstr "Installation abgeschlossen!"
 
 msgctxt "STR_APPLOADER_TYPE_LETTER"
 msgid "Type Letter A-D:"
-msgstr "Escribe la letra A-D:"
+msgstr "Buchstabe A-D eingeben:"
 
 msgctxt "STR_FILEWIZ_EMPTY"
 msgid " is empty!"
-msgstr " ¡está vacío!"
+msgstr " ist leer!"
 
 msgctxt "STR_FILEWIZ_ENTER_NEW_NAME"
 msgid "Enter new filename:"
-msgstr "Nuevo nombre de archivo:"
+msgstr "Neuen Dateinamen eingeben:"
 
 msgctxt "STR_FILEWIZ_RENAMING"
 msgid "Renaming..."
-msgstr "Renombrando..."
+msgstr "Wird umbenannt..."
 
 msgctxt "STR_FILEWIZ_DELETE_Q"
 msgid "Delete File?"
-msgstr "¿Borrar archivo?"
+msgstr "Datei löschen?"
 
 msgctxt "STR_FILEWIZ_DELETING"
 msgid "Deleting..."
-msgstr "Borrando..."
+msgstr "Wird gelöscht..."
 
 msgctxt "STR_FILEWIZ_ENTER_COPY_NAME"
 msgid "Enter copy name:"
-msgstr "Nombre de la copia:"
+msgstr "Namen für Kopie eingeben:"
 
 msgctxt "STR_FILEWIZ_COPYING"
 msgid "Copying..."
-msgstr "Copiando..."
+msgstr "Wird kopiert..."
 
 msgctxt "STR_FILEWIZ_SIZE_PREFIX"
 msgid "Size: "
-msgstr "Tamaño: "
+msgstr "Größe: "
 
 msgctxt "STR_FILEWIZ_SIZE_SUFFIX"
 msgid " Bytes."
-msgstr " bytes."
+msgstr " Bytes."
 
 msgctxt "STR_FILEWIZ_ERR_READING"
 msgid "Error reading file"
-msgstr "Error al leer el archivo"
+msgstr "Fehler beim Lesen der Datei"
 
 msgctxt "STR_FILEWIZ_SELECT_OP"
 msgid "Select an operation"
-msgstr "Selecciona una operación"
+msgstr "Vorgang auswählen"
 
 msgctxt "STR_FILEWIZ_SELECT_FILE"
 msgid "Select a File (0-9)"
-msgstr "Selecciona un archivo (0-9)"
+msgstr "Datei auswählen (0-9)"
 
 msgctxt "STR_SETTINGS_TIME_UPDATED_TO"
 msgid "Time Updated to "
-msgstr "Hora ajustada a "
+msgstr "Uhrzeit aktualisiert auf "
 
 msgctxt "STR_SETTINGS_TIME_UPDATED"
 msgid "Time Updated"
-msgstr "Hora ajustada"
+msgstr "Uhrzeit aktualisiert"
 
 msgctxt "STR_SETTINGS_INVALID_FMT_HHMM"
 msgid "Invalid Format (HH:MM)"
-msgstr "Formato inválido (HH:MM)"
+msgstr "Ungültiges Format (HH:MM)"
 
 msgctxt "STR_SETTINGS_DATE_UPDATED_TO"
 msgid "Date Updated to "
-msgstr "Fecha ajustada a "
+msgstr "Datum aktualisiert auf "
 
 msgctxt "STR_SETTINGS_INVALID_DATE"
 msgid "Invalid date"
-msgstr "Fecha inválida"
+msgstr "Ungültiges Datum"
 
 msgctxt "STR_SETTINGS_DATE_UPDATED"
 msgid "Date Updated"
-msgstr "Fecha ajustada"
+msgstr "Datum aktualisiert"
 
 msgctxt "STR_SETTINGS_INVALID_FMT_YYYYMMDD"
 msgid "Invalid format (YYYYMMDD)"
-msgstr "Formato inválido (AAAAMMDD)"
+msgstr "Ungültiges Format (YYYYMMDD)"
 
 msgctxt "STR_SETTINGS_INVALID_BANG"
 msgid "Invalid!"
-msgstr "¡Inválido!"
+msgstr "Ungültig!"
 
 msgctxt "STR_SETTINGS_UPDATED"
 msgid "Settings Updated"
-msgstr "Ajustes actualizados"
+msgstr "Einstellungen aktualisiert"
 
 msgctxt "STR_SETTINGS_HUH"
 msgid "Huh?"
-msgstr "¿Qué?"
+msgstr "Hä?"
 
 msgctxt "STR_LEX_INSTALL_DICT"
 msgid "Please install dict from GitHub!"
-msgstr "¡Instala el diccionario desde GitHub!"
+msgstr "Bitte Wörterbuch von GitHub installieren!"
 
 msgctxt "STR_LEX_LOADING"
 msgid "Loading Definitions"
-msgstr "Cargando definiciones"
+msgstr "Definitionen werden geladen"
 
 msgctxt "STR_LEX_MISSING"
 msgid "Missing Dictionary!"
-msgstr "¡Falta el diccionario!"
+msgstr "Wörterbuch fehlt!"
 
 msgctxt "STR_LEX_NONE"
 msgid "No definitions found"
-msgstr "No se encontraron definiciones"
+msgstr "Keine Definitionen gefunden"
 
 msgctxt "STR_LEX_TYPE_WORD"
 msgid "Type a Word:"
-msgstr "Escribe una palabra:"
+msgstr "Wort eingeben:"
 
 msgctxt "STR_LEX_TYPE_NEW_WORD"
 msgid "Type a New Word:"
-msgstr "Escribe una palabra nueva:"
+msgstr "Neues Wort eingeben:"
 
 msgctxt "STR_JOURNAL_CHOOSE"
 msgid "Choose (D)ate or (T)oday"
-msgstr "Elige (D)ate o (T)oday"
+msgstr "(D)atum oder (T)oday wählen"
 
 msgctxt "STR_USB_INIT"
 msgid "Initializing USB"
-msgstr "Inicializando USB"
+msgstr "USB wird initialisiert"
 
 msgctxt "STR_USB_HOST_FAIL"
 msgid "Host init failed: "
-msgstr "Error de init del host: "
+msgstr "Host-Init fehlgeschlagen: "
 
 msgctxt "STR_USB_SLOT_FAIL"
 msgid "Slot init failed: "
-msgstr "Error de init del slot: "
+msgstr "Slot-Init fehlgeschlagen: "
 
 msgctxt "STR_USB_CARD_STRUCT_FAIL"
 msgid "Failed to allocate card struct"
-msgstr "Error al asignar la estructura de la tarjeta"
+msgstr "Speicher für Kartenstruktur fehlgeschlagen"
 
 msgctxt "STR_USB_CARD_FAIL"
 msgid "Card init failed: "
-msgstr "Error de init de la tarjeta: "
+msgstr "Karten-Init fehlgeschlagen: "
 
 msgctxt "STR_USB_SDRESET"
 msgid "Please type 'sdreset' in home"
-msgstr "Escribe 'sdreset' en el inicio"
+msgstr "Bitte 'sdreset' im Home-Menü eingeben"
 
 msgctxt "STR_USB_CONNECT"
 msgid "Connect to a Computer:"
-msgstr "Conecta a una computadora:"
+msgstr "Mit Computer verbinden:"
 
 msgctxt "STR_CAL_TYPE_A_DATE"
 msgid " | Type a Date:"
-msgstr " | Escribe una fecha:"
+msgstr " | Datum eingeben:"
 
 msgctxt "STR_CAL_WEEK_HINT"
 msgid "Type Sun, etc. or (N)ew"
-msgstr "Escribe Dom, etc. o (N)uevo"
+msgstr "Tippe Sun usw. oder (N)eu"
 
 msgctxt "STR_CAL_EVENT_NAME"
 msgid "Enter Event Name:"
-msgstr "Nombre del evento:"
+msgstr "Ereignisname eingeben:"
 
 msgctxt "STR_CAL_ATTACH_NOTE"
 msgid "Attach Note:"
-msgstr "Añadir nota:"
+msgstr "Notiz anfügen:"
 
 msgctxt "STR_CAL_EVENT_CREATED"
 msgid "Event Created!"
-msgstr "¡Evento creado!"
+msgstr "Ereignis erstellt!"
 
 msgctxt "STR_CAL_EDIT_NAME"
 msgid "Edit Event Name:"
-msgstr "Editar nombre:"
+msgstr "Ereignisname bearbeiten:"
 
 msgctxt "STR_CAL_EDIT_NOTE"
 msgid "Edit Note:"
-msgstr "Editar nota:"
+msgstr "Notiz bearbeiten:"
 
 msgctxt "STR_CAL_DELETE_Q"
 msgid "Delete Event?"
-msgstr "¿Borrar evento?"
+msgstr "Ereignis löschen?"
 
 msgctxt "STR_CAL_EVENT_DELETED"
 msgid "Event Deleted"
-msgstr "Evento borrado"
+msgstr "Ereignis gelöscht"
 
 msgctxt "STR_CAL_EVENT_SAVED"
 msgid "Event Saved"
-msgstr "Evento guardado"
+msgstr "Ereignis gespeichert"
 
 msgctxt "STR_CAL_VIEW_HINT"
 msgid "Type 1-6,(D)el, or (S)ave"
-msgstr "Escribe 1-6,(D)el o (S)ave"
+msgstr "Tippe 1-6, (D)el oder (S)peichern"
 
 msgctxt "STR_CAL_STEP_NAME"
 msgid "Enter Event Name on OLED"
-msgstr "Nombre en la OLED"
+msgstr "Ereignisname auf dem OLED eingeben"
 
 msgctxt "STR_CAL_STEP_START_DATE"
 msgid "Set Start Date on OLED"
-msgstr "Fecha de inicio en la OLED"
+msgstr "Startdatum auf dem OLED festlegen"
 
 msgctxt "STR_CAL_STEP_START_TIME"
 msgid "Set Start Time on OLED"
-msgstr "Hora de inicio en la OLED"
+msgstr "Startzeit auf dem OLED festlegen"
 
 msgctxt "STR_CAL_STEP_DURATION"
 msgid "Set Duration on OLED"
-msgstr "Duración en la OLED"
+msgstr "Dauer auf dem OLED festlegen"
 
 msgctxt "STR_CAL_STEP_REPEAT"
 msgid "Set Repeat Code on OLED"
-msgstr "Repetición en la OLED"
+msgstr "Wiederholungscode auf dem OLED festlegen"
 
 msgctxt "STR_CAL_STEP_NOTE"
 msgid "Attach Note on OLED"
-msgstr "Nota en la OLED"
+msgstr "Notiz auf dem OLED anfügen"
 
 msgctxt "STR_CAL_DAY_HINT"
 msgid "Events 1-7 or (N)ew"
-msgstr "Eventos 1-7 o (N)uevo"
+msgstr "Ereignisse 1-7 oder (N)eu"
 
 msgctxt "STR_CAL_STARTS"
 msgid "Starts: "
-msgstr "Inicio: "
+msgstr "Beginnt: "
 
 msgctxt "STR_CAL_DUR"
 msgid ", Dur: "
-msgstr ", Dur: "
+msgstr ", Dauer: "
 
 msgctxt "STR_CAL_REP"
 msgid ", Rep: "
-msgstr ", Rep: "
+msgstr ", Whg: "
 
 msgctxt "STR_CAL_MONTHLY_IN"
 msgid " in "
-msgstr " en "
+msgstr " in "
 
 msgctxt "STR_COMM_ME"
 msgid "Me"
-msgstr "Yo"
+msgstr "Ich"
 
 msgctxt "STR_COMM_LOCAL_CHAT"
 msgid "Local Chat"
-msgstr "Chat local"
+msgstr "Lokaler Chat"
 
 msgctxt "STR_COMM_CHAT"
 msgid "Chat"
@@ -842,11 +842,11 @@ msgstr "Chat"
 
 msgctxt "STR_COMM_MSG_PREFIX"
 msgid "Message: "
-msgstr "Mensaje: "
+msgstr "Nachricht: "
 
 msgctxt "STR_COMM_SELECT_ROOM"
 msgid "Select Room"
-msgstr "Selecciona sala"
+msgstr "Raum auswählen"
 
 msgctxt "STR_COMM_PEERS_PREFIX"
 msgid "P: "
@@ -858,279 +858,279 @@ msgstr "---"
 
 msgctxt "STR_COMM_DIRECT"
 msgid "Direct"
-msgstr "Directo"
+msgstr "Direkt"
 
 msgctxt "STR_TERM_FILE_SAVED"
 msgid "FILE SAVED"
-msgstr "ARCHIVO GUARDADO"
+msgstr "DATEI GESPEICHERT"
 
 msgctxt "STR_TERM_USAGE_POTION"
 msgid "Usage: potion <filename>"
-msgstr "Uso: potion <archivo>"
+msgstr "Verwendung: potion <dateiname>"
 
 msgctxt "STR_TERM_ONLY_CTXT"
 msgid "Only .c and .txt files supported"
-msgstr "Solo se admiten archivos .c y .txt"
+msgstr "Nur .c- und .txt-Dateien werden unterstützt"
 
 msgctxt "STR_TERM_FILE_NOT_FOUND"
 msgid "File not found"
-msgstr "Archivo no encontrado"
+msgstr "Datei nicht gefunden"
 
 msgctxt "STR_TERM_HELP_AVAILABLE"
 msgid "Available commands:"
-msgstr "Comandos disponibles:"
+msgstr "Verfügbare Befehle:"
 
 msgctxt "STR_TERM_HELP_LS"
 msgid "ls                  List dir"
-msgstr "ls                  Lista carpeta"
+msgstr "ls                  Ordner auflisten"
 
 msgctxt "STR_TERM_HELP_CD"
 msgid "cd <dir>          Change dir"
-msgstr "cd <dir>          Cambia carpeta"
+msgstr "cd <dir>          Ordner wechseln"
 
 msgctxt "STR_TERM_HELP_RM"
 msgid "rm <file>        Remove file"
-msgstr "rm <file>        Borra archivo"
+msgstr "rm <file>        Datei löschen"
 
 msgctxt "STR_TERM_HELP_RM_R"
 msgid "rm -r <dir>       Remove dir"
-msgstr "rm -r <dir>       Borra carpeta"
+msgstr "rm -r <dir>       Ordner löschen"
 
 msgctxt "STR_TERM_HELP_CP"
 msgid "cp <src> <dest>    Copy file"
-msgstr "cp <src> <dest>    Copia archivo"
+msgstr "cp <src> <dest>    Datei kopieren"
 
 msgctxt "STR_TERM_HELP_MV"
 msgid "mv <src> <dest>    Mv/rename"
-msgstr "mv <src> <dest>    Mueve/renombra"
+msgstr "mv <src> <dest>    Verschieben/umbenennen"
 
 msgctxt "STR_TERM_HELP_TOUCH"
 msgid "touch <file>     Create file"
-msgstr "touch <file>     Crea archivo"
+msgstr "touch <file>     Datei erstellen"
 
 msgctxt "STR_TERM_HELP_MKDIR"
 msgid "mkdir <name>   Create folder"
-msgstr "mkdir <name>   Crea carpeta"
+msgstr "mkdir <name>   Ordner erstellen"
 
 msgctxt "STR_TERM_HELP_CLEAR"
 msgid "clear         Clear terminal"
-msgstr "clear         Limpia terminal"
+msgstr "clear         Terminal leeren"
 
 msgctxt "STR_TERM_HELP_TXT"
 msgid "txt <file>       Open in TXT"
-msgstr "txt <file>       Abre en TXT"
+msgstr "txt <file>       In TXT öffnen"
 
 msgctxt "STR_TERM_HELP_POTION"
 msgid "potion/pot <file>  Edit prgm"
-msgstr "potion/pot <file>  Edita prgm"
+msgstr "potion/pot <file>  Programm bearbeiten"
 
 msgctxt "STR_TERM_HELP_BREW"
 msgid "brew <file>         Run prgm"
-msgstr "brew <file>         Ejecuta prgm"
+msgstr "brew <file>         Programm ausführen"
 
 msgctxt "STR_TERM_HELP_LINK"
 msgid "pot link <file> <alias> link"
-msgstr "pot link <file> <alias> crea enlace"
+msgstr "pot link <file> <alias> verlinken"
 
 msgctxt "STR_TERM_HELP_UNLINK"
 msgid "pot unlink <alias>    unlink"
-msgstr "pot unlink <alias>    borra enlace"
+msgstr "pot unlink <alias>    entlinken"
 
 msgctxt "STR_TERM_HELP_SETFONT"
 msgid "setfont <l/s>  Set font size"
-msgstr "setfont <l/p>  Tamaño de fuente"
+msgstr "setfont <l/s>  Schriftgröße setzen"
 
 msgctxt "STR_TERM_HELP_THEME"
 msgid "theme <light/dark> Set theme"
-msgstr "theme <claro/oscuro> Tema"
+msgstr "theme <light/dark> Design setzen"
 
 msgctxt "STR_TERM_CD_NOT_DIR"
 msgid "cd: Not a directory"
-msgstr "cd: No es una carpeta"
+msgstr "cd: Kein Ordner"
 
 msgctxt "STR_TERM_CD_NO_SUCH"
 msgid "cd: No such directory"
-msgstr "cd: No existe la carpeta"
+msgstr "cd: Ordner existiert nicht"
 
 msgctxt "STR_TERM_LS_DIR"
 msgid "[DIR]"
-msgstr "[CAR]"
+msgstr "[ORDNER]"
 
 msgctxt "STR_TERM_LS_NOT_DIR"
 msgid "ls: Not a directory"
-msgstr "ls: No es una carpeta"
+msgstr "ls: Kein Ordner"
 
 msgctxt "STR_TERM_LS_NO_SUCH"
 msgid "ls: No such directory"
-msgstr "ls: No existe la carpeta"
+msgstr "ls: Ordner existiert nicht"
 
 msgctxt "STR_TERM_PATH_NOT_DEFINED"
 msgid "Path not defined"
-msgstr "Ruta no definida"
+msgstr "Pfad nicht definiert"
 
 msgctxt "STR_TERM_RMDIR_FAILED"
 msgid "Failed to remove directory"
-msgstr "Error al borrar la carpeta"
+msgstr "Ordner konnte nicht gelöscht werden"
 
 msgctxt "STR_TERM_PATH_NOT_FOUND"
 msgid "Path not found"
-msgstr "Ruta no encontrada"
+msgstr "Pfad nicht gefunden"
 
 msgctxt "STR_TERM_OPEN_FAILED"
 msgid "Failed to open file"
-msgstr "Error al abrir el archivo"
+msgstr "Datei konnte nicht geöffnet werden"
 
 msgctxt "STR_TERM_NOT_FILE_RM"
 msgid "Not a file - use <rm -r>"
-msgstr "No es un archivo - usa <rm -r>"
+msgstr "Keine Datei - <rm -r> verwenden"
 
 msgctxt "STR_TERM_DELETE_FAILED"
 msgid "Delete failed"
-msgstr "Error al borrar"
+msgstr "Löschen fehlgeschlagen"
 
 msgctxt "STR_TERM_USAGE_CP"
 msgid "Usage: cp <src> <dest>"
-msgstr "Uso: cp <src> <dest>"
+msgstr "Verwendung: cp <quelle> <ziel>"
 
 msgctxt "STR_TERM_SRC_NOT_FOUND"
 msgid "Source not found"
-msgstr "Origen no encontrado"
+msgstr "Quelle nicht gefunden"
 
 msgctxt "STR_TERM_SRC_NOT_FILE"
 msgid "Source is not a file"
-msgstr "El origen no es un archivo"
+msgstr "Quelle ist keine Datei"
 
 msgctxt "STR_TERM_DEST_FAILED"
 msgid "Failed to create destination"
-msgstr "Error al crear el destino"
+msgstr "Ziel konnte nicht erstellt werden"
 
 msgctxt "STR_TERM_USAGE_MV"
 msgid "Usage: mv <src> <dest>"
-msgstr "Uso: mv <src> <dest>"
+msgstr "Verwendung: mv <quelle> <ziel>"
 
 msgctxt "STR_TERM_USAGE_TOUCH"
 msgid "Usage: touch <file>"
-msgstr "Uso: touch <archivo>"
+msgstr "Verwendung: touch <datei>"
 
 msgctxt "STR_TERM_IS_DIR"
 msgid "Is a directory"
-msgstr "Es una carpeta"
+msgstr "Ist ein Ordner"
 
 msgctxt "STR_TERM_CREATE_FILE_FAILED"
 msgid "Failed to create file"
-msgstr "Error al crear el archivo"
+msgstr "Datei konnte nicht erstellt werden"
 
 msgctxt "STR_TERM_USAGE_TXT"
 msgid "Usage: txt <filename>"
-msgstr "Uso: txt <archivo>"
+msgstr "Verwendung: txt <dateiname>"
 
 msgctxt "STR_TERM_ONLY_TXT"
 msgid "Only .txt files supported"
-msgstr "Solo se admiten archivos .txt"
+msgstr "Nur .txt-Dateien werden unterstützt"
 
 msgctxt "STR_TERM_OPENING_PREFIX"
 msgid "Opening: "
-msgstr "Abriendo: "
+msgstr "Öffne: "
 
 msgctxt "STR_TERM_USAGE_LINK"
 msgid "Usage: pot link <file> <alias>"
-msgstr "Uso: pot link <archivo> <alias>"
+msgstr "Verwendung: pot link <datei> <alias>"
 
 msgctxt "STR_TERM_LINKED"
 msgid "Linked "
-msgstr "Enlace: "
+msgstr "Verlinkt: "
 
 msgctxt "STR_TERM_UNLINKED"
 msgid "Unlinked "
-msgstr "Enlace borrado: "
+msgstr "Verknüpfung entfernt: "
 
 msgctxt "STR_TERM_LINK_NOT_FOUND"
 msgid "Link not found"
-msgstr "Enlace no encontrado"
+msgstr "Link nicht gefunden"
 
 msgctxt "STR_TERM_USAGE_BREW"
 msgid "Usage: brew <filename>"
-msgstr "Uso: brew <archivo>"
+msgstr "Verwendung: brew <dateiname>"
 
 msgctxt "STR_TERM_ONLY_C"
 msgid "Only .c files supported"
-msgstr "Solo se admiten archivos .c"
+msgstr "Nur .c-Dateien werden unterstützt"
 
 msgctxt "STR_TERM_BREW_READ_FAIL"
 msgid "Failed to read or empty file"
-msgstr "Error al leer o archivo vacío"
+msgstr "Lesen fehlgeschlagen oder Datei leer"
 
 msgctxt "STR_TERM_FONT_LARGE"
 msgid "Font set to Large"
-msgstr "Fuente: Grande"
+msgstr "Schrift auf Groß gesetzt"
 
 msgctxt "STR_TERM_FONT_SMALL"
 msgid "Font set to Small"
-msgstr "Fuente: Pequeña"
+msgstr "Schrift auf Klein gesetzt"
 
 msgctxt "STR_TERM_USAGE_SETFONT"
 msgid "Usage: setfont <l/s>"
-msgstr "Uso: setfont <l/p>"
+msgstr "Verwendung: setfont <g/k>"
 
 msgctxt "STR_TERM_THEME_LIGHT"
 msgid "Theme set to Light"
-msgstr "Tema: Claro"
+msgstr "Design auf Hell gesetzt"
 
 msgctxt "STR_TERM_THEME_DARK"
 msgid "Theme set to Dark"
-msgstr "Tema: Oscuro"
+msgstr "Design auf Dunkel gesetzt"
 
 msgctxt "STR_TERM_USAGE_THEME"
 msgid "Usage: theme <light/dark>"
-msgstr "Uso: theme <claro/oscuro>"
+msgstr "Verwendung: theme <hell/dunkel>"
 
 msgctxt "STR_TERM_LINK_MISSING"
 msgid "Linked file missing"
-msgstr "Falta el archivo enlazado"
+msgstr "Verlinkte Datei fehlt"
 
 msgctxt "STR_TERM_LINK_READ_FAIL"
 msgid "Failed to read linked file"
-msgstr "Error al leer el archivo enlazado"
+msgstr "Verlinkte Datei konnte nicht gelesen werden"
 
 msgctxt "STR_TERM_HELP_LANG"
 msgid "lang <code>   Switch language"
-msgstr "lang <code>   Cambiar idioma"
+msgstr "lang <code>   Sprache wechseln"
 
 msgctxt "STR_TERM_LANG_SET"
 msgid "Language set to "
-msgstr "Idioma configurado: "
+msgstr "Sprache gesetzt auf "
 
 msgctxt "STR_TXT_STYLE_BODY"
 msgid "BODY"
-msgstr "CUERPO"
+msgstr "TEXT"
 
 msgctxt "STR_TXT_STYLE_CODE"
 msgid "CODE"
-msgstr "CÓDIGO"
+msgstr "CODE"
 
 msgctxt "STR_TXT_STYLE_QUOTE"
 msgid "QUOTE"
-msgstr "CITA"
+msgstr "ZITAT"
 
 msgctxt "STR_TXT_STYLE_ULIST"
 msgid "U LIST"
-msgstr "LISTA S"
+msgstr "ULISTE"
 
 msgctxt "STR_TXT_STYLE_OLIST"
 msgid "O LIST"
-msgstr "LISTA N"
+msgstr "OLISTE"
 
 msgctxt "STR_TXT_STYLE_HRULE"
 msgid "H RULE"
-msgstr "LÍNEA"
+msgstr "TRENNLINIE"
 
 msgctxt "STR_TXT_STYLE_BLANK_LINE"
 msgid "BLANK LINE"
-msgstr "LÍNEA VACÍA"
+msgstr "LEERZEILE"
 
 msgctxt "STR_TXT_STYLE_BLANK"
 msgid "BLANK"
-msgstr "VACÍO"
+msgstr "LEER"
 
 msgctxt "STR_TXT_FONT_SER"
 msgid "SER"
@@ -1138,7 +1138,7 @@ msgstr "SER"
 
 msgctxt "STR_TXT_FONT_SAN"
 msgid "SAN"
-msgstr "SIN"
+msgstr "SAN"
 
 msgctxt "STR_TXT_FONT_MON"
 msgid "MON"
@@ -1146,15 +1146,15 @@ msgstr "MON"
 
 msgctxt "STR_TXT_STYLE_BOLD_ITALIC"
 msgid "BOLD+ITALIC"
-msgstr "NEGRITA+CURSIVA"
+msgstr "FETT+KURSIV"
 
 msgctxt "STR_TXT_STYLE_BOLD"
 msgid "BOLD"
-msgstr "NEGRITA"
+msgstr "FETT"
 
 msgctxt "STR_TXT_STYLE_ITALIC"
 msgid "ITALIC"
-msgstr "CURSIVA"
+msgstr "KURSIV"
 
 msgctxt "STR_TXT_STYLE_NORMAL"
 msgid "NORMAL"
@@ -1162,23 +1162,23 @@ msgstr "NORMAL"
 
 msgctxt "STR_TXT_SAVE_FAILED_OPEN"
 msgid "SAVE FAILED - OPEN ERR"
-msgstr "ERROR AL GUARDAR - ERR. APERT."
+msgstr "SPEICHERN FEHLGESCHLAGEN - ÖFFNEN FEHLER"
 
 msgctxt "STR_TXT_FILE_LOADED"
 msgid "FILE LOADED"
-msgstr "ARCHIVO CARGADO"
+msgstr "DATEI GELADEN"
 
 msgctxt "STR_TXT_CREATE_FAILED_SD"
 msgid "CREATE FAILED - No SD!"
-msgstr "ERROR AL CREAR - ¡Sin SD!"
+msgstr "ERSTELLEN FEHLGESCHLAGEN - Keine SD!"
 
 msgctxt "STR_TXT_CREATE_FAILED"
 msgid "CREATE FAILED"
-msgstr "ERROR AL CREAR"
+msgstr "ERSTELLEN FEHLGESCHLAGEN"
 
 msgctxt "STR_TXT_CREATED"
 msgid "Created File"
-msgstr "Archivo creado"
+msgstr "Datei erstellt"
 
 msgctxt "STR_TXT_FONT_SERIF"
 msgid "SERIF"
@@ -1194,59 +1194,59 @@ msgstr "MONO"
 
 msgctxt "STR_TXT_INVALID_NAME"
 msgid "Invalid Name"
-msgstr "Nombre inválido"
+msgstr "Ungültiger Name"
 
 msgctxt "STR_TXT_INPUT_FILENAME"
 msgid "Input Filename"
-msgstr "Nombre de archivo:"
+msgstr "Dateinamen eingeben"
 
 msgctxt "STR_TXT_NAME_NEW_FILE"
 msgid "Name New File"
-msgstr "Nombre del nuevo archivo:"
+msgstr "Neue Datei benennen"
 
 msgctxt "STR_TXT_BAD_FILETYPE"
 msgid "Incompatible Filetype!"
-msgstr "¡Tipo de archivo incompatible!"
+msgstr "Inkompatibler Dateityp!"
 
 msgctxt "STR_TASKS_ENTER_NAME"
 msgid "Enter Task Name:"
-msgstr "Nombre de la tarea:"
+msgstr "Aufgabenname eingeben:"
 
 msgctxt "STR_TASKS_ADDED"
 msgid "New Task Added"
-msgstr "Tarea añadida"
+msgstr "Neue Aufgabe hinzugefügt"
 
 msgctxt "STR_TASKS_ENTER_NEW_NAME"
 msgid "Enter a new task name:"
-msgstr "Nuevo nombre de la tarea:"
+msgstr "Neuen Aufgabennamen eingeben:"
 
 msgctxt "STR_TASKS_UPDATING"
 msgid "updating task..."
-msgstr "actualizando..."
+msgstr "Aufgabe wird aktualisiert..."
 
 msgctxt "STR_TASKS_DELETE_Q"
 msgid "Delete Task?"
-msgstr "¿Borrar tarea?"
+msgstr "Aufgabe löschen?"
 
 msgctxt "STR_TASKS_DELETING"
 msgid "deleting..."
-msgstr "borrando..."
+msgstr "wird gelöscht..."
 
 msgctxt "STR_TASKS_COPYING"
 msgid "copying..."
-msgstr "copiando..."
+msgstr "wird kopiert..."
 
 msgctxt "STR_TASKS_SELECT_HINT"
 msgid "Select (1-0),New Task (N)"
-msgstr "Elige (1-0), Nueva (N)"
+msgstr "Wählen (1-0), Neue (N)"
 
 msgctxt "STR_TASKS_NO_TASKS"
 msgid "No Tasks! Add New Task (N)"
-msgstr "¡Sin tareas! Añadir (N)"
+msgstr "Keine Aufgaben! Neue (N)"
 
 msgctxt "STR_TASKS_SET_DUE"
 msgid "Set Due Date on OLED"
-msgstr "Fecha límite en la OLED"
+msgstr "Fälligkeitsdatum auf dem OLED festlegen"
 
 msgctxt "STR_TASKS_T_PREFIX"
 msgid "T:"
@@ -1254,95 +1254,95 @@ msgstr "T:"
 
 msgctxt "STR_TOUCHPAD_FAILED"
 msgid "Touchpad Failed"
-msgstr "Error del panel táctil"
+msgstr "Touchpad fehlgeschlagen"
 
 msgctxt "STR_SSH_NO_MEM"
 msgid "Out of memory creating SSH session."
-msgstr "Memoria insuficiente para crear la sesión SSH."
+msgstr "Nicht genug Speicher für SSH-Sitzung."
 
 msgctxt "STR_SSH_CONNECTING_PREFIX"
 msgid "Connecting to "
-msgstr "Conectando a "
+msgstr "Verbinde mit "
 
 msgctxt "STR_SSH_CONNECT_FAILED_PREFIX"
 msgid "Connection failed: "
-msgstr "Error de conexión: "
+msgstr "Verbindung fehlgeschlagen: "
 
 msgctxt "STR_SSH_DISCONNECTED"
 msgid "Disconnected."
-msgstr "Desconectado."
+msgstr "Verbindung getrennt."
 
 msgctxt "STR_SSH_SESSION_CLOSED"
 msgid "SSH session closed."
-msgstr "Sesión SSH cerrada."
+msgstr "SSH-Sitzung beendet."
 
 msgctxt "STR_SSH_FINGERPRINT"
 msgid "Host key SHA256 fingerprint:"
-msgstr "Huella SHA256 de la clave del host:"
+msgstr "Host-Key SHA256-Fingerabdruck:"
 
 msgctxt "STR_SSH_FIRST_CONNECTION"
 msgid "First connection to this host."
-msgstr "Primera conexión a este host."
+msgstr "Erste Verbindung zu diesem Host."
 
 msgctxt "STR_SSH_TRUST_HOST_KEY"
 msgid "Trust this host key?"
-msgstr "¿Confiar en esta clave de host?"
+msgstr "Diesen Host-Key vertrauen?"
 
 msgctxt "STR_SSH_HOST_KEY_NOT_TRUSTED"
 msgid "Host key not trusted; connection aborted."
-msgstr "Clave de host no confiable; conexión abortada."
+msgstr "Host-Key nicht vertraut; Verbindung abgebrochen."
 
 msgctxt "STR_SSH_HOST_KEY_CHANGED"
 msgid "WARNING: HOST KEY HAS CHANGED!"
-msgstr "ADVERTENCIA: ¡LA CLAVE DEL HOST HA CAMBIADO!"
+msgstr "WARNUNG: HOST-KEY HAT SICH GEÄNDERT!"
 
 msgctxt "STR_SSH_HOST_KEY_MITM"
 msgid "Possible man-in-the-middle attack; connection aborted."
-msgstr "Posible ataque de intermediario; conexión abortada."
+msgstr "Möglicher Man-in-the-Middle-Angriff; Verbindung abgebrochen."
 
 msgctxt "STR_SSH_HOST_KEY_FAIL"
 msgid "Could not retrieve host key."
-msgstr "No se pudo recuperar la clave del host."
+msgstr "Host-Key konnte nicht abgerufen werden."
 
 msgctxt "STR_SSH_HOST_KEY_VERIFY_FAIL"
 msgid "Host key verification failed."
-msgstr "Falló la verificación de la clave del host."
+msgstr "Host-Key-Überprüfung fehlgeschlagen."
 
 msgctxt "STR_SSH_LOGIN_AS"
 msgid "Login as:"
-msgstr "Usuario:"
+msgstr "Anmelden als:"
 
 msgctxt "STR_SSH_LOGIN_CANCELLED"
 msgid "Login cancelled."
-msgstr "Conexión cancelada."
+msgstr "Anmeldung abgebrochen."
 
 msgctxt "STR_SSH_PASSWORD_FOR_PREFIX"
 msgid "Password for "
-msgstr "Contraseña para "
+msgstr "Passwort für "
 
 msgctxt "STR_SSH_AUTHENTICATING"
 msgid "Authenticating..."
-msgstr "Autenticando..."
+msgstr "Authentifizierung läuft..."
 
 msgctxt "STR_SSH_AUTH_FAILED_PREFIX"
 msgid "Authentication failed: "
-msgstr "Falló la autenticación: "
+msgstr "Authentifizierung fehlgeschlagen: "
 
 msgctxt "STR_SSH_CHANNEL_FAIL"
 msgid "Could not open channel."
-msgstr "No se pudo abrir el canal."
+msgstr "Kanal konnte nicht geöffnet werden."
 
 msgctxt "STR_SSH_SHELL_FAIL_PREFIX"
 msgid "Could not start shell: "
-msgstr "No se pudo iniciar el shell: "
+msgstr "Shell konnte nicht gestartet werden: "
 
 msgctxt "STR_SSH_DISCONNECTED_TAG"
 msgid "[disconnected]"
-msgstr "[desconectado]"
+msgstr "[getrennt]"
 
 msgctxt "STR_SSH_USAGE_WIFI"
 msgid "Usage: wifi <ssid>"
-msgstr "Uso: wifi <ssid>"
+msgstr "Verwendung: wifi <ssid>"
 
 msgctxt "STR_SSH_USAGE_WIFI_SUB"
 msgid "       wifi-scan / wifi-list / wifi-status / wifi-disconnect"
@@ -1350,31 +1350,31 @@ msgstr "       wifi-scan / wifi-list / wifi-status / wifi-disconnect"
 
 msgctxt "STR_SSH_CONNECTING_SAVED_PREFIX"
 msgid "Connecting to saved network "
-msgstr "Conectando a la red guardada "
+msgstr "Verbinde mit gespeichertem Netzwerk "
 
 msgctxt "STR_SSH_WIFI_CONNECT_CANCELLED"
 msgid "Wifi connect cancelled."
-msgstr "Conexión WiFi cancelada."
+msgstr "WiFi-Verbindung abgebrochen."
 
 msgctxt "STR_SSH_SCANNING_NETWORKS"
 msgid "Scanning for networks..."
-msgstr "Buscando redes..."
+msgstr "Suche nach Netzwerken..."
 
 msgctxt "STR_SSH_SCAN_HINT"
 msgid "Run 'wifi-list' when the scan finishes."
-msgstr "Ejecuta 'wifi-list' cuando termine el escaneo."
+msgstr "'wifi-list' ausführen, wenn der Scan fertig ist."
 
 msgctxt "STR_SSH_NO_SCAN_RESULTS"
 msgid "No scan results. Run 'wifi-scan' first."
-msgstr "Sin resultados de escaneo. Ejecuta 'wifi-scan' primero."
+msgstr "Keine Scan-Ergebnisse. Zuerst 'wifi-scan' ausführen."
 
 msgctxt "STR_SSH_NETWORKS_FOUND_SUFFIX"
 msgid " networks found:"
-msgstr " redes encontradas:"
+msgstr " Netzwerke gefunden:"
 
 msgctxt "STR_SSH_WIFI_STATE_PREFIX"
 msgid "WiFi state: "
-msgstr "Estado del WiFi: "
+msgstr "WiFi-Status: "
 
 msgctxt "STR_SSH_SSID_PREFIX"
 msgid "SSID: "
@@ -1386,29 +1386,28 @@ msgstr "IP:   "
 
 msgctxt "STR_SSH_WIFI_DISCONNECTED"
 msgid "WiFi disconnected."
-msgstr "WiFi desconectado."
+msgstr "WiFi-Verbindung getrennt."
 
 msgctxt "STR_SSH_INVALID_PORT"
 msgid "Invalid port."
-msgstr "Puerto inválido."
+msgstr "Ungültiger Port."
 
 msgctxt "STR_SSH_USAGE_SSH"
 msgid "Usage: ssh [user@]host[:port]"
-msgstr "Uso: ssh [usuario@]host[:puerto]"
+msgstr "Verwendung: ssh [benutzer@]host[:port]"
 
 msgctxt "STR_SSH_USAGE_SSH_P"
 msgid "       ssh -p <port> [user@]host"
-msgstr "       ssh -p <puerto> [usuario@]host"
+msgstr "       ssh -p <port> [benutzer@]host"
 
 msgctxt "STR_SSH_NO_WIFI"
 msgid "No WiFi connection."
-msgstr "Sin conexión WiFi."
+msgstr "Keine WiFi-Verbindung."
 
 msgctxt "STR_SSH_JOIN_NETWORK"
 msgid "Join a network first:  wifi <ssid>"
-msgstr "Únete primero a una red:  wifi <ssid>"
+msgstr "Zuerst Netzwerk beitreten:  wifi <ssid>"
 
 msgctxt "STR_SSH_NO_HOST"
 msgid "No host specified."
-msgstr "No se especificó el host."
-
+msgstr "Kein Host angegeben."

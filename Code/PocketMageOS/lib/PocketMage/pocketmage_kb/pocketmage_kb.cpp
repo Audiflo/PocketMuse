@@ -956,6 +956,7 @@ char PocketmageKB::updateKeypress() {
                   static const char* cyc_O[] = {"O", "Ó", "Ò", "Ô", "Ö", "Õ", "Ø"};
                   static const char* cyc_u[] = {"u", "ú", "ù", "û", "ü"};
                   static const char* cyc_U[] = {"U", "Ú", "Ù", "Û", "Ü"};
+                  static const char* cyc_s[] = {"s", "ß"};
                   static const char* cyc_n[] = {"n", "ñ"};
                   static const char* cyc_N[] = {"N", "Ñ"};
                   static const char* cyc_c[] = {"c", "ç"};
@@ -976,6 +977,7 @@ char PocketmageKB::updateKeypress() {
                   else if (nestedBaseC == 'O') { activeCycle = cyc_O; activeCycleLen = 7; }
                   else if (nestedBaseC == 'u') { activeCycle = cyc_u; activeCycleLen = 5; }
                   else if (nestedBaseC == 'U') { activeCycle = cyc_U; activeCycleLen = 5; }
+                  else if (nestedBaseC == 's') { activeCycle = cyc_s; activeCycleLen = 2; }
                   else if (nestedBaseC == 'n') { activeCycle = cyc_n; activeCycleLen = 2; }
                   else if (nestedBaseC == 'N') { activeCycle = cyc_N; activeCycleLen = 2; }
                   else if (nestedBaseC == 'c') { activeCycle = cyc_c; activeCycleLen = 2; }

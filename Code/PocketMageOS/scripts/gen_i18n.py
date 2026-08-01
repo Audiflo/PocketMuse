@@ -272,7 +272,8 @@ def emit_header(languages, entries):
         "enum Lang : uint8_t {",
     ]
     for i, lang in enumerate(languages):
-        name = {"en": "English", "fr": "French", "es": "Spanish"}.get(lang, lang)
+        name = {"en": "English", "fr": "French", "es": "Spanish",
+                "de": "German"}.get(lang, lang)
         lines.append(f"  {name} = {i},")
     lines.append("  _LANG_COUNT")
     lines.append("};")
@@ -312,7 +313,8 @@ def emit_cpp(languages, by_lang, aliases):
         "",
         "const char* const kLanguageNames[" + str(len(languages)) + "] = {",
     ]
-    names = {"en": "English", "fr": "Français", "es": "Español"}
+    names = {"en": "English", "fr": "Français", "es": "Español",
+             "de": "Deutsch"}
     lines.append("  " + ", ".join(f'"{names[l]}"' for l in languages) + "};")
     lines.append("")
 
