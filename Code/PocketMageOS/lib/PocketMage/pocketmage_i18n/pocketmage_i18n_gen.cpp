@@ -5,7 +5,7 @@ const char* const kLanguageCodes[4] = { "en", "fr", "es", "de" };
 const char* const kLanguageNames[4] = {
   "English", "Français", "Español", "Deutsch"};
 
-static const char* const kStringsEn[352] = {
+static const char* const kStringsEn[363] = {
   "SHIFT",
   "FN",
   "FN+SHIFT",
@@ -357,10 +357,21 @@ static const char* const kStringsEn[352] = {
   "       ssh -p <port> [user@]host",
   "No WiFi connection.",
   "Join a network first:  wifi <ssid>",
-  "No host specified."
+  "No host specified.",
+  "PIN",
+  "Wrong PIN",
+  "Unlocked",
+  "Lock Enabled",
+  "Lock Disabled",
+  "PIN Set",
+  "PIN must be 4-8 digits",
+  "Enter new PIN",
+  "Confirm PIN",
+  "PINs do not match",
+  "Lock: on | off | pin <4-8 digits>"
 };
 
-static const char* const kStringsFr[352] = {
+static const char* const kStringsFr[363] = {
   "SHIFT",
   "FN",
   "FN+SHIFT",
@@ -712,10 +723,21 @@ static const char* const kStringsFr[352] = {
   "       ssh -p <port> [utilisateur@]hôte",
   "Pas de connexion WiFi.",
   "Rejoignez d'abord un réseau :  wifi <ssid>",
-  "Aucun hôte spécifié."
+  "Aucun hôte spécifié.",
+  "PIN",
+  "Mauvais PIN",
+  "Déverrouillé",
+  "Verrouillage activé",
+  "Verrouillage désactivé",
+  "PIN défini",
+  "Le PIN doit faire 4 à 8 chiffres",
+  "Saisir le nouveau PIN",
+  "Confirmer le PIN",
+  "Les PIN ne correspondent pas",
+  "Verrou : on | off | pin <4-8 chiffres>"
 };
 
-static const char* const kStringsEs[352] = {
+static const char* const kStringsEs[363] = {
   "SHIFT",
   "FN",
   "FN+SHIFT",
@@ -1067,10 +1089,21 @@ static const char* const kStringsEs[352] = {
   "       ssh -p <puerto> [usuario@]host",
   "Sin conexión WiFi.",
   "Únete primero a una red:  wifi <ssid>",
-  "No se especificó el host."
+  "No se especificó el host.",
+  "PIN",
+  "PIN incorrecto",
+  "Desbloqueado",
+  "Bloqueo activado",
+  "Bloqueo desactivado",
+  "PIN establecido",
+  "El PIN debe tener 4-8 dígitos",
+  "Introducir nuevo PIN",
+  "Confirmar PIN",
+  "Los PIN no coinciden",
+  "Bloqueo: on | off | pin <4-8 dígitos>"
 };
 
-static const char* const kStringsDe[352] = {
+static const char* const kStringsDe[363] = {
   "SHIFT",
   "FN",
   "FN+SHIFT",
@@ -1422,7 +1455,18 @@ static const char* const kStringsDe[352] = {
   "       ssh -p <port> [benutzer@]host",
   "Keine WiFi-Verbindung.",
   "Zuerst Netzwerk beitreten:  wifi <ssid>",
-  "Kein Host angegeben."
+  "Kein Host angegeben.",
+  "PIN",
+  "Falsche PIN",
+  "Entsperrt",
+  "Sperre aktiviert",
+  "Sperre deaktiviert",
+  "PIN gesetzt",
+  "PIN muss 4-8 Ziffern haben",
+  "Neue PIN eingeben",
+  "PIN bestätigen",
+  "PINs stimmen nicht überein",
+  "Sperre: on | off | pin <4-8 Ziffern>"
 };
 
 const char* const* const kStrings[4] = {

@@ -57,12 +57,66 @@ String settingCommandSelect(String command) {
     else if (timePart.length() >= 4) { 
       CLOCK().setTimeFromString(timePart);
       returnText = TR(STR_SETTINGS_TIME_UPDATED);
-    } 
+    }
     else {
       returnText = TR(STR_SETTINGS_INVALID_FMT_HHMM);
     }
     
     return returnText;
+  }
+  else if (command == "lock" || command.startsWith("lock ")) {
+    String lockArg = "";
+    int lockSpaceIdx = command.indexOf(' ');
+    if (lockSpaceIdx != -1) {
+      lockArg = command.substring(lockSpaceIdx + 1);
+      lockArg.trim();
+      lockArg.toLowerCase();
+    }
+
+    // "lock" with no argument: report current state
+    if (lockArg.length() == 0) {
+      return lockIsEnabled() ? TR(STR_LOCK_ENABLED) : TR(STR_LOCK_DISABLED);
+    }
+    else if (lockArg == "on") {
+      // If no PIN is stored yet, walk through masked create + confirm
+      if (!lockHasPin()) {
+        String pin1 = textPrompt(TR(STR_LOCK_ENTER_PIN), "", true);
+        if (pin1 == "_EXIT_" || pin1 == "_RETURN_" || pin1 == "_CENTER_") return "";
+        String pin2 = textPrompt(TR(STR_LOCK_CONFIRM_PIN), "", true);
+        if (pin2 == "_EXIT_" || pin2 == "_RETURN_" || pin2 == "_CENTER_") return "";
+
+        if (!lockPinValid(pin1)) return TR(STR_LOCK_PIN_INVALID);
+        if (pin1 != pin2) return TR(STR_LOCK_MISMATCH);
+
+        lockSetPin(pin1);
+      } else {
+        // PIN already configured: just switch the gate on
+        prefs.begin("PocketMage", false);
+        prefs.putBool("LOCK_ENABLED", true);
+        prefs.end();
+        deviceLocked = true;
+      }
+      newState = true;
+      return TR(STR_LOCK_ENABLED);
+    }
+    else if (lockArg == "off") {
+      lockDisable();
+      newState = true;
+      return TR(STR_LOCK_DISABLED);
+    }
+    else {
+      return TR(STR_LOCK_HELP);
+    }
+  }
+  else if (command.startsWith("lockpin ")) {
+    String pin = command.substring(8);
+    pin.trim();
+
+    if (!lockPinValid(pin)) return TR(STR_LOCK_PIN_INVALID);
+
+    lockSetPin(pin);
+    newState = true;
+    return TR(STR_LOCK_PIN_SET);
   }
   else if (command.startsWith("dateset") || command.startsWith("setdate")) {
     String datePart = "";

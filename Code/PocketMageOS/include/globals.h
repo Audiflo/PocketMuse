@@ -56,9 +56,10 @@ void einkHandler_APP();
 //utils.cpp
 void printDebug();
 void checkTimeout();
-void loadState(bool changeState = true);
+void loadState(bool changeState = true, char bootKey = 0);
+void wakeFromNowlater(char bootKey = 0);
 void updateBattState();
-String textPrompt(String promptText = "", String prefix = "", bool mask = false);
+String textPrompt(String promptText = "", String prefix = "", bool mask = false, bool lockGlyph = false);
 int boolPrompt(String promptText = "Are you sure?");
 void waitForKeypress(String message = "Press any button to continue...");
 void checkCrashState();
@@ -76,6 +77,23 @@ void processKB();
 
 // OTA_APP: Remove all pocketmage v3 prototypes below this line
 #if !OTA_APP // POCKETMAGE_OS
+
+// <UTILS.cpp>
+// Maps a boot shortcut letter (pressed while the device is off / on NOWLATER)
+// to its app; returns the current app unchanged when there is no match.
+AppState bootShortcutApp(char inchar);
+
+// <LOCK.cpp>
+extern volatile bool deviceLocked;      // Transient lock requirement; see LOCK.cpp
+bool lockIsEnabled();
+bool lockHasPin();
+bool lockPinValid(const String& pin);
+void lockSetPin(const String& pin);
+void lockDisable();
+bool lockVerifyPin(const String& pin);
+void lockEnsureUnlocked();
+void einkHandler_LOCK();
+
 // <FILEWIZ.cpp>
 void FILEWIZ_INIT();
 void processKB_FILEWIZ();

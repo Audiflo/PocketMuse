@@ -26,7 +26,7 @@ constexpr int HOME_TASKS_W      = kEinkWidth - HOME_TASKS_X - 10;  // 159: task 
 
 void HOME_INIT() {
   u8g2f.setForegroundColor(GxEPD_BLACK);
-  display.setRotation(1);
+  display.setRotation(3);
   CurrentAppState = HOME;
   currentLine     = "";
   KB().setKeyboardState(NORMAL);
@@ -397,12 +397,21 @@ void processKB_HOME() {
       break;
 
     case NOWLATER:
+      // Any keypad key turns the device back on; the power button powers it off
+      {
+        char wakeKey = KB().updateKeypress();
+        if (wakeKey != 0) {
+          // Feed the shortcut letter through so boot shortcuts work from
+          // NOWLATER (loadState's own keypad read would come up empty here).
+          wakeFromNowlater(wakeKey);
+          break;
+        }
+      }
       DateTime now = CLOCK().nowDT();
       if (prevTime != now.minute()) {
         prevTime = now.minute();
         newState = true;
       }
-      else newState = false;
       break;
   }
 }
@@ -422,6 +431,10 @@ void einkHandler_HOME() {
     case NOWLATER:
       if (newState) {
         newState = false;
+
+        // NOWLATER frame is authored for rotation 3 (see #280); force it so the
+        // clock face never renders inverted after another app left a rotation.
+        display.setRotation(3);
 
         // BACKGROUND
         display.drawBitmap(0, 0, nowLaterallArray[0], 320, 240, GxEPD_BLACK);

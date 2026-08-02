@@ -72,6 +72,9 @@ extern const unsigned char _toggleON [] PROGMEM;
 extern const unsigned char _toggleOFF [] PROGMEM;
 
 //
+extern const unsigned char _lockIcon [] PROGMEM;
+
+//
 extern const unsigned char _calendar00 [] PROGMEM;
 extern const unsigned char _calendar01 [] PROGMEM;
 extern const unsigned char _calendar02 [] PROGMEM;

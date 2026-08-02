@@ -104,6 +104,10 @@ void deepSleep(bool alternateScreenSaver) {
     pocketmage::setCpuSpeed(240);
     delay(50);
 
+    // Screensavers are authored for the canonical rotation; HOME_INIT() may have
+    // left the panel at rotation 1 (180 degrees off), so force rotation 3 here.
+    display.setRotation(3);
+
     // Check if there are custom screensavers
     File dir = global_fs->open("/assets/backgrounds");
     std::vector<String> binFiles;

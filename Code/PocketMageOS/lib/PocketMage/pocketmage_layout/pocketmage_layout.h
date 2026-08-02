@@ -38,6 +38,12 @@ constexpr int kOledInfoBatteryY      = kOledHeight - kOledInfoBatteryH;
 constexpr int kOledInfoGap           = 6;    // gap between info bar items
 constexpr int kOledInfoFirstX        = kOledInfoBatteryW + kOledInfoGap;  // x of the first text item
 
+// OLED lock prompt lock glyph (LOCK.cpp): 16x16, top-right corner
+constexpr int kOledLockGlyphW = 16;
+constexpr int kOledLockGlyphH = 16;
+constexpr int kOledLockGlyphY = 2;
+constexpr int kOledLockGlyphX = kOledLockGlyphW + 2;  // right margin = glyph width + 2
+
 // OLED scroll preview (PocketmageOled::oledScroll / oledScrollFrame)
 constexpr int kOledScrollPreviewW   = 128;  // 128px-wide preview strip (scrolloled0)
 constexpr int kOledScrollRowPitch   = 4;    // vertical pitch of preview bars

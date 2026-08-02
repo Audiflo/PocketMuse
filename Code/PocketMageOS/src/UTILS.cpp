@@ -66,22 +66,9 @@ void checkTimeout() {
     pocketmage::deepSleep();
 
   } else if (PWR_BTN_event && CurrentHOMEState == NOWLATER) {
-    ESP_LOGE(TAG, "In NOWLATER state, returning home");
-    loadState();
-    keypad.flush();
-
-    CurrentHOMEState = HOME_HOME;
+    ESP_LOGE(TAG, "Power Button Event: powering off from NOWLATER");
     PWR_BTN_event = false;
-    OLED().setPowerSave(false);
-    display.fillScreen(GxEPD_WHITE);
-    EINK().forceSlowFullUpdate(true);
-
-    // Play startup jingle
-    BZ().playJingle(Jingles::Startup);
-
-    EINK().refresh();
-    delay(200);
-    newState = true;
+    pocketmage::deepSleep();
   }
 }
 
@@ -195,28 +182,61 @@ void checkTimeout() {
     }
 
   } else if (PWR_BTN_event && CurrentHOMEState == NOWLATER) {
-    ESP_LOGE(TAG, "In NOWLATER state, returning home");
-    loadState();
-    keypad.flush();
-
-    CurrentHOMEState = HOME_HOME;
+    ESP_LOGE(TAG, "Power Button Event: powering off from NOWLATER");
     PWR_BTN_event = false;
-    OLED().setPowerSave(false);
-    display.fillScreen(GxEPD_WHITE);
-    EINK().forceSlowFullUpdate(true);
+    pocketmage::deepSleep();
+  }
+}
 
-    // Play startup jingle
-    BZ().playJingle(Jingles::Startup);
+// Exit the NOWLATER (charging shutdown) screen back to home, triggered by any
+// keypad key.  bootKey carries the shortcut letter pressed to wake (reused by
+// loadState so "press a letter while off" launches the app from NOWLATER too).
+// Re-locks via loadState() when a PIN is configured.
+void wakeFromNowlater(char bootKey) {
+  loadState(true, bootKey);
+  keypad.flush();
+  disableTimeout = false;
 
-    EINK().refresh();
-    delay(200);
-    newState = true;
+  CurrentHOMEState = HOME_HOME;
+  OLED().setPowerSave(false);
+
+  // Play startup jingle
+  BZ().playJingle(Jingles::Startup);
+  newState = true;
+
+  // While locked, keep the NOWLATER frame on the panel so the PIN prompt does
+  // not appear over a blank flash; the home screen draws after unlocking.
+  if (deviceLocked) return;
+
+  display.fillScreen(GxEPD_WHITE);
+  EINK().forceSlowFullUpdate(true);
+  EINK().refresh();
+  delay(200);
+}
+
+// Boot shortcut letters (pressed while off, or as the NOWLATER wake key) map
+// to an app; any other key keeps the currently loaded app.
+// TODO: This should be i18n-ed?
+AppState bootShortcutApp(char inchar) {
+  switch (inchar) {
+    case 'h': return HOME;
+    case 'u': return USB_APP;
+    case 'f': return FILEWIZ;
+    case 't': return TASKS;
+    case 'n': return TXT;
+    case 's': return SETTINGS;
+    case 'c': return CALENDAR;
+    case 'j': return JOURNAL;
+    case 'd': return LEXICON;
+    case 'x': return TERMINAL;
+    case 'l': return APPLOADER;
+    default:  return CurrentAppState;
   }
 }
 
 #endif
 
-void loadState(bool changeState) {
+void loadState(bool changeState, char bootKey) {
   // LOAD PREFERENCES
   prefs.begin("PocketMage", true);  // Read-Only
   // Misc
@@ -237,6 +257,11 @@ void loadState(bool changeState) {
   OTA3_APP = prefs.getString("OTA3", "-");
   OTA4_APP = prefs.getString("OTA4", "-");
 
+  // Every boot/wake starts locked when a PIN is configured
+  #if !OTA_APP  // POCKETMAGE_OS
+  deviceLocked = prefs.getBool("LOCK_ENABLED", false);
+  #endif  // POCKETMAGE_OS
+
   if (!changeState) {
     prefs.end();
     return;
@@ -250,23 +275,14 @@ void loadState(bool changeState) {
   } else {
     CurrentAppState = static_cast<AppState>(prefs.getInt("CurrentAppState", HOME));
 
-    // Check boot keypress
-    KB().setKeyboardState(NORMAL);
-    char inchar = KB().updateKeypress();
-    switch (inchar) {
-      case 'h': CurrentAppState = HOME; break;
-      case 'u': CurrentAppState = USB_APP; break;
-      case 'f': CurrentAppState = FILEWIZ; break;
-      case 't': CurrentAppState = TASKS; break;
-      case 'n': CurrentAppState = TXT; break;
-      case 's': CurrentAppState = SETTINGS; break;
-      case 'c': CurrentAppState = CALENDAR; break;
-      case 'j': CurrentAppState = JOURNAL; break;
-      case 'd': CurrentAppState = LEXICON; break;
-      case 'x': CurrentAppState = TERMINAL; break;
-      case 'l': CurrentAppState = APPLOADER; break;
-      default: break;
+    // Check boot keypress; a key captured by the NOWLATER wake path is passed
+    // in so the shortcut letter opens its app without re-reading the keypad.
+    char inchar = bootKey;
+    if (inchar == 0) {
+      KB().setKeyboardState(NORMAL);
+      inchar = KB().updateKeypress();
     }
+    CurrentAppState = bootShortcutApp(inchar);
 
     keypad.flush();
 
@@ -274,13 +290,16 @@ void loadState(bool changeState) {
     switch (CurrentAppState) {
       case HOME:      HOME_INIT(); break;
       case TXT:       TXT_INIT(); break; 
+      case FILEWIZ:   FILEWIZ_INIT(); break;
       case SETTINGS:  SETTINGS_INIT(); break;
       case TASKS:     TASKS_INIT(); break;
       case USB_APP:   HOME_INIT(); break;
+      case COMM:      COMM_INIT(); break;
       case CALENDAR:  CALENDAR_INIT(); break;
       case LEXICON:   LEXICON_INIT(); break;
       case JOURNAL:   JOURNAL_INIT(); break;
       case TERMINAL:  TERMINAL_INIT(); break;
+      case APPLOADER: APPLOADER_INIT(); break;
       default:        HOME_INIT(); break;
     }
   }
@@ -347,7 +366,7 @@ void updateBattState() {
 #pragma region Basic Inputs
 // Prompt the user for text input, return the text
 #if !OTA_APP // PocketMage OS Only
-String textPrompt(String promptText, String prefix, bool mask) {
+String textPrompt(String promptText, String prefix, bool mask, bool lockGlyph) {
   String currentLine = "";
   int cursor_pos = 0;
   long lastInput = CLOCK().getPrevTimeMillis(); // Sync to system idle
@@ -509,7 +528,8 @@ String textPrompt(String promptText, String prefix, bool mask) {
       if (isIdle) {
         // Continuously update the idle animation frames while idle
         OLEDFPSMillis = currentMillis;
-        mageIdle(true); 
+        // The lock prompt must stay on screen: never yield to the mage animation
+        if (!lockGlyph) mageIdle(true);
       } 
       else if (redraw) {
         // Only redraw the text prompt if the user typed or moved the cursor
@@ -521,7 +541,15 @@ String textPrompt(String promptText, String prefix, bool mask) {
         if (mask) {
           for (int i = 0; i < displayLine.length(); i++) displayLine[i] = '*';
         }
-        if (prefix != "") OLED().oledLine(prefix + displayLine, cursor_pos + prefix.length(), false, promptText);
+        // Lock screen: draw text + glyph into one frame and send a single buffer,
+        // so the glyph never strobes against a separate text-only send
+        if (lockGlyph) {
+          OLED().oledLine(prefix + displayLine, cursor_pos + prefix.length(), false, promptText, true);
+          u8g2.drawXBMP(u8g2.getDisplayWidth() - kOledLockGlyphX, kOledLockGlyphY,
+                        kOledLockGlyphW, kOledLockGlyphH, _lockIcon);
+          u8g2.sendBuffer();
+        }
+        else if (prefix != "") OLED().oledLine(prefix + displayLine, cursor_pos + prefix.length(), false, promptText);
         else OLED().oledLine(displayLine, cursor_pos, false, promptText);
       }
     }

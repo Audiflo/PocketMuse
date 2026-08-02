@@ -126,7 +126,7 @@ void PocketmageOled::sysMessage(String msg, int showTime) {
   if (SAVE_POWER) pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
 }
 
-void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, String bottomMsg) {
+void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, String bottomMsg, bool deferSend) {
   u8g2_.setDrawColor(1);
   const uint16_t dw = u8g2_.getDisplayWidth();
 
@@ -209,7 +209,7 @@ void PocketmageOled::oledLine(String line, int input_pos, bool doProgressBar, St
     }
   }
 
-  u8g2_.sendBuffer();
+  if (!deferSend) u8g2_.sendBuffer();
 }
 
 void PocketmageOled::infoBar() {

@@ -24,7 +24,8 @@ public:
   
   // Main methods
   void oledWord(String word, bool allowLarge = false, bool showInfo = true, String bottomText = "");
-  void oledLine(String line, int input_pos, bool doProgressBar = true, String bottomMsg = "");
+  // deferSend: caller draws into the buffer after oledLine and sends once itself
+  void oledLine(String line, int input_pos, bool doProgressBar = true, String bottomMsg = "", bool deferSend = false);
   void sysMessage(String msg, int showTime = 1500);
   void oledScroll();
   void infoBar();

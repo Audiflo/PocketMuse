@@ -1412,3 +1412,47 @@ msgctxt "STR_SSH_NO_HOST"
 msgid "No host specified."
 msgstr "Aucun hôte spécifié."
 
+
+msgctxt "STR_LOCK_PROMPT"
+msgid "PIN"
+msgstr "PIN"
+
+msgctxt "STR_LOCK_WRONG"
+msgid "Wrong PIN"
+msgstr "Mauvais PIN"
+
+msgctxt "STR_LOCK_UNLOCKED"
+msgid "Unlocked"
+msgstr "Déverrouillé"
+
+msgctxt "STR_LOCK_ENABLED"
+msgid "Lock Enabled"
+msgstr "Verrouillage activé"
+
+msgctxt "STR_LOCK_DISABLED"
+msgid "Lock Disabled"
+msgstr "Verrouillage désactivé"
+
+msgctxt "STR_LOCK_PIN_SET"
+msgid "PIN Set"
+msgstr "PIN défini"
+
+msgctxt "STR_LOCK_PIN_INVALID"
+msgid "PIN must be 4-8 digits"
+msgstr "Le PIN doit faire 4 à 8 chiffres"
+
+msgctxt "STR_LOCK_ENTER_PIN"
+msgid "Enter new PIN"
+msgstr "Saisir le nouveau PIN"
+
+msgctxt "STR_LOCK_CONFIRM_PIN"
+msgid "Confirm PIN"
+msgstr "Confirmer le PIN"
+
+msgctxt "STR_LOCK_MISMATCH"
+msgid "PINs do not match"
+msgstr "Les PIN ne correspondent pas"
+
+msgctxt "STR_LOCK_HELP"
+msgid "Lock: on | off | pin <4-8 digits>"
+msgstr "Verrou : on | off | pin <4-8 chiffres>"

@@ -21,6 +21,14 @@ void applicationEinkHandler() {
   #endif
   // OTA_APP: Remove switch statement
   #if !OTA_APP // POCKETMAGE_OS
+  // While a lock is required (loop() is blocked on lockEnsureUnlocked) the
+  // e-ink must not repaint: keep the sleep screensaver/boot frame on the panel.
+  // The NOWLATER shutdown screen is exempt so the clock face can render.
+  if (deviceLocked && CurrentHOMEState != NOWLATER) {
+    einkHandler_LOCK();  // no-op: keep the sleep screensaver on the panel
+    return;
+  }
+
   switch (CurrentAppState) {
     case HOME:
       einkHandler_HOME();
@@ -170,6 +178,11 @@ void loop() {
       resetRequested = false;
       HOME_INIT();
     }
+    // OS-level lock lifecycle: while a lock is required (boot/wake, NOWLATER
+    // exit, mid-session "lock on"), block here on the PIN prompt so no app
+    // input or e-ink repaint can happen until the device is unlocked.  The
+    // NOWLATER shutdown screen is exempt: power-off must work while locked.
+    if (deviceLocked && CurrentHOMEState != NOWLATER) lockEnsureUnlocked();
     if (!noTimeout)  checkTimeout();
     if (DEBUG_VERBOSE) printDebug();
   #endif

@@ -1411,3 +1411,47 @@ msgstr "Zuerst Netzwerk beitreten:  wifi <ssid>"
 msgctxt "STR_SSH_NO_HOST"
 msgid "No host specified."
 msgstr "Kein Host angegeben."
+
+msgctxt "STR_LOCK_PROMPT"
+msgid "PIN"
+msgstr "PIN"
+
+msgctxt "STR_LOCK_WRONG"
+msgid "Wrong PIN"
+msgstr "Falsche PIN"
+
+msgctxt "STR_LOCK_UNLOCKED"
+msgid "Unlocked"
+msgstr "Entsperrt"
+
+msgctxt "STR_LOCK_ENABLED"
+msgid "Lock Enabled"
+msgstr "Sperre aktiviert"
+
+msgctxt "STR_LOCK_DISABLED"
+msgid "Lock Disabled"
+msgstr "Sperre deaktiviert"
+
+msgctxt "STR_LOCK_PIN_SET"
+msgid "PIN Set"
+msgstr "PIN gesetzt"
+
+msgctxt "STR_LOCK_PIN_INVALID"
+msgid "PIN must be 4-8 digits"
+msgstr "PIN muss 4-8 Ziffern haben"
+
+msgctxt "STR_LOCK_ENTER_PIN"
+msgid "Enter new PIN"
+msgstr "Neue PIN eingeben"
+
+msgctxt "STR_LOCK_CONFIRM_PIN"
+msgid "Confirm PIN"
+msgstr "PIN bestätigen"
+
+msgctxt "STR_LOCK_MISMATCH"
+msgid "PINs do not match"
+msgstr "PINs stimmen nicht überein"
+
+msgctxt "STR_LOCK_HELP"
+msgid "Lock: on | off | pin <4-8 digits>"
+msgstr "Sperre: on | off | pin <4-8 Ziffern>"
