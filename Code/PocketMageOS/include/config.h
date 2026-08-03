@@ -22,9 +22,10 @@
 #define POWER_SAVE_FREQ 40                      // CPU freq for power save mode
 #define IDLE_TIME 20000                         // time to wait for mage idle (ms)
 
-// Full refresh after N partial refreshes (CHANGE WITH CAUTION)
+// Full refresh after N refreshes (CHANGE WITH CAUTION)
+#define FAST_REFRESH_AFTER 5   // Fast/partial mode: datasheet clean-every-5
 #if POCKETMAGE_HW_VERSION == 2
-  #define FULL_REFRESH_AFTER 10 // Prod uses N=10                    
+  #define FULL_REFRESH_AFTER 10 // Prod legacy uses N=10                    
 #else
   #define FULL_REFRESH_AFTER 5  // Beta needs N=5
 #endif

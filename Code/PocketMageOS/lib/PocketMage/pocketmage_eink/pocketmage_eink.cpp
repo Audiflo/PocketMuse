@@ -46,7 +46,7 @@ void PocketmageEink::refresh() {
       #if POCKETMAGE_HW_VERSION != 2
         display_.display(true);
       #endif
-    } else if ((partialCounter_ >= fullRefreshAfter_) || forceSlowFullUpdate_) {
+    } else if ((partialCounter_ >= FAST_REFRESH_AFTER) || forceSlowFullUpdate_) {
       forceSlowFullUpdate_ = false;
       partialCounter_ = 0;
       // Slow "clean" full update to clear accumulated ghosting from the fast
