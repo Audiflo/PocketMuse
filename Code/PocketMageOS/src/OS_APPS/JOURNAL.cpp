@@ -18,9 +18,6 @@ constexpr int JOURNAL_DOT_H  = 4;    // entry dot height
 void JOURNAL_INIT() {
   CurrentAppState = JOURNAL;
   CurrentJournalState = J_MENU;
-  #if POCKETMAGE_HW_VERSION != 2
-    EINK().forceSlowFullUpdate(true);
-  #endif
   newState = true;
   KB().setKeyboardState(NORMAL);
 }
@@ -180,7 +177,7 @@ void einkHandler_JOURNAL() {
         newState = false;
         beginEinkScreen();
         drawJMENU();
-        EINK().multiPassRefresh(2);
+        EINK().refresh();
       }
       break;
     default:

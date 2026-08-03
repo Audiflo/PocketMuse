@@ -371,7 +371,7 @@ void einkHandler_LEXICON() {
           cursorY += LEX_LINE_HEIGHT;
         }
 
-        endEinkScreen(TR(STR_LEX_TYPE_NEW_WORD), EinkRefresh::ForceFull);
+        endEinkScreen(TR(STR_LEX_TYPE_NEW_WORD), EinkRefresh::Normal);
       }
       break;
   }

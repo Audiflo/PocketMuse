@@ -17,6 +17,11 @@ U8G2_FOR_ADAFRUIT_GFX u8g2f;
 
 TaskHandle_t einkHandlerTaskHandle = NULL;
 
+// Recursive mutex serializing panel access between the main task (keystroke
+// driven refresh()) and the einkHandler task (50ms poll).  Recursive so
+// refresh() can take it and still call lockPanel() from deepSleep() etc.
+static SemaphoreHandle_t einkMutex = NULL;
+
 volatile bool GxEPD2_310_GDEQ031T10::useFastFullUpdate = true;
 
 static PocketmageEink pm_eink(display);
@@ -24,36 +29,72 @@ static PocketmageEink pm_eink(display);
 PocketmageEink& EINK() { return pm_eink; }
 
 void PocketmageEink::refresh() {
-  if ((partialCounter_ >= fullRefreshAfter_) || forceSlowFullUpdate_) {
-    forceSlowFullUpdate_ = false;
-    partialCounter_ = 0;
-    setFastFullRefresh(false);
-  } else {
-    setFastFullRefresh(true);
-    partialCounter_++;
-  }
-  display_.display(false);
-  display_.setFullWindow();
-  display_.fillScreen(GxEPD_WHITE);
-  display_.hibernate();
-}
-
-void PocketmageEink::multiPassRefresh(int passes) {
-  #if POCKETMAGE_HW_VERSION == 2
-    EINK().refresh();
-  #else
-    display_.display(false);
-    if (passes > 0) {
-      for (int i = 0; i < passes; i++) {
-        delay(250);
+  lockPanel();
+  if (FAST_REFRESH) {
+    // Fast refresh stack (experimental, default off): differential partial
+    // redraws with a boot full and a periodic slow clean; each full is followed
+    // by a beta-only same-frame partial reinforce for the under-saturated black.
+    if (panelNeedsFullRefresh_) {
+      // First refresh after boot/deep-sleep wake: a true full update resyncs the
+      // panel with GxEPD2's previous-image RAM.  On beta hardware, the fast
+      // full waveform under-saturates black, so reinforce with a same-frame
+      // partial (0x10 == 0x13); production has good contrast without it.
+      panelNeedsFullRefresh_ = false;
+      partialCounter_ = 0;
+      setFastFullRefresh(true);
+      display_.display(false);
+      #if POCKETMAGE_HW_VERSION != 2
         display_.display(true);
-      }
+      #endif
+    } else if ((partialCounter_ >= fullRefreshAfter_) || forceSlowFullUpdate_) {
+      forceSlowFullUpdate_ = false;
+      partialCounter_ = 0;
+      // Slow "clean" full update to clear accumulated ghosting from the fast
+      // partial refreshes; uses the extended (default) waveform, ~3s.  Followed
+      // by a beta-only same-frame partial refresh.
+      setFastFullRefresh(false);
+      display_.display(false);
+      #if POCKETMAGE_HW_VERSION != 2
+        display_.display(true);
+      #endif
+    } else {
+      // Fast full-screen partial update (~0.65s).  GxEPD2's display() keeps the
+      // panel's previous-image RAM (0x10) in sync, so the differential update
+      // stays correct; ghosting is bounded by the periodic clean above.
+      partialCounter_++;
+      display_.display(true);
     }
-    delay(100);
+    display_.setFullWindow();
+    display_.fillScreen(GxEPD_WHITE);
+    display_.powerOff();
+  } else {
+    // Legacy refresh (production default, "tried and true"): always a full
+    // refresh, fast waveform for normal redraws and slow waveform for the
+    // periodic clean / forced slow update.  Deep sleep between refreshes; the
+    // full update rebuilds both RAM buffers, so the hibernate wake-reset that
+    // wipes panel RAM is harmless here.
+    if ((partialCounter_ >= fullRefreshAfter_) || forceSlowFullUpdate_) {
+      forceSlowFullUpdate_ = false;
+      partialCounter_ = 0;
+      setFastFullRefresh(false);
+    } else {
+      setFastFullRefresh(true);
+      partialCounter_++;
+    }
+    display_.display(false);
     display_.setFullWindow();
     display_.fillScreen(GxEPD_WHITE);
     display_.hibernate();
-  #endif
+  }
+  unlockPanel();
+}
+
+void PocketmageEink::lockPanel() {
+  if (einkMutex) xSemaphoreTakeRecursive(einkMutex, portMAX_DELAY);
+}
+
+void PocketmageEink::unlockPanel() {
+  if (einkMutex) xSemaphoreGiveRecursive(einkMutex);
 }
 
 void PocketmageEink::setFastFullRefresh(bool setting) {
@@ -109,7 +150,9 @@ int PocketmageEink::countLines(const String& input, size_t maxLineLength) {
 void PocketmageEink::forceSlowFullUpdate(bool force) { forceSlowFullUpdate_ = force; }
 
 void setupEink() {
+  einkMutex = xSemaphoreCreateRecursiveMutex();
   display.init(115200);
+  pm_eink.markPanelNeedsFullRefresh();
   display.setRotation(3);
   display.setFullWindow();
   u8g2f.begin(display);

@@ -424,7 +424,7 @@ void einkHandler_HOME() {
         drawHome();
         //EINK().refresh();
         //einkFramesDynamic(frames,false);
-        EINK().multiPassRefresh(1);
+        EINK().refresh();
       }
       break;
 
@@ -478,9 +478,6 @@ void einkHandler_HOME() {
           }
         }
 
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
         EINK().refresh();
       }
       break;

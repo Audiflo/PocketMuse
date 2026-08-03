@@ -48,9 +48,6 @@ void FILEWIZ_INIT() {
   CurrentAppState = FILEWIZ;
   CurrentFileWizState = WIZ0_;
   KB().setKeyboardState(NORMAL);
-  #if POCKETMAGE_HW_VERSION != 2
-    EINK().forceSlowFullUpdate(true);
-  #endif
   newState = true;
 }
 
@@ -563,7 +560,7 @@ void einkHandler_FILEWIZ() {
         EINK().drawStatusBar("- " + PM_SDAUTO().getWorkingFile());
         display.drawBitmap(0, 0, fileWizardallArray[1], 320, 218, GxEPD_BLACK);
 
-        EINK().multiPassRefresh(2);
+        EINK().refresh();
       }
       break;
   }

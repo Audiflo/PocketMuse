@@ -90,8 +90,11 @@ void deepSleep(bool alternateScreenSaver) {
   // Put OLED to sleep
   u8g2.setPowerSave(1);
 
-  // Stop the einkHandler task safely
+  // Stop the einkHandler task safely.  Take the panel mutex first so a refresh
+  // already in flight in that task completes before the task is deleted; the
+  // mutex is recursive, so the screensaver refresh below re-enters cleanly.
   if (einkHandlerTaskHandle != NULL) {
+    EINK().lockPanel();
     vTaskDelete(einkHandlerTaskHandle);
     einkHandlerTaskHandle = NULL;
   }
@@ -162,12 +165,8 @@ void deepSleep(bool alternateScreenSaver) {
       pocketmage::setCpuSpeed(POWER_SAVE_FREQ);
     SDActive = false;
 
-    #if POCKETMAGE_HW_VERSION == 2
-      EINK().forceSlowFullUpdate(true);
-      EINK().refresh();
-    #else
-      EINK().multiPassRefresh(2);
-    #endif
+    EINK().forceSlowFullUpdate(true);
+    EINK().refresh();
   } else {
     // Display alternate screensaver
     EINK().forceSlowFullUpdate(true);
@@ -179,6 +178,7 @@ void deepSleep(bool alternateScreenSaver) {
   display.fillScreen(GxEPD_WHITE);
   // Put E-Ink to sleep
   display.hibernate();
+  EINK().unlockPanel();
 
   // Save last state
   prefs.begin("PocketMage", false);

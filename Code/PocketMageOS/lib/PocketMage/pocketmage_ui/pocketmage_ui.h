@@ -7,8 +7,6 @@
 enum class EinkRefresh : uint8_t {
     Normal,
     ForceFull,
-    MultiPass1,
-    MultiPass2,
 };
 
 void drawScrollbar(int total, int visible, int index,
@@ -17,6 +15,6 @@ void drawScrollbar(int total, int visible, int index,
                    uint16_t fg = GxEPD_BLACK, uint16_t bg = GxEPD_WHITE);
 
 void beginEinkScreen(bool preserveBg = false);
-void endEinkScreen(const char* statusText, EinkRefresh mode = EinkRefresh::MultiPass2);
+void endEinkScreen(const char* statusText, EinkRefresh mode = EinkRefresh::Normal);
 
 void drawListItem(int x, int y, const String& text, int maxWidth = -1);

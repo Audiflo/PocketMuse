@@ -1892,9 +1892,6 @@ void einkHandler_TXT_NEW() {
     display.setFullWindow();
     u8g2f.setForegroundColor(GxEPD_BLACK);
     editorEinkDisplay(document, currentLineNum);
-    #if POCKETMAGE_HW_VERSION != 2
-      EINK().forceSlowFullUpdate(true);
-    #endif
     EINK().refresh();
   }
 }

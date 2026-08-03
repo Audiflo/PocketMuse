@@ -43,12 +43,6 @@ void endEinkScreen(const char* statusText, EinkRefresh mode) {
       EINK().forceSlowFullUpdate(true);
       EINK().refresh();
       break;
-    case EinkRefresh::MultiPass1:
-      EINK().multiPassRefresh(1);
-      break;
-    case EinkRefresh::MultiPass2:
-      EINK().multiPassRefresh(2);
-      break;
   }
 }
 

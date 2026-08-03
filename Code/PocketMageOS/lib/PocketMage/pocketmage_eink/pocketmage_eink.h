@@ -33,7 +33,6 @@ public:
   void setFullRefreshAfter(uint8_t fullRefreshAfter)    { fullRefreshAfter_ = fullRefreshAfter; };
 
   void refresh();
-  void multiPassRefresh(int passes);
   void setFastFullRefresh(bool setting);
   void statusBar(const String& input, bool fullWindow=false);
   void drawStatusBar(const String& input);
@@ -50,10 +49,14 @@ public:
   uint8_t getLineSpacing() { return lineSpacing_; };
   DisplayT& getDisplay() { return display_; };
   void forceSlowFullUpdate(bool force);
+  void markPanelNeedsFullRefresh() { panelNeedsFullRefresh_ = true; };
+  void lockPanel();
+  void unlockPanel();
 
 private:
   DisplayT&             display_;
   bool                  forceSlowFullUpdate_  = false;
+  bool                  panelNeedsFullRefresh_ = true;
   uint8_t               partialCounter_       = 0;
   uint8_t               fullRefreshAfter_     = FULL_REFRESH_AFTER;
   uint8_t               lineSpacing_          = 6;

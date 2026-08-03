@@ -1432,9 +1432,6 @@ void einkHandler_CALENDAR() {
         newState = false;
         EINK().resetDisplay();
         drawCalendarWeek(weekOffsetCount);
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
         EINK().refresh();
       }
       break;
@@ -1444,9 +1441,6 @@ void einkHandler_CALENDAR() {
         newState = false;
         EINK().resetDisplay();
         drawCalendarMonth(monthOffsetCount);
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
         EINK().refresh();
       }
       break;
@@ -1474,9 +1468,6 @@ void einkHandler_CALENDAR() {
           case 5: EINK().drawStatusBar(TR(STR_CAL_STEP_NOTE)); break;
         }
 
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
         EINK().refresh();
       }
       break;
@@ -1496,9 +1487,6 @@ void einkHandler_CALENDAR() {
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (4 * CAL_EDIT_PITCH), newEventRepeat, FontStyle::Body);
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
 
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
         EINK().refresh();
       }
       break;
@@ -1534,9 +1522,6 @@ void einkHandler_CALENDAR() {
           FontEngine::drawText(DisplayTarget::EINK, CAL_DAY_TEXT_X, CAL_DAY_INFO_Y + (j * CAL_DAY_ROW_H), bottomInfo, FontStyle::Tiny);
         }
 
-        #if POCKETMAGE_HW_VERSION != 2
-          EINK().forceSlowFullUpdate(true);
-        #endif
         EINK().refresh();
       }
       break;

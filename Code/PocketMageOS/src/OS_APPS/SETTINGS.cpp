@@ -262,6 +262,26 @@ String settingCommandSelect(String command) {
     newState = true;
     return TR(STR_SETTINGS_UPDATED);
   }
+  else if (command.startsWith("fastrefresh ")) {
+    String fastRefreshPart = command.substring(12);
+    fastRefreshPart.trim();
+
+    if (fastRefreshPart != "t" && fastRefreshPart != "f") return "Invalid";
+
+    FAST_REFRESH = (fastRefreshPart == "t");
+
+    prefs.begin("PocketMage", false);
+    prefs.putBool("FAST_REFRESH", FAST_REFRESH);
+    prefs.end();
+
+    // Switching from legacy to fast refresh mid-session must rebuild the
+    // panel's previous-image RAM before the first partial redraw, otherwise
+    // the differential update diffs against a stale frame.
+    if (FAST_REFRESH) EINK().markPanelNeedsFullRefresh();
+
+    newState = true;
+    return TR(STR_SETTINGS_UPDATED);
+  }
   else if (command.startsWith("debug ")) {
     String debugPart = command.substring(6);
     debugPart.trim();
@@ -374,6 +394,9 @@ void einkHandler_SETTINGS() {
     // ALLOW_NO_MICROSD
     if (ALLOW_NO_MICROSD) display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (5 * SETTINGS_TOG_PITCH), _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     else display.drawBitmap(SETTINGS_TOG_X, SETTINGS_TOG_Y0 + (5 * SETTINGS_TOG_PITCH), _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    // FAST_REFRESH (experimental), second column first row
+    if (FAST_REFRESH) display.drawBitmap(SETTINGS_VAL2_X, SETTINGS_TOG_Y0, _toggleON, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
+    else display.drawBitmap(SETTINGS_VAL2_X, SETTINGS_TOG_Y0, _toggleOFF, SETTINGS_TOG_W, SETTINGS_TOG_H, GxEPD_BLACK);
     // OLED_MAX_FPS
     FontEngine::drawText(DisplayTarget::EINK, SETTINGS_VAL2_X, SETTINGS_VAL_Y0, String(OLED_MAX_FPS), FontStyle::Body);
 
