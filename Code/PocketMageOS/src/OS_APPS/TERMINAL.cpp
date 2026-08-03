@@ -1953,7 +1953,7 @@ void einkHandler_TERMINAL() {
           widestNum = "0" + widestNum;
         }
         String widestLineNum = "[" + widestNum + "]";
-        int codeX = POTION_LINE_X + FontEngine::textWidth(DisplayTarget::EINK, widestLineNum, FontStyle::Mono) + TERM_LINE_NUM_GAP;
+        int codeX = POTION_LINE_X + FontEngine::textWidth(DisplayTarget::EINK, widestLineNum, FontStyle::Terminal) + TERM_LINE_NUM_GAP;
 
         if (potionLines.size() <= POTION_PAGE_LINES) {
           int y = POTION_ROW_TOP;
@@ -1970,8 +1970,8 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Mono);
-              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Mono);
+              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Terminal);
+              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Terminal);
               y += POTION_ROW_PITCH;
           }
         } 
@@ -1993,8 +1993,8 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Mono);
-              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Mono);
+              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Terminal);
+              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Terminal);
               y += POTION_ROW_PITCH;
             }
           }
@@ -2015,8 +2015,8 @@ void einkHandler_TERMINAL() {
                 u8g2f.setForegroundColor(bgColor);
               } else
                 u8g2f.setForegroundColor(fgColor);
-              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Mono);
-              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Mono);
+              FontEngine::drawText(DisplayTarget::EINK, POTION_LINE_X, y, "[" + lineNum + "]", FontStyle::Terminal);
+              FontEngine::drawText(DisplayTarget::EINK, codeX, y, s, FontStyle::Terminal);
               y += POTION_ROW_PITCH;
             }
           }

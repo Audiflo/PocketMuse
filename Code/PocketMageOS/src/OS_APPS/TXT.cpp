@@ -21,7 +21,7 @@ TXTState_NEW CurrentTXTState_NEW = TXT_;
 #define SPECIAL_PADDING 20      // Padding for lists, code blocks, quote blocks
 #define SPACEWIDTH_SYMBOL "n"   // n is roughly the width of a space
 #define WORDWIDTH_BUFFER 0      // Add extra spacing to each word
-#define DISPLAY_WIDTH_BUFFER 0  // Add margin for text wrap calc
+#define DISPLAY_WIDTH_BUFFER 5  // Right margin so wrapped text clears the scrollbar column
 #define HEADING_LINE_PADDING 8  // Padding between each line
 #define NORMAL_LINE_PADDING 2
 
@@ -464,7 +464,7 @@ int findWrapIndex(const String& content, int startIndex, char style) {
   return maxLen; 
 }
 
-void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
+ulong reflowParagraphCore(ulong startLine, uint16_t* cursorRef) {
   char baseStyle = document.lines[startLine].type;
   char contStyle = baseStyle;
   
@@ -484,7 +484,7 @@ void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
     endLine++;
   }
   
-  int absoluteCursor = activeCursor; 
+  int absoluteCursor = (cursorRef != nullptr) ? *cursorRef : -1; 
   ulong currWriteIdx = startLine;
   
   int textIndex = 0;
@@ -512,7 +512,7 @@ void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
     if (absoluteCursor != -1) {
       if (absoluteCursor <= writeLine.len) {
         currentLineNum = currWriteIdx;
-        activeCursor = absoluteCursor;
+        *cursorRef = absoluteCursor;
         absoluteCursor = -1; 
       } else {
         absoluteCursor -= writeLine.len;
@@ -535,7 +535,7 @@ void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
     
     if (absoluteCursor != -1) {
       currentLineNum = currWriteIdx;
-      activeCursor = 0;
+      *cursorRef = 0;
     }
     currWriteIdx++; 
   }
@@ -543,45 +543,19 @@ void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
   if (endLine > currWriteIdx) {
     deleteLinesMultiple(currWriteIdx, endLine - currWriteIdx);
   }
+
+  return currWriteIdx - startLine;
 }
 
-// Re-wrap a single line's text to the active font width, splitting it across
-// multiple lines when needed. Adjacent lines are left untouched so paragraph
-// structure and content are preserved across font switches. Returns the number
-// of lines the original line now occupies (always >= 1).
-ulong reflowLineAt(ulong lineIdx) {
-  char style = document.lines[lineIdx].type;
-  String text = String(document.lines[lineIdx].text);
-  int textIndex = 0;
-  int textLen = text.length();
-
-  if (textLen == 0) return 1;
-
-  ulong writeIdx = lineIdx;
-  while (textIndex < textLen) {
-    int wrapLen = findWrapIndex(text, textIndex, style);
-
-    String chunk = text.substring(textIndex, textIndex + wrapLen);
-    textIndex += wrapLen;
-
-    if (writeIdx > lineIdx) insertLineArray(writeIdx);
-
-    Line& writeLine = document.lines[writeIdx];
-    writeLine.type = style;
-    strncpy(writeLine.text, chunk.c_str(), LINE_CAP);
-    writeLine.text[LINE_CAP] = '\0';
-    writeLine.len = strlen(writeLine.text);
-
-    if (textIndex < textLen && text[textIndex] == ' ') textIndex++;
-
-    writeIdx++;
-  }
-
-  return writeIdx - lineIdx;
+void reflowParagraph(ulong startLine, uint16_t& activeCursor) {
+  reflowParagraphCore(startLine, &activeCursor);
 }
 
-// Re-wrap every line in the document with the current font metrics. The edit
-// cursor is pinned to its original line/column, clamped to the new layout.
+// Re-wrap every paragraph in the document with the current font metrics.
+// Each paragraph (a line plus its same-style continuation lines) is merged and
+// re-wrapped as a unit so line breaks follow the new font; stale continuation
+// lines left over from a wider font are dropped. The edit cursor is pinned to
+// its original line/column, clamped to the new layout.
 void reflowAllLines(ulong& currLine, uint16_t& cursor) {
   if (document.lineCount == 0) return;
 
@@ -590,7 +564,13 @@ void reflowAllLines(ulong& currLine, uint16_t& cursor) {
 
   ulong i = 0;
   while (i < document.lineCount) {
-    i += reflowLineAt(i);
+    char type = document.lines[i].type;
+    // Blank lines and horizontal rules carry no re-flowable text.
+    if (type == ' ' || type == 'B' || type == 'H') {
+      i++;
+      continue;
+    }
+    i += reflowParagraphCore(i, nullptr);
   }
 
   currLine = savedLine;
@@ -1436,7 +1416,7 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
     if (isSpecial) {
       return FontEngine::charWidth(DisplayTarget::OLED, code, FontStyle::Tiny);
     }
-      return FontEngine::charWidth(DisplayTarget::OLED, code, FontStyle::Medium);
+      return FontEngine::charWidth(DisplayTarget::OLED, code, FontStyle::OledWord);
     };
 
     // --- PASS 1: Single-sweep UTF-8 width and cursor calculation ---
@@ -1520,7 +1500,7 @@ void editorOledDisplay(Line& line, uint16_t cursor_pos, bool currentlyTyping) {
       int char_w = charWidth(unicode, false);
 
       if (xpos + char_w >= 0 && xpos <= display_w) {
-        FontEngine::drawGlyph(DisplayTarget::OLED, xpos, bodyY, unicode, FontStyle::Medium);
+        FontEngine::drawGlyph(DisplayTarget::OLED, xpos, bodyY, unicode, FontStyle::OledWord);
       }
 
       xpos += char_w;
