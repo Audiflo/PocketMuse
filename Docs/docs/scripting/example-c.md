@@ -1,5 +1,5 @@
 ---
-title: "PocketMage Script Example: Basic Input/Output"
+title: "Scripting Example: Basic Input/Output"
 description: "A simple PocketMage script demonstrating user input, OLED output, and terminal printing."
 ---
 
@@ -32,7 +32,7 @@ updateTerm();
 var i = 0;
 
 // Loop while i < x
-// Us toInt to convert str to int
+// Use toInt to convert str to int
 while (i < toInt(x)) {
   // Iterate
   i = i + 1;
@@ -55,3 +55,17 @@ print("Random Number: " + randomInt);
 // (refresh the OLED)
 updateTerm();
 ```
+
+## What it shows
+
+- `prompt()` reads a string from the user.
+- `toInt()` converts that string to an integer for the loop condition.
+- `oledWord()` prints to the OLED.
+- `print()` appends to the terminal buffer; `updateTerm()` repaints it.
+- `delay()` and `random()` are available as general helpers.
+
+## Read next
+
+- [E-Ink Drawing](ink-c.md)
+- [OLED Drawing](oled-c.md)
+- [Full Wrench Command List](fullPotionCommandList.md)

@@ -12,9 +12,9 @@ This guide ensures SD cards are formatted in a way that is compatible with the P
 
 ---
 
-## Supported SD Card Requirements
+## Supported SD card requirements
 
-- **Card size:** 2 GB – 32 GB microSD
+- **Card size:** 2 GB - 32 GB microSD recommended. The slot supports up to 2 TB, but cards above 32 GB must be forced to FAT32 + MBR and are not recommended.
 - **Filesystem:** FAT32
 - **Partition scheme:** MBR (Master Boot Record)
 - **Partitions:** Single primary partition

@@ -244,7 +244,7 @@ Draws a rectangle on the OLED buffer.
 * **Example:**
 
   ```c
-  oledRect(0, 0, 128, 32, 0, 1);
+  oledRect(0, 0, 256, 32, 0, 1);
   ```
 
 ### `oledCircle(x, y, radius, borderColor)`
@@ -259,7 +259,7 @@ Draws a circle outline on the OLED buffer. (No fill option supported).
 * **Example:**
 
   ```c
-  oledCircle(64, 16, 10, 0);
+  oledCircle(128, 16, 10, 0);
   ```
 
 ### `oledText(x, y, size, color, text)`

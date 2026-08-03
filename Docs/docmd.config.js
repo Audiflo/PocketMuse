@@ -69,25 +69,56 @@ export default {
   pageNavigation: true,
   navigation: [
     { title: "Home", path: "/", icon: "home" },
+    {
+      title: "Getting Started",
+      icon: "rocket",
+      collapsible: true,
+      path: "/getting-started/index",
+      children: [
+        { title: "What is PocketMage", path: "/getting-started/what-is-pocketmage", icon: "info" },
+        { title: "Build Environments", path: "/development/build-environments", icon: "settings" },
+      ],
+    },
+    {
+      title: "PocketMageOS",
+      icon: "cpu",
+      collapsible: true,
+      path: "/development/index",
+      children: [
+        { title: "Features", path: "/features/index", icon: "star" },
+      ],
+    },
+    {
+      title: "Guides",
+      icon: "book-open",
+      collapsible: true,
+      path: "/guides/index",
+      children: [
+        { title: "Making Apps", path: "/guides/making-apps", icon: "code" },
+        { title: "Native Apps", path: "/guides/native-apps", icon: "terminal" },
+        { title: "OTA Apps", path: "/guides/ota-apps", icon: "package" },
+      ],
+    },
+    {
+      title: "Reference",
+      icon: "book",
+      collapsible: true,
+      path: "/reference/index",
+      children: [
+        { title: "App API", path: "/reference/app-api", icon: "code" },
+        { title: "PocketMage Library", path: "/reference/pocketmage-library", icon: "box" },
+        { title: "System State", path: "/reference/system-state", icon: "settings" },
+      ],
+    },
+    { title: "Commands", path: "/command-manual/index", icon: "keyboard" },
     { title: "FAQ", path: "/faq/index", icon: "help-circle" },
-    { title: "Command Manual", path: "/command-manual/index", icon: "keyboard" },
     {
       title: "Tutorials",
-      icon: "book-open",
+      icon: "folder-open",
       collapsible: true,
       path: "/tutorials/index",
       children: [
         { title: "Format MicroSD Card", path: "/tutorials/format-micro-sd", icon: "card-sd" },
-        { title: "PlatformIO Config", path: "/tutorials/platformio-config", icon: "settings" },
-      ],
-    },
-    {
-      title: "Development",
-      icon: "code",
-      collapsible: true,
-      path: "/development/index",
-      children: [
-        { title: "Build Environments", path: "/development/build-environments", icon: "settings" },
       ],
     },
     {

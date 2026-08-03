@@ -5,12 +5,11 @@ description: "Step-by-step guides for PocketMage setup and configuration."
 
 # Tutorials
 
-Welcome to the PocketMage tutorials section! Here you'll find guides for setup, SD card formatting, and PlatformIO configuration.
+These pages cover hands-on setup tasks.
 
 ## Guides
 
 - [Format a MicroSD Card](format-micro-sd.md)
-- [PlatformIO Build Environment](platformio-config.md)
 
 ## Development
 
