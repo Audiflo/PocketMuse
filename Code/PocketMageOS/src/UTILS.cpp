@@ -272,6 +272,7 @@ void loadState(bool changeState, char bootKey) {
 #if !OTA_APP  // POCKETMAGE_OS
   if (HOME_ON_BOOT) {
     CurrentAppState = HOME;
+    HOME_INIT();
   } else {
     CurrentAppState = static_cast<AppState>(prefs.getInt("CurrentAppState", HOME));
 
