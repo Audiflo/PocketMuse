@@ -63,6 +63,25 @@ jobs:
           set -euo pipefail
           pio run -e ${{ matrix.env }}
 
+      - name: Package OTA App Tar
+        if: matrix.env == 'OTA_APP'
+        run: |
+          set -euo pipefail
+          mkdir -p .pio/build/OTA_APP/package
+          cp .pio/build/OTA_APP/firmware.bin .pio/build/OTA_APP/package/app.bin
+          tar -cf .pio/build/OTA_APP/package/app.tar -C .pio/build/OTA_APP/package app.bin
+
+      - name: Upload Firmware Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocketmage-${{ matrix.env }}-${{ github.sha }}
+          path: |
+            .pio/build/${{ matrix.env }}/*.bin
+            .pio/build/${{ matrix.env }}/*.elf
+            .pio/build/${{ matrix.env }}/package/app.tar
+          if-no-files-found: error
+          retention-days: 14
+
   i18n-check:
     runs-on: ubuntu-latest
 
