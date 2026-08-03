@@ -247,7 +247,7 @@ void loadState(bool changeState, char bootKey) {
   ALLOW_NO_MICROSD = prefs.getBool("ALLOW_NO_SD", true);
   PM_SDAUTO().setEditingFile(prefs.getString("editingFile", ""));
   HOME_ON_BOOT = prefs.getBool("HOME_ON_BOOT", false);
-  FAST_REFRESH = prefs.getBool("FAST_REFRESH", false);
+  FAST_REFRESH = prefs.getBool("FAST_REFRESH", POCKETMAGE_HW_VERSION == 1);
   OLED_BRIGHTNESS = prefs.getInt("OLED_BRIGHTNESS", 255);
   OLED_MAX_FPS = prefs.getInt("OLED_MAX_FPS", 60);
   I18n::setLanguage(static_cast<Lang>(prefs.getInt("Language", static_cast<int>(Lang::English))));
