@@ -856,7 +856,7 @@ int timePrompt(int defaultTime) {
       } else {
         u8g2.setDrawColor(1);               // Standard white text
       }
-      FontEngine::drawGlyph(DisplayTarget::OLED, tX[i], 16, digits[i], FontStyle::ClockDigit);
+      FontEngine::drawGlyph(DisplayTarget::OLED, tX[i], 16, '0' + digits[i], FontStyle::ClockDigit);
     }
     u8g2.setDrawColor(1); // Reset for next draw cycle
 
@@ -1070,7 +1070,7 @@ String datePrompt(String defaultYYYYMMDD) {
       } else {
         u8g2.setDrawColor(1);               // Standard white text
       }
-      FontEngine::drawGlyph(DisplayTarget::OLED, dX[i], 16, digits[i], FontStyle::ClockDigit);
+      FontEngine::drawGlyph(DisplayTarget::OLED, dX[i], 16, '0' + digits[i], FontStyle::ClockDigit);
     }
     u8g2.setDrawColor(1); // Reset for next draw cycle
 
