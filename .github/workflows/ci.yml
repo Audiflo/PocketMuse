@@ -76,9 +76,9 @@ jobs:
         with:
           name: pocketmage-${{ matrix.env }}-${{ github.sha }}
           path: |
-            .pio/build/${{ matrix.env }}/*.bin
-            .pio/build/${{ matrix.env }}/*.elf
-            .pio/build/${{ matrix.env }}/package/app.tar
+            Code/PocketMageOS/.pio/build/${{ matrix.env }}/*.bin
+            Code/PocketMageOS/.pio/build/${{ matrix.env }}/*.elf
+            Code/PocketMageOS/.pio/build/${{ matrix.env }}/package/app.tar
           if-no-files-found: error
           retention-days: 14
 
