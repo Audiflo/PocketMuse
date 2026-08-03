@@ -45,6 +45,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Prepare the Python Cauldron
         uses: actions/setup-python@v5
