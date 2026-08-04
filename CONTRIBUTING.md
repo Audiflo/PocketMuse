@@ -23,13 +23,13 @@ Thanks for your interest in contributing! This guide covers everything you need 
 git clone https://github.com/TailsmanDesign/PocketMage_PDA.git
 ```
 
-Main firmware source lives under `Code/PocketMage_V3/`. Hardware design files (KiCad schematics/PCBs) are under `Resources/PCB/`.
+Main firmware source lives under `Code/PocketMageOS/`. Hardware design files (KiCad schematics/PCBs) are under `Resources/PCB/`.
 
 ---
 
 ## Building the firmware
 
-PocketMage uses [PlatformIO](https://platformio.org/). From `Code/PocketMage_V3/`:
+PocketMage uses [PlatformIO](https://platformio.org/). From `Code/PocketMageOS/`:
 
 ```bash
 pio run -e PM_PRODUCTION   # Production hardware (N16R2, Quad PSRAM)

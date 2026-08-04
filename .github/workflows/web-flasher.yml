@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: Code/PocketMage_V3
+        working-directory: Code/PocketMageOS
 
     steps:
       - name: Checkout release tag
@@ -129,7 +129,7 @@ jobs:
           APP0_OFFSET_DEC=$(to_decimal "$APP0_OFFSET_HEX")
 
           for ENV in PM_BETA PM_PRODUCTION; do
-            BUILD_DIR="$GITHUB_WORKSPACE/Code/PocketMage_V3/.pio/build/$ENV"
+            BUILD_DIR="$GITHUB_WORKSPACE/Code/PocketMageOS/.pio/build/$ENV"
             ENV_TARGET_DIR="${TARGET_DIR}/$ENV"
             mkdir -p "${ENV_TARGET_DIR}"
 

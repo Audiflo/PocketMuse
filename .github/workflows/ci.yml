@@ -1,0 +1,108 @@
+name: Pull Request CI
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  docs-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20.19.0"
+          cache: npm
+          cache-dependency-path: Docs/package-lock.json
+
+      - name: Build Docs
+        working-directory: Docs
+        run: |
+          set -euo pipefail
+          npm ci
+          npm run build
+
+  firmware-build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - PM_PRODUCTION
+          - PM_BETA
+          - OTA_APP
+
+    defaults:
+      run:
+        working-directory: Code/PocketMageOS
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Prepare the Python Cauldron
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install PlatformIO
+        run: |
+          set -euo pipefail
+          pip install -U platformio
+
+      - name: Build Firmware Environment
+        run: |
+          set -euo pipefail
+          pio run -e ${{ matrix.env }}
+
+      - name: Package OTA App Tar
+        if: matrix.env == 'OTA_APP'
+        run: |
+          set -euo pipefail
+          mkdir -p .pio/build/OTA_APP/package
+          cp .pio/build/OTA_APP/firmware.bin .pio/build/OTA_APP/package/app.bin
+          tar -cf .pio/build/OTA_APP/package/app.tar -C .pio/build/OTA_APP/package app.bin
+
+      - name: Upload Firmware Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pocketmage-${{ matrix.env }}-${{ github.sha }}
+          path: |
+            Code/PocketMageOS/.pio/build/${{ matrix.env }}/*.bin
+            Code/PocketMageOS/.pio/build/${{ matrix.env }}/*.elf
+            Code/PocketMageOS/.pio/build/${{ matrix.env }}/package/app.tar
+          if-no-files-found: error
+          retention-days: 14
+
+  i18n-check:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Code/PocketMageOS
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Prepare the Python Cauldron
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Regenerate i18n tables
+        run: |
+          set -euo pipefail
+          python scripts/gen_i18n.py
+
+      - name: Check i18n drift
+        run: |
+          set -euo pipefail
+          git diff --exit-code -- lib/PocketMage/pocketmage_i18n
