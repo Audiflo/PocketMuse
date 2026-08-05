@@ -250,6 +250,7 @@ void loadState(bool changeState, char bootKey) {
   FAST_REFRESH = prefs.getBool("FAST_REFRESH", POCKETMAGE_HW_VERSION == 1);
   OLED_BRIGHTNESS = prefs.getInt("OLED_BRIGHTNESS", 255);
   OLED_MAX_FPS = prefs.getInt("OLED_MAX_FPS", 60);
+  MUTE_BUZZER = prefs.getBool("MUTE_BUZZER", false);
   I18n::setLanguage(static_cast<Lang>(prefs.getInt("Language", static_cast<int>(Lang::English))));
 
   OTA1_APP = prefs.getString("OTA1", "-");
