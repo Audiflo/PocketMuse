@@ -45,8 +45,8 @@ constexpr int CAL_EDIT_PITCH    = 22;    // event editor/viewer: value row pitch
 constexpr int CAL_EDIT_TEXT_W   = CAL_DAY_LIST_X + CAL_DAY_LIST_W - CAL_EDIT_X;  // 203: value text width
 constexpr int CAL_NOTE_Y0       = CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH);  // event note: first line baseline
 constexpr int CAL_NOTE_SCROLL_X = CAL_EDIT_X + CAL_EDIT_TEXT_W + 1;   // event note: scrollbar x
-constexpr int CAL_NOTE_SCROLL_Y = CAL_NOTE_Y0 - 18;                   // event note: scrollbar track y
-constexpr int CAL_NOTE_SCROLL_H = kEinkContentH - CAL_NOTE_SCROLL_Y;  // event note: scrollbar track height
+constexpr int CAL_NOTE_SCROLL_Y = CAL_NOTE_Y0 - 18 + 2;                   // event note: scrollbar track y (top inset)
+constexpr int CAL_NOTE_SCROLL_H = kEinkContentH - CAL_NOTE_SCROLL_Y - 2;  // event note: scrollbar track height (bottom inset)
 
 enum CalendarState { WEEK, MONTH, NEW_EVENT, VIEW_EVENT, SUN, MON, TUE, WED, THU, FRI, SAT };
 CalendarState CurrentCalendarState = MONTH;
@@ -70,7 +70,7 @@ String newEventDuration = "";
 String newEventRepeat = "";
 String newEventNote = "";
 static std::vector<String> wrappedEventNoteLines;
-static ulong eventNoteScrollIndex = 0;
+static int eventNoteScrollIndex = 0;
 
 std::vector<std::vector<String>> dayEvents;
 std::vector<std::vector<String>> calendarEvents;
@@ -95,6 +95,14 @@ inline int eventNoteVisibleLines() {
 void resetEventNoteScroll() {
   eventNoteScrollIndex = 0;
   wrappedEventNoteLines = wordWrap(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body);
+}
+
+inline bool updateEventNoteScrollFromTouch(int maxScroll) {
+  // The shared touch helper uses ulong&, while Calendar keeps signed scroll bounds.
+  ulong touchScrollIndex = eventNoteScrollIndex;
+  bool updateScreen = TOUCH().updateScroll(maxScroll, touchScrollIndex);
+  eventNoteScrollIndex = static_cast<int>(touchScrollIndex);
+  return updateScreen;
 }
 
 void updateEventArray();
@@ -1265,7 +1273,7 @@ void processKB_CALENDAR() {
     case VIEW_EVENT:
       {
         int maxNoteScroll = max(0, (int)wrappedEventNoteLines.size() - eventNoteVisibleLines());
-        if (TOUCH().updateScroll(maxNoteScroll, eventNoteScrollIndex)) {
+        if (updateEventNoteScrollFromTouch(maxNoteScroll)) {
           newState = true;
         }
       }
@@ -1325,17 +1333,6 @@ void processKB_CALENDAR() {
             else if (note != "_EXIT_") {
               newEventNote = note;
               resetEventNoteScroll();
-              newState = true;
-            }
-          }
-          else if (inchar == '7' && eventNoteScrollIndex > 0) {
-            eventNoteScrollIndex--;
-            newState = true;
-          }
-          else if (inchar == '8') {
-            int maxNoteScroll = max(0, (int)wrappedEventNoteLines.size() - eventNoteVisibleLines());
-            if (eventNoteScrollIndex < (ulong)maxNoteScroll) {
-              eventNoteScrollIndex++;
               newState = true;
             }
           }
@@ -1528,9 +1525,9 @@ void einkHandler_CALENDAR() {
 
         int visibleNoteLines = eventNoteVisibleLines();
         int maxNoteScroll = max(0, (int)wrappedEventNoteLines.size() - visibleNoteLines);
-        if (eventNoteScrollIndex > (ulong)maxNoteScroll) eventNoteScrollIndex = maxNoteScroll;
+        if (eventNoteScrollIndex > maxNoteScroll) eventNoteScrollIndex = maxNoteScroll;
 
-        int noteEnd = min((int)wrappedEventNoteLines.size(), (int)eventNoteScrollIndex + visibleNoteLines);
+        int noteEnd = min((int)wrappedEventNoteLines.size(), eventNoteScrollIndex + visibleNoteLines);
         for (int i = eventNoteScrollIndex; i < noteEnd; i++) {
           int noteY = CAL_NOTE_Y0 + ((i - eventNoteScrollIndex) * einkRowPitch(FontStyle::Body));
           FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, noteY, wrappedEventNoteLines[i], FontStyle::Body);
