@@ -5,114 +5,104 @@ description: "Frequently asked questions about the PocketMage PDA device."
 
 # PocketMage FAQ
 
----
+## Helpful links
 
-## Helpful Links
+- [PocketMage.org](https://pocketmage.org/)
+- [PocketMage on GitHub](https://github.com/TailsmanDesign/PocketMage_PDA)
+- [PocketMage on Discord](https://discord.gg/KSCapSf4XH)
+- [Ashtf on YouTube](https://www.youtube.com/@ashtf)
+- [Ashtf on Patreon](https://patreon.com/Ashtf)
 
-[PocketMage.org](https://pocketmage.org/)
+## General information
 
-[PocketMage - GitHub](https://github.com/ashtf8/PocketMage_PDA)
+### What is PocketMage?
 
-[PocketMage - Discord](https://discord.gg/KSCapSf4XH)
+PocketMage is a hackable, open-source PDA focused on productivity. Use it to take notes, keep track of tasks, journal, schedule your week, and more. It is a clamshell design with a clear shell, a full tactile thumb keyboard, a large E-Ink main display, and a smaller OLED secondary display. All hardware and software is open source, which makes it ideal for hacking and add-ons.
 
-[Ashtf - YouTube](https://www.youtube.com/@ashtf)
+### How much is the kit?
 
-[Ashtf - Patreon](patreon.com/Ashtf)
+The final production kit is not released yet and the price is not final. The target is around $150 for a full kit.
 
----
+### How hard is it to build the kit?
 
-## General Information
+The kit is designed so anyone can build it. The only tool you need is one allen key, and there is no soldering, programming, or electronics involved in the build process.
 
-### **What is PocketMage?**
+### Will I be able to get PocketMage if I live outside the USA?
 
-PocketMage is a hackable PDA device focused on productivity. You can use it to take notes, keep track of tasks, journal, schedule your week, and much more. PocketMage is a hackable revival of the classic PDA-style device. The device features a dual-screen setup with a large E Ink main display and a smaller OLED secondary display. It also has a clamshell design with a clear shell and a full tactile thumb keyboard. PocketMage is fully open-source hardware and software, making it ideal for hacking and add-ons!
+Yes. We plan to ship worldwide.
 
-### **How much is the kit?**
+### When can I order?
 
-The PocketMage final production kit isn't released yet and the price isn't set in stone! That being said, the target price is around the $150 mark for a full kit.
+There is no set release date yet. Once the beta production run is complete and the software matures, we will move to final production.
 
-### **How hard is it to build the kit?**
+### How can I get notified when the kit releases?
 
-The kit is designed so that **anyone can build it!** The only tool you need is one allen key, and the kit requires no special skills in software or hardware. There is **no soldering**, **no programming, and no electronics** involved in the build process.
+Visit [PocketMage.org](https://pocketmage.org/) and click the "Join the Mailing List!" button.
 
-### **Will I be able to get PocketMage if I live outside the USA?**
+### How can I keep up with the project?
 
-We plan to ship PocketMage all around the world!
+Subscribe to [Ashtf's YouTube channel](https://www.youtube.com/@ashtf) for video updates, [Ashtf's Patreon](https://patreon.com/Ashtf) for exclusive weekly written updates, and the [PocketMage Discord server](https://discord.gg/KSCapSf4XH) for community updates.
 
-### **When can I order?**
+## Building and operating the PocketMage
 
-There is no set release date for the PocketMage kit at this moment, but once the beta production run is complete and the software has some time to mature, we will move on to the final production! See below for how to get notified when the kit releases!
+### Where is the build guide?
 
-### **How can I get notified when the kit releases?**
+The video build guide is [here](https://youtu.be/2aNcC0qCK1o?si=HKqUIyK0ZPkjqzQI).
 
-Visit [PocketMage.org](https://pocketmage.org/) and click the purple "Join the Mailing List!" button to sign up for an email notification.
+### Is there a guide on the key operations?
 
-### **How can I keep up with the PocketMage project?**
+Yes. Use the [Command Manual](../command-manual/index.md).
 
-You can subscribe to [Ashtf's YouTube Channel](https://www.youtube.com/@ashtf) for video-style updates, [Ashtf's Patreon](patreon.com/Ashtf) for exclusive weekly written updates, and [The PocketMage Discord Server](https://discord.gg/KSCapSf4XH) for community-driven updates!
+### How do I flash the firmware?
 
----
+1. Carefully remove the battery (pull on the plastic connector).
+2. Ensure the DIP switch for programming mode is ON.
+3. Hold the power button while plugging the PocketMage into your computer. Nothing should happen.
+4. Open [The Web Flasher](https://tailsmandesign.github.io/PocketMage_PDA/) in a Chrome-based browser and select your firmware version. The most recent stable build is recommended.
+5. If you want to keep your saved settings, check the "Preserve user data during installation" box.
+6. Hit the flash button and select the PocketMage from the list of USB devices.
+7. When flashing is done, unplug the PocketMage and re-insert the battery.
 
-## Building and Operating the PocketMage
+PocketMage should boot up automatically.
 
-### **Where is the build guide?**
+### What SD card can I use?
 
-The video build guide can be found [here.](https://youtu.be/2aNcC0qCK1o?si=HKqUIyK0ZPkjqzQI)
+Use a microSD card formatted as FAT32 with an MBR partition table. Cards up to 32 GB are recommended; 8 GB is a good sweet spot because PocketMage files are small. The smaller the card, the faster the device. Cards larger than 32 GB must be explicitly forced to FAT32 + MBR and are not recommended. See [Format a MicroSD Card](../tutorials/format-micro-sd.md) for the exact steps.
 
-### **Is there a guide on the key operations?**
+### Where are the CAD files?
 
-Yes! That guide can be found [here.](https://github.com/ashtf8/PocketMage_PDA/tree/main/Docs/Getting%20Started/Command%20Manual)
+CAD files are available only to beta testers until the final production release. If you are a beta tester, find the password-protected archive [here](https://github.com/TailsmanDesign/PocketMage_PDA/tree/main/Resources/CAD) and the password in the beta Discord channel.
 
-### **How do I flash the firmware?**
+### Where can I get an extra battery?
 
-First, carefully **remove the battery** out of your PocketMage (pull carefully on the plastic connector).
+International kits do not come with a battery because of shipping regulations. Battery links for common countries are [here](https://pocketmage.org/get/).
 
-Then, ensure the DIP switch for programming mode is switched to the ON position.
+### What is the programming mode switch?
 
-Next, hold the power button while plugging your PocketMage into your computer, **nothing should happen**.
+The programming mode switch connects the USB port directly to the microcontroller, bypassing the USB and battery charge controller. You can keep it on and use the device normally, but charging is limited to 500 mA instead of fast charging.
 
-Next, navigate to [The Web Flasher](https://ashtf8.github.io/PocketMage_PDA/) in a **chrome-based browser** and select your firmware version. The **most recent stable build** (highest number) is recommended.
+## Build and app docs
 
-If you would like to keep your saved settings, ensure that the "Preserve user data during installation" check box is **checked**.
+For the current setup path, start here:
 
-Next, hit the flash button and select the PocketMage from the list of USB devices.
+- [Build Environments](../development/build-environments.md)
+- [App API Reference](../reference/app-api.md)
+- [System State Reference](../reference/system-state.md)
 
-Once the flashing is done, unplug your PocketMage and re-insert the battery.
+## Common issues
 
-PocketMage should boot up automatically!
+### My dictionary isn't working
 
-### **What SD card can I use?**
+The English dictionary is not installed out of the box and must be downloaded to the SD card. Find the dictionary files [here](https://github.com/TailsmanDesign/PocketMage_PDA/tree/main/Resources/Assets/Dictionary%20(OPTED)). Connect the PocketMage to your computer with the USB app and drop all the `.txt` files into the dictionary folder.
 
-You can use any microSD card up to 32gb. **8gb is recommended** since PocketMage files are small and require very little storage. The smaller the SD card you use, the faster the PocketMage will be. SD cards **MUST** be formatted to **FAT32** format.
+### I can't flash the firmware
 
-### **Where are the CAD files?**
+Ensure the battery is unplugged and the programming mode DIP switch is ON. See the flashing guide above.
 
-Currently CAD files are available only to Beta Testers. These files will be released to the public alongside the release of the final production PocketMage. If you are a Beta Tester, you can find the password-protected .zip file [here](https://github.com/ashtf8/PocketMage_PDA/tree/main/Resources/CAD) and the password in the beta Discord channel.
+### My SD card isn't working
 
-### **Where can I get an extra battery?**
+First, ensure the card is 32 GB or smaller (8 GB is recommended). Next, ensure it is formatted as FAT32 with an MBR partition table. It will not work otherwise. See [Format a MicroSD Card](../tutorials/format-micro-sd.md).
 
-International kits do not come with a battery because of shipping regulations. Battery links for common countries can be found [here.](https://pocketmage.org/get/)
+### I found a software bug
 
-### **What is the programming mode switch?**
-
-The programming mode switch allows you to program and debug the PocketMage. Internally, it connects the USB port directly to the microcontroller, bypassing the USB and battery charge controller. You may keep programming mode on and use the device as normal with no issues, but your charging will be limited to 500mA as opposed to fast charging when programming mode is turned off.
-
-## Common Issues
-
----
-
-### **My dictionary isn't working!**
-
-The English dictionary isn't installed on the PocketMage out of the box and needs to be downloaded to the SD card. Find the dictionary files [here.](<https://github.com/ashtf8/PocketMage_PDA/tree/main/Resources/Assets/Dictionary%20(OPTED)>) Simply connect your PocketMage to your computer using the USB app and drop all the .txt files into the dictionary folder!
-
-### **I can't flash the firmware!**
-
-Ensure that: Your battery is unplugged and the programming mode DIP switch is set to ON. Refer to above guide for detailed instructions on flashing.
-
-### **I found a software bug!**
-
-Please report the bug in detail on the [GitHub issues page](https://github.com/ashtf8/PocketMage_PDA/issues) and include steps to reproduce. We will get to it when we can!
-
-### **My SD card isn't working!**
-
-First, ensure that your SD card is below 32gb. The recommended size is 8gb, the smaller the SD card the faster the PocketMage will be. Next, ensure that your SD card is formatted to FAT32. It will not work unless it's formatted to FAT32.
+Report the bug in detail on the [GitHub issues page](https://github.com/TailsmanDesign/PocketMage_PDA/issues), including steps to reproduce.
