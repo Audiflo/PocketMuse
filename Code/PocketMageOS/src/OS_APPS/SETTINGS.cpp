@@ -89,7 +89,7 @@ static std::vector<SettingItem> settingsList = {
   SettingItem{"SYSTEM_CLOCK", "System Clock", SetType::BOOLEAN, nullptr, &SYSTEM_CLOCK, 0, 0, updateBlank},
   SettingItem{"SHOW_YEAR", "Show Year", SetType::BOOLEAN, nullptr, &SHOW_YEAR, 0, 0, updateBlank},
   SettingItem{"SAVE_POWER", "Save Power", SetType::BOOLEAN, nullptr, &SAVE_POWER, 0, 0, updateBlank},
-  SettingItem{"FAST_REFRESH", "Fast Refresh (Experimental!)", SetType::BOOLEAN, nullptr, &FAST_REFRESH, 0, 0, updateFastRef},
+  SettingItem{"FAST_REFRESH", "Fast Refresh (Unstable!)", SetType::BOOLEAN, nullptr, &FAST_REFRESH, 0, 0, updateFastRef},
   SettingItem{"DEBUG_VERBOSE", "Debug Verbose", SetType::BOOLEAN, nullptr, &DEBUG_VERBOSE, 0, 0, updateBlank},
   SettingItem{"HOME_ON_BOOT", "Home on Boot", SetType::BOOLEAN, nullptr, &HOME_ON_BOOT, 0, 0, updateBlank},
   SettingItem{"ALLOW_NO_SD", "Allow No SD", SetType::BOOLEAN, nullptr, &ALLOW_NO_MICROSD, 0, 0, updateBlank},
@@ -280,8 +280,10 @@ void processKB_SETTINGS() {
         SettingItem& item = settingsList[settingsScrollIndex];
         
         if (item.type == SetType::BOOLEAN) {
-          int res = boolPrompt("Toggle " + item.name + "?");
-          if (res == 1) {
+          // Direct Toggle logic instead of boolPrompt
+          bool nextState = !(*(item.boolVal));
+          
+          if (nextState) { // Turning ON
             if (item.key == "LOCK_ENABLED") {
               if (!lockHasPin()) {
                 actionSetPin();
@@ -298,7 +300,7 @@ void processKB_SETTINGS() {
               *(item.boolVal) = true;
             }
           } 
-          else if (res == 0) {
+          else { // Turning OFF
             if (item.key == "LOCK_ENABLED") {
               lockDisable();
               *(item.boolVal) = false;
@@ -308,12 +310,11 @@ void processKB_SETTINGS() {
             }
           }
 
-          if (res == 1 || res == 0) {
-            prefs.begin("PocketMage", false);
-            prefs.putBool(item.key.c_str(), *(item.boolVal));
-            prefs.end();
-            if (item.onUpdate) item.onUpdate();
-          }
+          // Save the toggled value
+          prefs.begin("PocketMage", false);
+          prefs.putBool(item.key.c_str(), *(item.boolVal));
+          prefs.end();
+          if (item.onUpdate) item.onUpdate();
         } 
         else if (item.type == SetType::INTEGER) {
           String promptTxt = item.name + " (" + String(item.minVal) + "-" + String(item.maxVal) + "):";
@@ -396,7 +397,7 @@ void einkHandler_SETTINGS() {
     // Draw scrollbar vertically aligned to the left of the internal bounding box
     drawScrollbar(settingsList.size(), SETTINGS_ITEMS_PAGE, settingsScrollIndex, SETTINGS_BOX_X, SETTINGS_BOX_Y, SETTINGS_BOX_H, 4, false, GxEPD_BLACK, GxEPD_WHITE);
 
-    int textX = SETTINGS_BOX_X + 8; // Offset text past scrollbar
+    int textX = SETTINGS_BOX_X + 10; // Offset text past scrollbar
     int valX = textX;
     int nameX = valX + 38; // Provide room on the left to draw a checkbox or the [value]
 
@@ -417,9 +418,9 @@ void einkHandler_SETTINGS() {
       if (i == settingsScrollIndex) {
         // Dynamically size the bounding box to fit the exact text
         int nameWidth = FontEngine::textWidth(DisplayTarget::EINK, item.name, FontStyle::Body);
-        int boxW = (nameX - valX) + nameWidth + 8; // value width + text width + padding
+        int boxW = (nameX - valX) + nameWidth + 12; // value width + text width + padding
         
-        display.fillRoundRect(valX - 4, y - 13, boxW, 18, 4, GxEPD_BLACK);
+        display.fillRoundRect(valX - 2, y - 13, boxW, 18, 4, GxEPD_BLACK);
         u8g2f.setForegroundColor(GxEPD_WHITE);
       } else {
         u8g2f.setForegroundColor(GxEPD_BLACK);
