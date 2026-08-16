@@ -10,7 +10,7 @@ enum class SetType { BOOLEAN, INTEGER, ACTION };
 // Data-driven struct holding configuration for each setting
 struct SettingItem {
   String key;              // Preference key name
-  String name;             // Display name in UI
+  StringID nameID;         // Display name in UI
   SetType type;            // Boolean, Integer, or Action
   int* intVal;             // Pointer to global int variable
   bool* boolVal;           // Pointer to global bool variable
@@ -65,7 +65,7 @@ void actionSetPin() {
 }
 
 void actionSetLang() {
-  String langPart = textPrompt("Language code (en, es, etc):");
+  String langPart = textPrompt(TR(STR_SETTINGS_LANG_PROMPT));
   if (langPart != "_EXIT_" && langPart != "_RETURN_" && langPart != "_CENTER_") {
     langPart.trim();
     langPart.toLowerCase();
@@ -82,22 +82,22 @@ void actionSetLang() {
 
 // Core array defining the system settings
 static std::vector<SettingItem> settingsList = {
-  SettingItem{"OLED_BRIGHTNESS", "OLED Brightness", SetType::INTEGER, &OLED_BRIGHTNESS, nullptr, 0, 255, updateLumina},
-  SettingItem{"TIMEOUT", "Screen Timeout", SetType::INTEGER, &TIMEOUT, nullptr, 15, 3600, updateBlank},
-  SettingItem{"OLED_MAX_FPS", "OLED Max FPS", SetType::INTEGER, &OLED_MAX_FPS, nullptr, 5, 144, updateBlank},
-  SettingItem{"MUTE_BUZZER", "Mute Buzzer", SetType::BOOLEAN, nullptr, &MUTE_BUZZER, 0, 0, updateBlank},
-  SettingItem{"SYSTEM_CLOCK", "System Clock", SetType::BOOLEAN, nullptr, &SYSTEM_CLOCK, 0, 0, updateBlank},
-  SettingItem{"SHOW_YEAR", "Show Year", SetType::BOOLEAN, nullptr, &SHOW_YEAR, 0, 0, updateBlank},
-  SettingItem{"SAVE_POWER", "Save Power", SetType::BOOLEAN, nullptr, &SAVE_POWER, 0, 0, updateBlank},
-  SettingItem{"FAST_REFRESH", "Fast Refresh (Unstable!)", SetType::BOOLEAN, nullptr, &FAST_REFRESH, 0, 0, updateFastRef},
-  SettingItem{"DEBUG_VERBOSE", "Debug Verbose", SetType::BOOLEAN, nullptr, &DEBUG_VERBOSE, 0, 0, updateBlank},
-  SettingItem{"HOME_ON_BOOT", "Home on Boot", SetType::BOOLEAN, nullptr, &HOME_ON_BOOT, 0, 0, updateBlank},
-  SettingItem{"ALLOW_NO_SD", "Allow No SD", SetType::BOOLEAN, nullptr, &ALLOW_NO_MICROSD, 0, 0, updateBlank},
-  SettingItem{"LOCK_ENABLED", "Device Lock", SetType::BOOLEAN, nullptr, (bool*)&deviceLocked, 0, 0, updateBlank},
-  SettingItem{"", "Set Lock PIN", SetType::ACTION, nullptr, nullptr, 0, 0, actionSetPin},
-  SettingItem{"", "Set Time", SetType::ACTION, nullptr, nullptr, 0, 0, actionSetTime},
-  SettingItem{"", "Set Date", SetType::ACTION, nullptr, nullptr, 0, 0, actionSetDate},
-  SettingItem{"", "System Language", SetType::ACTION, nullptr, nullptr, 0, 0, actionSetLang}
+  SettingItem{"OLED_BRIGHTNESS", STR_SETTINGS_NAME_BRIGHTNESS, SetType::INTEGER, &OLED_BRIGHTNESS, nullptr, 0, 255, updateLumina},
+  SettingItem{"TIMEOUT", STR_SETTINGS_NAME_TIMEOUT, SetType::INTEGER, &TIMEOUT, nullptr, 15, 3600, updateBlank},
+  SettingItem{"OLED_MAX_FPS", STR_SETTINGS_NAME_MAX_FPS, SetType::INTEGER, &OLED_MAX_FPS, nullptr, 5, 144, updateBlank},
+  SettingItem{"MUTE_BUZZER", STR_SETTINGS_NAME_MUTE, SetType::BOOLEAN, nullptr, &MUTE_BUZZER, 0, 0, updateBlank},
+  SettingItem{"SYSTEM_CLOCK", STR_SETTINGS_NAME_CLOCK, SetType::BOOLEAN, nullptr, &SYSTEM_CLOCK, 0, 0, updateBlank},
+  SettingItem{"SHOW_YEAR", STR_SETTINGS_NAME_YEAR, SetType::BOOLEAN, nullptr, &SHOW_YEAR, 0, 0, updateBlank},
+  SettingItem{"SAVE_POWER", STR_SETTINGS_NAME_POWER, SetType::BOOLEAN, nullptr, &SAVE_POWER, 0, 0, updateBlank},
+  SettingItem{"FAST_REFRESH", STR_SETTINGS_NAME_FAST_REFRESH, SetType::BOOLEAN, nullptr, &FAST_REFRESH, 0, 0, updateFastRef},
+  SettingItem{"DEBUG_VERBOSE", STR_SETTINGS_NAME_DEBUG, SetType::BOOLEAN, nullptr, &DEBUG_VERBOSE, 0, 0, updateBlank},
+  SettingItem{"HOME_ON_BOOT", STR_SETTINGS_NAME_HOME_BOOT, SetType::BOOLEAN, nullptr, &HOME_ON_BOOT, 0, 0, updateBlank},
+  SettingItem{"ALLOW_NO_SD", STR_SETTINGS_NAME_ALLOW_SD, SetType::BOOLEAN, nullptr, &ALLOW_NO_MICROSD, 0, 0, updateBlank},
+  SettingItem{"LOCK_ENABLED", STR_SETTINGS_NAME_LOCK, SetType::BOOLEAN, nullptr, (bool*)&deviceLocked, 0, 0, updateBlank},
+  SettingItem{"", STR_SETTINGS_NAME_SET_PIN, SetType::ACTION, nullptr, nullptr, 0, 0, actionSetPin},
+  SettingItem{"", STR_SETTINGS_NAME_SET_TIME, SetType::ACTION, nullptr, nullptr, 0, 0, actionSetTime},
+  SettingItem{"", STR_SETTINGS_NAME_SET_DATE, SetType::ACTION, nullptr, nullptr, 0, 0, actionSetDate},
+  SettingItem{"", STR_SETTINGS_NAME_SET_LANG, SetType::ACTION, nullptr, nullptr, 0, 0, actionSetLang}
 };
 
 // Simplified state machine
@@ -116,6 +116,12 @@ constexpr int SETTINGS_TOG_W      = 26;
 constexpr int SETTINGS_TOG_H      = 11;
 constexpr int SETTINGS_ITEMS_PAGE = 9;
 constexpr int SETTINGS_PITCH      = SETTINGS_BOX_H / SETTINGS_ITEMS_PAGE;
+
+// Localized labels can overflow the fixed rows (German especially): clamp them
+// to the box interior on the e-ink and clear of the OLED hint column.
+constexpr int SETTINGS_NAME_MAX_W = (SETTINGS_BOX_X + SETTINGS_BOX_W) - (SETTINGS_BOX_X + 10) - 38 - 8; // valX + value gutter + right pad
+constexpr int SETTINGS_HIGHLIGHT_MAX_W = (SETTINGS_BOX_X + SETTINGS_BOX_W) - ((SETTINGS_BOX_X + 10) - 2); // right edge - highlight start
+constexpr int SETTINGS_OLED_NAME_MAX_W = 140 - kOledPrevX - 2; // clear of the hint column at x=140
 
 void SETTINGS_INIT() {
   // OPEN SETTINGS
@@ -317,7 +323,7 @@ void processKB_SETTINGS() {
           if (item.onUpdate) item.onUpdate();
         } 
         else if (item.type == SetType::INTEGER) {
-          String promptTxt = item.name + " (" + String(item.minVal) + "-" + String(item.maxVal) + "):";
+          String promptTxt = String(TR(item.nameID)) + " (" + String(item.minVal) + "-" + String(item.maxVal) + "):";
           String resStr = textPrompt(promptTxt);
           
           if (resStr != "_RETURN_" && resStr != "_EXIT_" && resStr != "_CENTER_") {
@@ -344,7 +350,7 @@ void processKB_SETTINGS() {
       }
       // Space to manually type a setting command
       else if (inchar == 32) { 
-        String cmd = textPrompt("Type a setting command:", "> ");
+        String cmd = textPrompt(TR(STR_SETTINGS_CMD_PROMPT), "> ");
         if (cmd != "_RETURN_" && cmd != "_EXIT_" && cmd != "_CENTER_" && cmd != "") {
           String returnText = settingCommandSelect(cmd);
           if (returnText != "") OLED().sysMessage(returnText, 1000);
@@ -376,13 +382,14 @@ void processKB_SETTINGS() {
         u8g2.drawTriangle(0, y - 2 * kOledPrevTriH, 0, y, kOledPrevTriW, y - kOledPrevTriH);
       }
       
-      FontEngine::drawText(DisplayTarget::OLED, kOledPrevX, y, settingsList[i].name, FontStyle::Tiny);
+      FontEngine::drawText(DisplayTarget::OLED, kOledPrevX, y,
+                           truncateWithEllipsis(TR(settingsList[i].nameID), SETTINGS_OLED_NAME_MAX_W, FontStyle::Tiny, DisplayTarget::OLED), FontStyle::Tiny);
       y += kOledPrevPitch;
     }
 
     // Draw instructions on the right side of the OLED
-    FontEngine::drawText(DisplayTarget::OLED, 140, 12, "ENTER to change", FontStyle::Tiny);
-    FontEngine::drawText(DisplayTarget::OLED, 140, 26, "SPACE to type", FontStyle::Tiny);
+    FontEngine::drawText(DisplayTarget::OLED, 140, 12, TR(STR_SETTINGS_ENTER_CHANGE), FontStyle::Tiny);
+    FontEngine::drawText(DisplayTarget::OLED, 140, 26, TR(STR_SETTINGS_SPACE_TYPE), FontStyle::Tiny);
 
     u8g2.sendBuffer();
   }
@@ -414,11 +421,16 @@ void einkHandler_SETTINGS() {
     for (int i = startIdx; i < min((int)settingsList.size(), startIdx + SETTINGS_ITEMS_PAGE); i++) {
       SettingItem& item = settingsList[i];
 
+      // Localized label: shrink to Small when Body overflows, then ellipsis-truncate
+      FontStyle nameStyle = FontEngine::fitStyle(DisplayTarget::EINK, TR(item.nameID), SETTINGS_NAME_MAX_W, kLabelCascade, kLabelCascadeCount);
+      String name = truncateWithEllipsis(TR(item.nameID), SETTINGS_NAME_MAX_W, nameStyle);
+
       // Visually invert/highlight currently selected setting row
       if (i == settingsScrollIndex) {
-        // Dynamically size the bounding box to fit the exact text
-        int nameWidth = FontEngine::textWidth(DisplayTarget::EINK, item.name, FontStyle::Body);
-        int boxW = (nameX - valX) + nameWidth + 12; // value width + text width + padding
+        // Dynamically size the bounding box to fit the exact text, clamped so it
+        // never crosses the box edge onto the background
+        int nameWidth = FontEngine::textWidth(DisplayTarget::EINK, name, nameStyle);
+        int boxW = min((nameX - valX) + nameWidth + 12, SETTINGS_HIGHLIGHT_MAX_W); // value width + text width + padding
         
         display.fillRoundRect(valX - 2, y - 13, boxW, 18, 4, GxEPD_BLACK);
         u8g2f.setForegroundColor(GxEPD_WHITE);
@@ -441,14 +453,14 @@ void einkHandler_SETTINGS() {
       }
 
       // Draw text label
-      FontEngine::drawText(DisplayTarget::EINK, nameX, y, item.name, FontStyle::Body);
+      FontEngine::drawText(DisplayTarget::EINK, nameX, y, name, nameStyle);
       y += SETTINGS_PITCH;
     }
 
     u8g2f.setForegroundColor(GxEPD_BLACK);
     
     // Output the static instruction prompt box below
-    endEinkScreen("Type or select a setting");
+    endEinkScreen(TR(STR_SETTINGS_EINK_HINT));
   }
 }
 #endif

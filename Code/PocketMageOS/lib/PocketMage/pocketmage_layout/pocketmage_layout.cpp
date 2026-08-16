@@ -37,19 +37,20 @@ size_t sliceThatFits(const char* s, size_t n, int maxTextWidth, FontStyle style)
   return best;
 }
 
-String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style) {
-  int w = FontEngine::textWidth(DisplayTarget::EINK, text, style);
+String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style,
+                            DisplayTarget target) {
+  int w = FontEngine::textWidth(target, text, style);
   if (w <= maxWidthPx) return text;
 
   String dots("...");
-  int dotsW = FontEngine::textWidth(DisplayTarget::EINK, dots, style);
+  int dotsW = FontEngine::textWidth(target, dots, style);
   int avail = maxWidthPx - dotsW;
   if (avail <= 0) return dots;
 
   int lo = 0, hi = text.length();
   while (lo < hi) {
     int mid = (lo + hi + 1) / 2;
-    if (FontEngine::textWidth(DisplayTarget::EINK, text.substring(0, mid), style) <= avail)
+    if (FontEngine::textWidth(target, text.substring(0, mid), style) <= avail)
       lo = mid;
     else
       hi = mid - 1;
