@@ -43,6 +43,10 @@ constexpr int CAL_EDIT_X        = 106;   // event editor/viewer: value column x
 constexpr int CAL_EDIT_Y0       = 68;    // event editor/viewer: first value baseline
 constexpr int CAL_EDIT_PITCH    = 22;    // event editor/viewer: value row pitch
 constexpr int CAL_EDIT_TEXT_W   = CAL_DAY_LIST_X + CAL_DAY_LIST_W - CAL_EDIT_X;  // 203: value text width
+constexpr int CAL_NOTE_Y0       = CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH);  // event note: first line baseline
+constexpr int CAL_NOTE_SCROLL_X = CAL_EDIT_X + CAL_EDIT_TEXT_W + 1;   // event note: scrollbar x
+constexpr int CAL_NOTE_SCROLL_Y = CAL_NOTE_Y0 - 18 + 2;                   // event note: scrollbar track y (top inset)
+constexpr int CAL_NOTE_SCROLL_H = kEinkContentH - CAL_NOTE_SCROLL_Y - 2;  // event note: scrollbar track height (bottom inset)
 
 enum CalendarState { WEEK, MONTH, NEW_EVENT, VIEW_EVENT, SUN, MON, TUE, WED, THU, FRI, SAT };
 CalendarState CurrentCalendarState = MONTH;
@@ -65,6 +69,8 @@ String newEventStartTime = "";
 String newEventDuration = "";
 String newEventRepeat = "";
 String newEventNote = "";
+static std::vector<String> wrappedEventNoteLines;
+static int eventNoteScrollIndex = 0;
 
 std::vector<std::vector<String>> dayEvents;
 std::vector<std::vector<String>> calendarEvents;
@@ -82,6 +88,23 @@ inline String formatDateDisplay(String yyyymmdd) {
   return yyyymmdd.substring(6, 8) + "/" + yyyymmdd.substring(4, 6) + "/" + yyyymmdd.substring(0, 4);
 }
 
+inline int eventNoteVisibleLines() {
+  return 1 + ((kEinkContentH - CAL_NOTE_Y0) / einkRowPitch(FontStyle::Body));
+}
+
+void resetEventNoteScroll() {
+  eventNoteScrollIndex = 0;
+  wrappedEventNoteLines = wordWrap(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body);
+}
+
+inline bool updateEventNoteScrollFromTouch(int maxScroll) {
+  // The shared touch helper uses ulong&, while Calendar keeps signed scroll bounds.
+  ulong touchScrollIndex = eventNoteScrollIndex;
+  bool updateScreen = TOUCH().updateScroll(maxScroll, touchScrollIndex);
+  eventNoteScrollIndex = static_cast<int>(touchScrollIndex);
+  return updateScreen;
+}
+
 void updateEventArray();
 void sortEventsByDate(std::vector<std::vector<String>> &calendarEvents);
 
@@ -92,6 +115,8 @@ void CALENDAR_INIT() {
   KB().setKeyboardState(NORMAL);
   monthOffsetCount = 0;
   weekOffsetCount = 0;
+  eventNoteScrollIndex = 0;
+  wrappedEventNoteLines.clear();
 
   updateEventArray();
   sortEventsByDate(calendarEvents);
@@ -760,6 +785,7 @@ void commandSelectDay(String command) {
       newEventRepeat    = evt[4];
       newEventNote      = evt[5];
       currentLine       = "";
+      resetEventNoteScroll();
 
       CurrentCalendarState = VIEW_EVENT;
       KB().setKeyboardState(NORMAL);
@@ -1245,6 +1271,13 @@ void processKB_CALENDAR() {
       break;
 
     case VIEW_EVENT:
+      {
+        int maxNoteScroll = max(0, (int)wrappedEventNoteLines.size() - eventNoteVisibleLines());
+        if (updateEventNoteScrollFromTouch(maxNoteScroll)) {
+          newState = true;
+        }
+      }
+
       // Force FUNC state before draining buffer
       KB().setKeyboardState(FUNC); 
       inchar = KB().updateKeypress();
@@ -1297,7 +1330,11 @@ void processKB_CALENDAR() {
           else if (inchar == '6') {
             String note = textPrompt(TR(STR_CAL_EDIT_NOTE));
             if (note == "_RETURN_") return;
-            else if (note != "_EXIT_") { newEventNote = note; newState = true; }
+            else if (note != "_EXIT_") {
+              newEventNote = note;
+              resetEventNoteScroll();
+              newState = true;
+            }
           }
           else if (inchar == '$') { // 'd' in FUNC layer
             if (boolPrompt(TR(STR_CAL_DELETE_Q)) == 1) {
@@ -1485,7 +1522,19 @@ void einkHandler_CALENDAR() {
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (2 * CAL_EDIT_PITCH), newEventStartTime, FontStyle::Body);
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (3 * CAL_EDIT_PITCH), newEventDuration, FontStyle::Body);
         FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (4 * CAL_EDIT_PITCH), newEventRepeat, FontStyle::Body);
-        FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, CAL_EDIT_Y0 + (5 * CAL_EDIT_PITCH), truncateWithEllipsis(newEventNote, CAL_EDIT_TEXT_W, FontStyle::Body), FontStyle::Body);
+
+        int visibleNoteLines = eventNoteVisibleLines();
+        int maxNoteScroll = max(0, (int)wrappedEventNoteLines.size() - visibleNoteLines);
+        if (eventNoteScrollIndex > maxNoteScroll) eventNoteScrollIndex = maxNoteScroll;
+
+        int noteEnd = min((int)wrappedEventNoteLines.size(), eventNoteScrollIndex + visibleNoteLines);
+        for (int i = eventNoteScrollIndex; i < noteEnd; i++) {
+          int noteY = CAL_NOTE_Y0 + ((i - eventNoteScrollIndex) * einkRowPitch(FontStyle::Body));
+          FontEngine::drawText(DisplayTarget::EINK, CAL_EDIT_X, noteY, wrappedEventNoteLines[i], FontStyle::Body);
+        }
+
+        drawScrollbar(wrappedEventNoteLines.size(), visibleNoteLines, eventNoteScrollIndex,
+                      CAL_NOTE_SCROLL_X, CAL_NOTE_SCROLL_Y, CAL_NOTE_SCROLL_H, 3);
 
         EINK().refresh();
       }
