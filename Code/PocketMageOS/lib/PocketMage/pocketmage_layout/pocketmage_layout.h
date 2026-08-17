@@ -67,16 +67,18 @@ constexpr int kOledSysMsgRaise      = 5;    // raise sysMessage text above the o
 constexpr int kIconCellSize = 40;   // app icon cell size
 constexpr int kIconNameGap  = 13;   // icon-to-name baseline gap
 
-// App-name label cascade: largest style first, all non-bold.  A name under a
-// 40px icon in a 60px grid cell uses Body, else Small (ncenR08, the compact
-// regular serif).  Picks the largest style whose width fits the 60px cell pitch
+// App-name label cascade: largest style first, all serif (no family mixing).
+// Body (ncenR10) first, then BodyNarrow (timR10 - Times 10pt, measurably
+// narrower at the same point size) as a middle step, then Small (ncenR08) as
+// the floor.  Used by the HOME/APPLOADER grid and the SETTINGS list; each
+// picks its own maxWidth.  Picks the largest style whose width fits
 // (FontEngine::fitStyle); truncateWithEllipsis() handles anything that still
 // overflows Small.
-static constexpr FontStyle kGridLabelCascade[] = {
-  FontStyle::Body, FontStyle::Small,
+static constexpr FontStyle kLabelCascade[] = {
+  FontStyle::Body, FontStyle::BodyNarrow, FontStyle::Small,
 };
-static constexpr int kGridLabelCascadeCount =
-    sizeof(kGridLabelCascade) / sizeof(kGridLabelCascade[0]);
+static constexpr int kLabelCascadeCount =
+    sizeof(kLabelCascade) / sizeof(kLabelCascade[0]);
 constexpr int kGridLabelMaxW = 60;  // max label width = grid cell pitch
 
 // OLED scroll-preview rows (task/terminal/chat scroll previews)
@@ -92,11 +94,13 @@ constexpr int kOledPrevTriH   = 3;   // cursor triangle half-height
 // Returns the number of characters that fit (0 if none fit, or 1+ for newline).
 size_t sliceThatFits(const char* s, size_t n, int maxTextWidth, FontStyle style);
 
-// Truncate text to fit within maxWidthPx using the given e-ink style.
-// Appends "..." when truncated and returns the shortened string.  The cut
-// always lands on a UTF-8 character boundary (a multi-byte sequence is never
-// split).
-String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style);
+// Truncate text to fit within maxWidthPx using the given style.  Defaults to
+// the e-ink metrics; pass DisplayTarget::OLED to measure against the OLED
+// font table instead.  Appends "..." when truncated and returns the shortened
+// string.  The cut always lands on a UTF-8 character boundary (a multi-byte
+// sequence is never split).
+String truncateWithEllipsis(const String& text, int maxWidthPx, FontStyle style,
+                            DisplayTarget target = DisplayTarget::EINK);
 
 // Word-wrap text to fit within maxWidthPx using the given font style.
 // Returns one string per wrapped line.

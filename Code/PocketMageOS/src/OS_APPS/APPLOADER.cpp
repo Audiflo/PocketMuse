@@ -229,8 +229,8 @@ void loadAndDrawAppIcon(int x, int y, int otaIndex, bool showName, int maxNameWi
 
   if (showName) {
     FontStyle nameStyle = FontEngine::fitStyle(DisplayTarget::EINK, app.name,
-                                               maxNameWidth, kGridLabelCascade,
-                                               kGridLabelCascadeCount);
+                                               maxNameWidth, kLabelCascade,
+                                               kLabelCascadeCount);
     String appNameStr = truncateWithEllipsis(app.name, maxNameWidth, nameStyle);
 
     u8g2f.setForegroundColor(GxEPD_BLACK);

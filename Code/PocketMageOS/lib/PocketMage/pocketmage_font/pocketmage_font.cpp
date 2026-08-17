@@ -19,6 +19,8 @@ const FontTable kDefaultFontTable = {
   { u8g2_font_ncenR12_tf,  u8g2_font_ncenR12_tf,  16 },
   // small (ncenR08)
   { u8g2_font_ncenR08_tf,  u8g2_font_ncenR08_tf,  10 },
+  // bodyNarrow (timR10)
+  { u8g2_font_timR10_tf,   u8g2_font_timR10_tf,   14 },
   // mono
   { u8g2_font_courR10_tf, u8g2_font_courR10_tf, 14 },
   // monoBold
@@ -148,7 +150,7 @@ FontEngine::Metrics FontEngine::metrics_[static_cast<int>(FontStyle::_StyleCount
 const FontEntry& FontEngine::entry(FontStyle s) {
   // Map the style enum to the FontEntry inside the active table.
   // The enum values MUST match the struct field order in FontTable.
-  static_assert(static_cast<int>(FontStyle::_StyleCount) == 24,
+  static_assert(static_cast<int>(FontStyle::_StyleCount) == 25,
                 "FontStyle enum count must match FontTable field count");
   const FontTable& t = *table_;
   switch (s) {
@@ -159,6 +161,7 @@ const FontEntry& FontEngine::entry(FontStyle s) {
     case FontStyle::BodyBoldItalic:return t.bodyBoldItalic;
     case FontStyle::Medium:        return t.medium;
     case FontStyle::Small:         return t.small;
+    case FontStyle::BodyNarrow:    return t.bodyNarrow;
     case FontStyle::Mono:          return t.mono;
     case FontStyle::MonoBold:      return t.monoBold;
     case FontStyle::MonoItalic:    return t.monoItalic;

@@ -63,6 +63,7 @@ PocketmageBZ& BZ() { return pm_bz; }
 
 // ===================== main functions =====================
 void PocketmageBZ::playJingle(const Jingle& jingle) {
+  if (MUTE_BUZZER) return;
   if (jingle.notes == nullptr || jingle.len == 0) {
     return;  // No valid notes to play
   }

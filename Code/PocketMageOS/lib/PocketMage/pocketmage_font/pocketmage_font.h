@@ -13,6 +13,7 @@ enum class FontStyle : uint8_t {
   BodyBoldItalic,// ncenBI10_tf
   Medium,        // ncenR12_tf     - 12pt serif for OLED
   Small,         // ncenR08_tf     - compact regular serif (grid names, labels)
+  BodyNarrow,    // timR10_tf
   Mono,          // courR10_tf     - monospace body
   MonoBold,      // courB10_tf
   MonoItalic,    // courI10_tf
@@ -71,6 +72,7 @@ struct FontTable {
   FontEntry bodyBoldItalic;
   FontEntry medium;
   FontEntry small;
+  FontEntry bodyNarrow;
   FontEntry mono;
   FontEntry monoBold;
   FontEntry monoItalic;

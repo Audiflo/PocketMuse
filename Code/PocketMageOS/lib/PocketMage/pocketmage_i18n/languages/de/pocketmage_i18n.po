@@ -684,6 +684,90 @@ msgctxt "STR_SETTINGS_HUH"
 msgid "Huh?"
 msgstr "Hä?"
 
+msgctxt "STR_SETTINGS_LANG_PROMPT"
+msgid "Language code (en, es, etc):"
+msgstr "Sprachcode (en, es, etc):"
+
+msgctxt "STR_SETTINGS_NAME_BRIGHTNESS"
+msgid "OLED Brightness"
+msgstr "OLED-Helligkeit"
+
+msgctxt "STR_SETTINGS_NAME_TIMEOUT"
+msgid "Screen Timeout"
+msgstr "Bildschirm-Timeout"
+
+msgctxt "STR_SETTINGS_NAME_MAX_FPS"
+msgid "OLED Max FPS"
+msgstr "OLED Max-FPS"
+
+msgctxt "STR_SETTINGS_NAME_MUTE"
+msgid "Mute Buzzer"
+msgstr "Summer stumm"
+
+msgctxt "STR_SETTINGS_NAME_CLOCK"
+msgid "System Clock"
+msgstr "Systemuhr"
+
+msgctxt "STR_SETTINGS_NAME_YEAR"
+msgid "Show Year"
+msgstr "Jahr anzeigen"
+
+msgctxt "STR_SETTINGS_NAME_POWER"
+msgid "Save Power"
+msgstr "Energie sparen"
+
+msgctxt "STR_SETTINGS_NAME_FAST_REFRESH"
+msgid "Fast Refresh (Unstable!)"
+msgstr "Schnell-Refresh (Instabil)"
+
+msgctxt "STR_SETTINGS_NAME_DEBUG"
+msgid "Debug Verbose"
+msgstr "Ausführliches Debugging"
+
+msgctxt "STR_SETTINGS_NAME_HOME_BOOT"
+msgid "Home on Boot"
+msgstr "Home beim Start"
+
+msgctxt "STR_SETTINGS_NAME_ALLOW_SD"
+msgid "Allow No SD"
+msgstr "Ohne SD starten"
+
+msgctxt "STR_SETTINGS_NAME_LOCK"
+msgid "Device Lock"
+msgstr "Gerätesperre"
+
+msgctxt "STR_SETTINGS_NAME_SET_PIN"
+msgid "Set Lock PIN"
+msgstr "Sperr-PIN setzen"
+
+msgctxt "STR_SETTINGS_NAME_SET_TIME"
+msgid "Set Time"
+msgstr "Zeit einstellen"
+
+msgctxt "STR_SETTINGS_NAME_SET_DATE"
+msgid "Set Date"
+msgstr "Datum einstellen"
+
+msgctxt "STR_SETTINGS_NAME_SET_LANG"
+msgid "System Language"
+msgstr "Systemsprache"
+
+msgctxt "STR_SETTINGS_CMD_PROMPT"
+msgid "Type a setting command:"
+msgstr "Befehl eingeben:"
+
+msgctxt "STR_SETTINGS_ENTER_CHANGE"
+msgid "ENTER to change"
+msgstr "EINGABE zum Ändern"
+
+msgctxt "STR_SETTINGS_SPACE_TYPE"
+msgid "SPACE to type"
+msgstr "LEERTASTE zum Tippen"
+
+msgctxt "STR_SETTINGS_EINK_HINT"
+msgid "Type or select a setting"
+msgstr "Einstellung wählen"
+
 msgctxt "STR_LEX_INSTALL_DICT"
 msgid "Please install dict from GitHub!"
 msgstr "Bitte Wörterbuch von GitHub installieren!"
