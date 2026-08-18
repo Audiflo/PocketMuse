@@ -233,8 +233,8 @@ void drawHome() {
     display.drawBitmap(xPos, yPos, appIcons[i], kIconCellSize, kIconCellSize, GxEPD_BLACK);
     const char* name = I18n::appName(i);
     FontStyle nameStyle = FontEngine::fitStyle(DisplayTarget::EINK, name,
-                                               kGridLabelMaxW, kGridLabelCascade,
-                                               kGridLabelCascadeCount);
+                                               kGridLabelMaxW, kLabelCascade,
+                                               kLabelCascadeCount);
     String label = truncateWithEllipsis(name, kGridLabelMaxW, nameStyle);
     int w = FontEngine::textWidth(DisplayTarget::EINK, label, nameStyle);
     FontEngine::drawText(DisplayTarget::EINK, xPos + (kIconCellSize / 2) - (w / 2),
