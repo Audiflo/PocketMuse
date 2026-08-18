@@ -527,16 +527,6 @@ ulong reflowParagraphCore(ulong startLine, uint16_t* cursorRef) {
     currWriteIdx++;
   }
   
-  // FIX (#262): a trailing space typed at the very end of the paragraph gets
-  // consumed above as the "space between wrapped words" (see the skip logic
-  // a few lines up), but if nothing follows it yet, that leaves
-  // absoluteCursor unresolved with no line for the cursor to land on.
-  // Previously this was only handled for the fully-empty-paragraph case
-  // (currWriteIdx == startLine); generalised to any case where the cursor
-  // was never placed, creating (or reusing) a fresh line for it rather than
-  // leaving the cursor silently stale past the end of the shortened line —
-  // which caused the next typed character to glue onto the previous word
-  // instead of starting a new line.
   if (absoluteCursor != -1) {
     char currentStyle = (currWriteIdx == startLine) ? baseStyle : contStyle;
 
