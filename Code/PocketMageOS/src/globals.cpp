@@ -31,6 +31,7 @@ bool HOME_ON_BOOT;                       // Start home app on boot
 bool FAST_REFRESH;                       // Experimental fast partial refresh mode
 int OLED_BRIGHTNESS;                     // OLED brightness (0-255)
 int OLED_MAX_FPS;                        // OLED max FPS
+bool MUTE_BUZZER;                        // Mute the buzzer
 bool SD_SPI_COMPATIBILITY;               // SD card compatibility mode
 
 // ===================== APP STATES =====================

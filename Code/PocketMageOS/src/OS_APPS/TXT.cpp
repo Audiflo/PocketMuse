@@ -527,19 +527,24 @@ ulong reflowParagraphCore(ulong startLine, uint16_t* cursorRef) {
     currWriteIdx++;
   }
   
-  if (currWriteIdx == startLine) {
+  if (absoluteCursor != -1) {
+    char currentStyle = (currWriteIdx == startLine) ? baseStyle : contStyle;
+
+    if (currWriteIdx >= document.lineCount || currWriteIdx >= endLine) {
+      insertLineArray(currWriteIdx);
+      if (currWriteIdx >= endLine) endLine++;
+    }
+
     Line& writeLine = document.lines[currWriteIdx];
-    writeLine.type = baseStyle;
+    writeLine.type = currentStyle;
     writeLine.text[0] = '\0';
     writeLine.len = 0;
-    
-    if (absoluteCursor != -1) {
-      currentLineNum = currWriteIdx;
-      *cursorRef = 0;
-    }
-    currWriteIdx++; 
+
+    currentLineNum = currWriteIdx;
+    *cursorRef = 0;
+    currWriteIdx++;
   }
-  
+
   if (endLine > currWriteIdx) {
     deleteLinesMultiple(currWriteIdx, endLine - currWriteIdx);
   }

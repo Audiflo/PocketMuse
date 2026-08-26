@@ -684,6 +684,90 @@ msgctxt "STR_SETTINGS_HUH"
 msgid "Huh?"
 msgstr "Hein?"
 
+msgctxt "STR_SETTINGS_LANG_PROMPT"
+msgid "Language code (en, es, etc):"
+msgstr "Code de langue (en, es, etc) :"
+
+msgctxt "STR_SETTINGS_NAME_BRIGHTNESS"
+msgid "OLED Brightness"
+msgstr "Luminosité OLED"
+
+msgctxt "STR_SETTINGS_NAME_TIMEOUT"
+msgid "Screen Timeout"
+msgstr "Délai d'écran"
+
+msgctxt "STR_SETTINGS_NAME_MAX_FPS"
+msgid "OLED Max FPS"
+msgstr "FPS max OLED"
+
+msgctxt "STR_SETTINGS_NAME_MUTE"
+msgid "Mute Buzzer"
+msgstr "Couper le vibreur"
+
+msgctxt "STR_SETTINGS_NAME_CLOCK"
+msgid "System Clock"
+msgstr "Horloge système"
+
+msgctxt "STR_SETTINGS_NAME_YEAR"
+msgid "Show Year"
+msgstr "Afficher l'année"
+
+msgctxt "STR_SETTINGS_NAME_POWER"
+msgid "Save Power"
+msgstr "Économie d'énergie"
+
+msgctxt "STR_SETTINGS_NAME_FAST_REFRESH"
+msgid "Fast Refresh (Unstable!)"
+msgstr "Refresh rapide (Instable)"
+
+msgctxt "STR_SETTINGS_NAME_DEBUG"
+msgid "Debug Verbose"
+msgstr "Débogage verbeux"
+
+msgctxt "STR_SETTINGS_NAME_HOME_BOOT"
+msgid "Home on Boot"
+msgstr "Accueil au démarrage"
+
+msgctxt "STR_SETTINGS_NAME_ALLOW_SD"
+msgid "Allow No SD"
+msgstr "Autoriser sans SD"
+
+msgctxt "STR_SETTINGS_NAME_LOCK"
+msgid "Device Lock"
+msgstr "Verrouillage de l'appareil"
+
+msgctxt "STR_SETTINGS_NAME_SET_PIN"
+msgid "Set Lock PIN"
+msgstr "Définir le PIN de verrouillage"
+
+msgctxt "STR_SETTINGS_NAME_SET_TIME"
+msgid "Set Time"
+msgstr "Régler l'heure"
+
+msgctxt "STR_SETTINGS_NAME_SET_DATE"
+msgid "Set Date"
+msgstr "Régler la date"
+
+msgctxt "STR_SETTINGS_NAME_SET_LANG"
+msgid "System Language"
+msgstr "Langue du système"
+
+msgctxt "STR_SETTINGS_CMD_PROMPT"
+msgid "Type a setting command:"
+msgstr "Tapez une commande de réglage :"
+
+msgctxt "STR_SETTINGS_ENTER_CHANGE"
+msgid "ENTER to change"
+msgstr "ENTRÉE pour modifier"
+
+msgctxt "STR_SETTINGS_SPACE_TYPE"
+msgid "SPACE to type"
+msgstr "ESPACE pour taper"
+
+msgctxt "STR_SETTINGS_EINK_HINT"
+msgid "Type or select a setting"
+msgstr "Tapez ou sélectionnez un réglage"
+
 msgctxt "STR_LEX_INSTALL_DICT"
 msgid "Please install dict from GitHub!"
 msgstr "Installez le dictionnaire depuis GitHub!"

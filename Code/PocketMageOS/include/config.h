@@ -90,6 +90,7 @@ extern bool HOME_ON_BOOT;        // Start home app on boot
 extern bool FAST_REFRESH;        // Enable experimental fast partial refresh mode
 extern int OLED_BRIGHTNESS;      // OLED brightness (0-255)
 extern int OLED_MAX_FPS;         // OLED max FPS
+extern bool MUTE_BUZZER;         // Mute the buzzer
 extern bool SD_SPI_COMPATIBILITY;
 
 #endif
