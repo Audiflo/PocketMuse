@@ -56,7 +56,6 @@ Touch scroll on the slider controls volume in all modes.
 - **JPEGDEC** - album art decode
 - **PNGdec** - album art decode
 - **U8g2** - OLED display
-- Adafruit GFX fonts (FreeSans, FreeMono, Font5x7Fixed, etc.)
 
 ## Project layout
 

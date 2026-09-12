@@ -3,8 +3,8 @@
 
 static constexpr int kItemH     = 10;
 static constexpr int kListTop   = 32;
-static constexpr int kListBot   = 222;
-static constexpr int kMaxVis    = (kListBot - kListTop) / kItemH;
+static constexpr int kListBot   = kEinkContentH;
+static constexpr int kMaxVis    = (kListBot - kListTop) / kItemH; // 18 rows
 
 static int g_scrollOffset = 0;
 
@@ -118,7 +118,7 @@ void browser_process_key(char ch) {
 }
 
 void browser_render() {
-    display.fillScreen(GxEPD_WHITE);
+    beginEinkScreen();
 
     char hdr[64];
     snprintf(hdr, sizeof(hdr), "%s  [%d]", source_label(), g_trackCount);
@@ -126,12 +126,11 @@ void browser_render() {
 
     int n = track_count();
     if (n == 0) {
-        display.setFont(&Font5x7Fixed);
-        display.setTextColor(GxEPD_BLACK);
-        display.setCursor(8, 80);
-        display.print("No tracks found");
-        display.setCursor(8, 94);
-        display.print("Place .mp3 files in /music/ on SD");
+        FontEngine::drawText(DisplayTarget::EINK, 8, 80,
+                             "No tracks found", FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, 8, 94,
+                             "Place .mp3 files in /music/ on SD", FontStyle::Body);
+        draw_footer("No tracks - add .mp3 files to /music/");
         EINK().refresh();
         return;
     }
@@ -144,31 +143,26 @@ void browser_render() {
     if (end > n) end = n;
 
     for (int i = g_scrollOffset; i < end; i++) {
-        if (i == g_selIndex) {
-            display.fillRect(0, y - 7, display.width(), kItemH, GxEPD_BLACK);
-            display.setTextColor(GxEPD_WHITE);
-        } else {
-            display.setTextColor(GxEPD_BLACK);
-        }
-
-        display.setFont(&Font5x7Fixed);
-        display.setCursor(8, y);
-
         char path[256];
         char label[64];
         get_track_path(i, path, sizeof(path));
         get_display_name(path, label, sizeof(label));
 
-        uint16_t maxChars = 54;
-        if ((int)strlen(label) > maxChars) {
-            label[maxChars - 2] = '.';
-            label[maxChars - 1] = '.';
-            label[maxChars] = '\0';
+        String row = truncateWithEllipsis(label, display.width() - 24,
+                                          FontStyle::Tiny);
+
+        if (i == g_selIndex) {
+            display.fillRect(0, y - 8, display.width(), kItemH, GxEPD_BLACK);
+            u8g2f.setForegroundColor(GxEPD_WHITE);
+        } else {
+            u8g2f.setForegroundColor(GxEPD_BLACK);
         }
-        display.print(label);
+
+        FontEngine::drawText(DisplayTarget::EINK, 8, y, row, FontStyle::Tiny);
 
         y += kItemH;
     }
+    u8g2f.setForegroundColor(GxEPD_BLACK);
 
     draw_scrollbar(n, kMaxVis, g_scrollOffset);
 

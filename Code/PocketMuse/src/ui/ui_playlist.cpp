@@ -3,8 +3,8 @@
 
 static constexpr int kItemH   = 10;
 static constexpr int kListTop = 32;
-static constexpr int kListBot = 222;
-static constexpr int kMaxVis  = (kListBot - kListTop) / kItemH;
+static constexpr int kListBot = kEinkContentH;
+static constexpr int kMaxVis  = (kListBot - kListTop) / kItemH; // 18 rows
 
 static int g_plScroll = 0;
 
@@ -60,7 +60,7 @@ void playlist_process_key(char ch) {
 }
 
 void playlist_render() {
-    display.fillScreen(GxEPD_WHITE);
+    beginEinkScreen();
 
     const char* srcName = "";
     if (g_playlistMgr.source() == PlaySource::Playlist) {
@@ -74,10 +74,8 @@ void playlist_render() {
 
     int n = g_trackCount;
     if (n == 0) {
-        display.setFont(&Font5x7Fixed);
-        display.setTextColor(GxEPD_BLACK);
-        display.setCursor(8, 80);
-        display.print("Playlist is empty");
+        FontEngine::drawText(DisplayTarget::EINK, 8, 80,
+                             "Playlist is empty", FontStyle::Body);
         draw_footer("B:back ?:help");
         EINK().refresh();
         return;
@@ -91,47 +89,39 @@ void playlist_render() {
     if (end > n) end = n;
 
     for (int i = g_plScroll; i < end; i++) {
-        if (i == g_selIndex) {
-            display.fillRect(0, y - 7, display.width(), kItemH, GxEPD_BLACK);
-            display.setTextColor(GxEPD_WHITE);
-        } else if (i == g_nowTrackIndex) {
-            display.fillRect(0, y - 7, display.width(), kItemH, GxEPD_WHITE);
-            display.setTextColor(GxEPD_BLACK);
-            display.drawFastHLine(0, y - 7, display.width(), GxEPD_BLACK);
-            display.drawFastHLine(0, y + kItemH - 8, display.width(), GxEPD_BLACK);
-        } else {
-            display.setTextColor(GxEPD_BLACK);
-        }
-
-        display.setFont(&Font5x7Fixed);
-        display.setCursor(8, y);
-
-        // Track number
-        char line[72];
-        snprintf(line, sizeof(line), "%2d. ", i + 1);
-        display.print(line);
-
-        // Track name
+        // Track number + name
         char path[256];
         char label[56];
         get_track_path(i, path, sizeof(path));
         get_display_name(path, label, sizeof(label));
 
-        if ((int)strlen(label) > 46) {
-            label[44] = '.';
-            label[45] = '.';
-            label[46] = '\0';
+        char prefix[8];
+        snprintf(prefix, sizeof(prefix), "%2d.", i + 1);
+        String row = String(prefix) + " " + label;
+        row = truncateWithEllipsis(row, display.width() - 30,
+                                   FontStyle::Tiny);
+
+        if (i == g_selIndex) {
+            display.fillRect(0, y - 8, display.width(), kItemH, GxEPD_BLACK);
+            u8g2f.setForegroundColor(GxEPD_WHITE);
+        } else if (i == g_nowTrackIndex) {
+            display.drawRect(4, y - 8, display.width() - 8, kItemH, GxEPD_BLACK);
+            u8g2f.setForegroundColor(GxEPD_BLACK);
+        } else {
+            u8g2f.setForegroundColor(GxEPD_BLACK);
         }
-        display.print(label);
+
+        FontEngine::drawText(DisplayTarget::EINK, 8, y, row, FontStyle::Tiny);
 
         // Now playing indicator
         if (i == g_nowTrackIndex && g_playState != PlayerState::Stopped) {
-            display.setCursor(display.width() - 30, y);
-            display.print(">");
+            FontEngine::drawText(DisplayTarget::EINK, display.width() - 22,
+                                 y, ">", FontStyle::Tiny);
         }
 
         y += kItemH;
     }
+    u8g2f.setForegroundColor(GxEPD_BLACK);
 
     draw_scrollbar(n, kMaxVis, g_plScroll);
 

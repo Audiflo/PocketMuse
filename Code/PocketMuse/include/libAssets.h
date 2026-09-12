@@ -1,1 +1,0 @@
-../lib/PocketMage/include/libAssets.h

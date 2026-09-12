@@ -1,1 +1,1 @@
-../../PocketMage_V3/include/globals.h
+../../PocketMageOS/include/globals.h

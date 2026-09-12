@@ -115,18 +115,14 @@ void nowplaying_cache_art(const char* path) {
 }
 
 void nowplaying_render() {
-    display.fillScreen(GxEPD_WHITE);
-
-    display.setFont(&FreeSans9pt7b);
-    display.setTextColor(GxEPD_BLACK);
+    beginEinkScreen();
 
     if (g_nowTitle[0] == '\0' && g_nowPath[0] == '\0') {
         draw_header("Now Playing");
-        display.setFont(&Font5x7Fixed);
-        display.setCursor(8, 80);
-        display.print("Nothing playing");
-        display.setCursor(8, 94);
-        display.print("Select a track from the browser");
+        FontEngine::drawText(DisplayTarget::EINK, 8, 80,
+                             "Nothing playing", FontStyle::Tiny);
+        FontEngine::drawText(DisplayTarget::EINK, 8, 94,
+                             "Select a track from the browser", FontStyle::Tiny);
         draw_footer("B:browser ?:help");
         EINK().refresh();
         return;
@@ -153,76 +149,80 @@ void nowplaying_render() {
     // If no art, draw a placeholder frame
     if (!artDrawn) {
         display.drawRect(kArtX, kArtY, kArtSize, kArtSize, GxEPD_BLACK);
-        display.setFont(&Font5x7Fixed);
-        display.setTextColor(GxEPD_BLACK);
-        display.setCursor(kArtX + 32, kArtY + 64);
-        display.print("No Art");
+        FontEngine::drawText(DisplayTarget::EINK, kArtX + 32, kArtY + 64,
+                             "No Art", FontStyle::Tiny);
     }
 
     // Track info
-    display.setFont(&FreeSans9pt7b);
-    display.setTextColor(GxEPD_BLACK);
-
     char buf[128];
 
     // Title
     truncate_text(g_nowTitle, buf, sizeof(buf));
-    display.setCursor(kInfoX, kArtY + 18);
-    display.print(buf);
+    String title = truncateWithEllipsis(buf, kInfoW - 8, FontStyle::Body);
+    FontEngine::drawText(DisplayTarget::EINK, kInfoX, kArtY + 18,
+                         title, FontStyle::Body);
 
     // Artist
     truncate_text(g_nowArtist, buf, sizeof(buf));
     if (buf[0]) {
-        display.setCursor(kInfoX, kArtY + 40);
-        display.print(buf);
+        String artist = truncateWithEllipsis(buf, kInfoW - 8, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, kInfoX, kArtY + 40,
+                             artist, FontStyle::Body);
     }
 
     // Album
     truncate_text(g_nowAlbum, buf, sizeof(buf));
     if (buf[0]) {
-        display.setCursor(kInfoX, kArtY + 60);
-        display.print(buf);
+        String album = truncateWithEllipsis(buf, kInfoW - 8, FontStyle::Body);
+        FontEngine::drawText(DisplayTarget::EINK, kInfoX, kArtY + 60,
+                             album, FontStyle::Body);
     }
 
     // Status line
-    display.setFont(&Font5x7Fixed);
     int statusY = kArtY + 82;
-
     int col = kInfoX;
     if (g_isFavorite) {
-        display.setCursor(col, statusY);
-        display.print("Fav");
+        FontEngine::drawText(DisplayTarget::EINK, col, statusY,
+                             "Fav", FontStyle::Tiny);
         col += 40;
     }
-
-    display.setCursor(col, statusY);
     switch (g_loopMode) {
-        case LoopMode::None: display.print(""); break;
-        case LoopMode::One:  display.print("R1"); break;
-        case LoopMode::All:  display.print("RA"); break;
+        case LoopMode::None: break;
+        case LoopMode::One:
+            FontEngine::drawText(DisplayTarget::EINK, col, statusY,
+                                 "R1", FontStyle::Tiny);
+            col += 35;
+            break;
+        case LoopMode::All:
+            FontEngine::drawText(DisplayTarget::EINK, col, statusY,
+                                 "RA", FontStyle::Tiny);
+            col += 35;
+            break;
     }
-    if (g_loopMode != LoopMode::None) col += 35;
-
-    display.setCursor(col, statusY);
     if (g_shuffleEnabled) {
-        display.print("Sf");
+        FontEngine::drawText(DisplayTarget::EINK, col, statusY,
+                             "Sf", FontStyle::Tiny);
         col += 30;
     }
 
     // Volume
-    display.setCursor(col, statusY);
-    display.printf("V:%d", (g_volume * 100 + 127) / 255);
+    char volBuf[16];
+    snprintf(volBuf, sizeof(volBuf), "V:%d", (g_volume * 100 + 127) / 255);
+    FontEngine::drawText(DisplayTarget::EINK, col, statusY,
+                         volBuf, FontStyle::Tiny);
 
     // Play/pause status
-    int playStatusY = statusY + 14;
-    display.setCursor(kInfoX, playStatusY);
+    int playStatusY = statusY + 16;
+    const char* playStatus;
     if (g_playState == PlayerState::Playing) {
-        display.print("> Playing");
+        playStatus = "> Playing";
     } else if (g_playState == PlayerState::Paused) {
-        display.print("|| Paused");
+        playStatus = "|| Paused";
     } else {
-        display.print("[] Stopped");
+        playStatus = "[] Stopped";
     }
+    FontEngine::drawText(DisplayTarget::EINK, kInfoX, playStatusY,
+                         playStatus, FontStyle::Tiny);
 
     // Progress bar
     int barY = kArtY + kArtSize + 14;
@@ -241,11 +241,8 @@ void nowplaying_render() {
     format_time(elapsedStr, sizeof(elapsedStr), elapsed);
     format_time(durationStr, sizeof(durationStr), g_nowDuration);
     snprintf(timeBuf, sizeof(timeBuf), "%s / %s", elapsedStr, durationStr);
-
-    display.setFont(&Font5x7Fixed);
-    display.setTextColor(GxEPD_BLACK);
-    display.setCursor(8, barY + 24);
-    display.print(timeBuf);
+    FontEngine::drawText(DisplayTarget::EINK, 8, barY + 24,
+                         timeBuf, FontStyle::Tiny);
 
     // Footer
     draw_footer("SPC:pause < >:skip /\\/:vol B:browser P:plist ?:help");

@@ -1,1 +1,1 @@
-../../PocketMage_V3/src/globals.cpp
+../../PocketMageOS/src/globals.cpp
