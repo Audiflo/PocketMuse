@@ -255,6 +255,10 @@ static void appTask(void*) {
 
 // Application entry points (called from PocketMage framework)
 void APP_INIT() {
+#if defined(POCKETMUSE_FAST_REFRESH) && POCKETMUSE_FAST_REFRESH
+    FAST_REFRESH = true;
+#endif
+
     // Restore volume
     prefs.begin("PocketMuse", true);
     g_volume = prefs.getUChar("volume", 200);
