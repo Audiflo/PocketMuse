@@ -1,6 +1,7 @@
 #include <globals.h>
 #include "AudioTools.h"
 #include "AudioTools/CoreAudio/AudioPlayer.h"
+#include "AudioTools/CoreAudio/ResampleStream.h"
 #include "AudioTools/AudioCodecs/CodecHelix.h"
 #include "AudioTools/Disk/AudioSource.h"
 #include "AudioTools/Disk/FileLoop.h"
@@ -15,7 +16,15 @@ using namespace audio_tools;
 static AudioSourceCallback    s_source;       // callbacks open files from SD
 static DecoderHelix           s_decoder;      // MP3/AAC/WAV auto-detect
 static I2SStream              s_i2sOut;       // I2S DMA output on GPIO 17
-AudioPlayer                   s_player(s_source, s_i2sOut, s_decoder);
+// Workaround: this audio-tools snapshot's ResampleStream hides the base p_out,
+// so setOutput() never reaches the pointer its write path actually uses (null
+// deref on any write incl. silence). attach() sets that shadowed pointer.
+class ResampleStream48 : public ResampleStream {
+  public:
+    void attach(Print &out) { p_out = &out; }
+};
+static ResampleStream48      s_resample;     // resamples every track to 48 kHz
+AudioPlayer                   s_player(s_source, s_resample, s_decoder);
 
 // Currently-open audio file and its size (updated by callbacks)
 static File s_audioFile;
@@ -29,19 +38,18 @@ static bool s_useLoop = false;
 static MetadataCache s_metaCache;
 static int s_metaFields = 0;
 
-// Deferred I2S reconfiguration: decoder notifies us on its call stack, but we
-// apply the new config from loop() where it's safe to tear down and restart I2S.
-static AudioInfo s_pendingAudio;
-static AudioInfo s_activeAudio;
-
-class I2SConfigRelay : public AudioInfoSupport {
+// Log-only observer: reports each format change. The I2S/PDM output runs at a
+// FIXED 48 kHz (an exact multiple of the 6.144 MHz PDM clock), and ResampleStream
+// adapts every track to it, so no driver re-install is ever needed here.
+class I2SInfoLogger : public AudioInfoSupport {
     void setAudioInfo(AudioInfo info) override {
-        if (info.sample_rate == 0) return;
-        s_pendingAudio = info;
+        Serial.printf("[audio] decoder %du/%db/%dch -> fixed 48k  i2s-clk %.0fHz\r\n",
+                      info.sample_rate, info.bits_per_sample, info.channels,
+                      i2s_get_clk(I2S_NUM_0));
     }
-    AudioInfo audioInfo() override { return s_pendingAudio; }
+    AudioInfo audioInfo() override { return AudioInfo(); }
 };
-static I2SConfigRelay s_i2sRelay;
+static I2SInfoLogger s_i2sLogger;
 
 // Metadata callback (fires during s_player.copy())
 static void onMetadata(MetaDataType type, const char* str, int len) {
@@ -267,17 +275,24 @@ void APP_INIT() {
     // Configure I2S output on BZ_PIN (GPIO 17).
     // Single-pin mode: BCK and WS clocks generated internally, only DATA pin used.
     // A simple RC low-pass filter on the pin converts the bitstream to analog audio.
+    // Fixed 48 kHz PDM: 128 * 48000 = 6.144 MHz, an exact clock for the legacy S3
+    // PDM driver. All other rates are handled by ResampleStream (see below).
     auto cfg = s_i2sOut.defaultConfig();
     cfg.pin_data = BZ_PIN;
     cfg.pin_bck = -1;
-    cfg.sample_rate = 44100;
+    cfg.sample_rate = 48000;
     cfg.channels = 2;
     cfg.bits_per_sample = 16;
     cfg.signal_type = PDM;
     s_i2sOut.begin(cfg);
-    s_activeAudio.sample_rate = 44100;
-    s_activeAudio.channels = 2;
-    s_activeAudio.bits_per_sample = 16;
+
+    Serial.printf("[audio] i2s begin requested=%lu actual=%.0fHz\r\n",
+                  (unsigned long)cfg.sample_rate, i2s_get_clk(I2S_NUM_0));
+
+    // Resampler: always output the fixed 48 kHz rate of the PDM hardware.
+    s_resample.attach(s_i2sOut);
+    s_resample.begin(AudioInfo(48000, 2, 16), 48000);
+    Serial.printf("[audio] resampler output fixed at %dHz (1:1 at start)\r\n", 48000);
 
     // Set up AudioSourceCallback
     s_source.setCallbackSelectStream(onSelectStream);
@@ -289,9 +304,9 @@ void APP_INIT() {
     // Enable auto-next for gapless track advancement
     s_player.setAutoNext(true);
     s_source.setCallbackNextStream(onNextStream);
+    s_decoder.addNotifyAudioChange(s_i2sLogger);
 
-    // Wire decoder audio-info callback (reconfigures I2S when sample rate changes)
-    s_decoder.addNotifyAudioChange(s_i2sRelay);
+    
 
     // Set up metadata callback (fires during copy() via built-in MetaDataID3)
     s_player.setMetadataCallback(onMetadata);
@@ -379,18 +394,6 @@ void setup() {
 }
 
 void loop() {
-    if (s_pendingAudio.sample_rate != 0 &&
-        s_pendingAudio.sample_rate != s_activeAudio.sample_rate) {
-        auto cfg = s_i2sOut.defaultConfig();
-        cfg.pin_data      = BZ_PIN;
-        cfg.pin_bck       = -1;
-        cfg.sample_rate   = s_pendingAudio.sample_rate;
-        cfg.channels      = s_pendingAudio.channels;
-        cfg.bits_per_sample = s_pendingAudio.bits_per_sample;
-        cfg.signal_type   = PDM;
-        s_i2sOut.begin(cfg);
-        s_activeAudio = s_pendingAudio;
-    }
     s_player.copy();
 }
 
